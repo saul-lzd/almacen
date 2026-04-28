@@ -1,0 +1,2 @@
+define(['exports', 'preact/jsx-runtime', './BaseTabBarItem-03c91d3f'], (function(e,a,t){"use strict";e.TabBarLinkItem=function({itemKey:e,icon:r,badge:i,metadata:n,severity:s,labelMaxWidth:l,href:b,label:c,"aria-controls":o}){return a.jsx(t.BaseTabBarItem,{"aria-controls":o,itemKey:e,label:c,icon:r,badge:i,metadata:n,severity:s,labelMaxWidth:l,href:b})}}));
+//# sourceMappingURL=TabBarLinkItem-57587dbd.js.map

@@ -1,0 +1,22 @@
+[
+  { "id": 1, "nombre": "Carlos", "apellido": "Mendoza", "telefono": "5512345678" },
+  { "id": 2, "nombre": "Elena", "apellido": "Rodríguez", "telefono": "5598765432" },
+  { "id": 3, "nombre": "Javier", "apellido": "Soto", "telefono": "5544332211" },
+  { "id": 4, "nombre": "Sofía", "apellido": "Vega", "telefono": "5566778899" },
+  { "id": 5, "nombre": "Ricardo", "apellido": "Lugo", "telefono": "5522334455" },
+  { "id": 6, "nombre": "Beatriz", "apellido": "Luna", "telefono": "5588776655" },
+  { "id": 7, "nombre": "Fernando", "apellido": "Gómez", "telefono": "5511223344" },
+  { "id": 8, "nombre": "Valeria", "apellido": "Pinto", "telefono": "5599001122" },
+  { "id": 9, "nombre": "Mauricio", "apellido": "Rivas", "telefono": "5577665544" },
+  { "id": 10, "nombre": "Lucía", "apellido": "Torres", "telefono": "5544556677" },
+  { "id": 11, "nombre": "Andrés", "apellido": "Castro", "telefono": "9511002233" },
+  { "id": 12, "nombre": "Mónica", "apellido": "Flores", "telefono": "9514455667" },
+  { "id": 13, "nombre": "Roberto", "apellido": "Díaz", "telefono": "5533221100" },
+  { "id": 14, "nombre": "Gabriela", "apellido": "Ortiz", "telefono": "5566554433" },
+  { "id": 15, "nombre": "Tomás", "apellido": "Márquez", "telefono": "9519988776" },
+  { "id": 16, "nombre": "Ximena", "apellido": "Salazar", "telefono": "5577889900" },
+  { "id": 17, "nombre": "Daniel", "apellido": "Pérez", "telefono": "5512123434" },
+  { "id": 18, "nombre": "Paola", "apellido": "Reyes", "telefono": "9512345670" },
+  { "id": 19, "nombre": "Igor", "apellido": "Vázquez", "telefono": "5500998877" },
+  { "id": 20, "nombre": "Karla", "apellido": "Juárez", "telefono": "9517654321" }
+]

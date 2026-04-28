@@ -1,0 +1,37 @@
+[
+  { "id": "TKT-001", "pasajero_id": 1, "viaje_id": 1, "asiento": "12A", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Tarjeta de Crédito", "fecha_emision": "10/03/2026", "vencimiento": null },
+  { "id": "TKT-002", "pasajero_id": 5, "viaje_id": 2, "asiento": "01B", "estatus": "Apartado", "precio_pagado": 450.00, "metodo_pago": "Pendiente", "fecha_emision": "14/03/2026", "vencimiento": "15/03/2026" },
+  { "id": "TKT-003", "pasajero_id": 11, "viaje_id": null, "asiento": null, "estatus": "Abierto", "precio_pagado": 450.00, "metodo_pago": "Efectivo", "fecha_emision": "05/03/2026", "vencimiento": "05/09/2026" },
+  
+  /* --- ESCENARIO: Pasajeros con Ida y Vuelta --- */
+  /* Pasajero 1: Ida (Viaje 1) y Regreso (Viaje 2) */
+  { "id": "TKT-004", "pasajero_id": 1, "viaje_id": 2, "asiento": "05A", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Tarjeta de Crédito", "fecha_emision": "10/03/2026", "vencimiento": null },
+  
+  /* Pasajero 2: Ida (Viaje 3) y Regreso (Viaje 4) */
+  { "id": "TKT-005", "pasajero_id": 2, "viaje_id": 3, "asiento": "10B", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Efectivo", "fecha_emision": "11/03/2026", "vencimiento": null },
+  { "id": "TKT-006", "pasajero_id": 2, "viaje_id": 4, "asiento": "02C", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Efectivo", "fecha_emision": "11/03/2026", "vencimiento": null },
+  
+  /* Pasajero 3: Ida (Viaje 5) y Regreso (Viaje 6) */
+  { "id": "TKT-007", "pasajero_id": 3, "viaje_id": 5, "asiento": "15F", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Transferencia", "fecha_emision": "12/03/2026", "vencimiento": null },
+  { "id": "TKT-008", "pasajero_id": 3, "viaje_id": 6, "asiento": "08A", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Transferencia", "fecha_emision": "12/03/2026", "vencimiento": null },
+
+  /* --- MÁS ELEMENTOS ASIGNADOS A VIAJES --- */
+  { "id": "TKT-009", "pasajero_id": 4, "viaje_id": 7, "asiento": "04A", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Efectivo", "fecha_emision": "13/03/2026", "vencimiento": null },
+  { "id": "TKT-010", "pasajero_id": 6, "viaje_id": 8, "asiento": "14D", "estatus": "Apartado", "precio_pagado": 450.00, "metodo_pago": "Pendiente", "fecha_emision": "14/03/2026", "vencimiento": "16/03/2026" },
+  { "id": "TKT-011", "pasajero_id": 7, "viaje_id": 9, "asiento": "03B", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Tarjeta de Débito", "fecha_emision": "15/03/2026", "vencimiento": null },
+  { "id": "TKT-012", "pasajero_id": 8, "viaje_id": 10, "asiento": "11E", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Efectivo", "fecha_emision": "10/03/2026", "vencimiento": null },
+  { "id": "TKT-013", "pasajero_id": 9, "viaje_id": 11, "asiento": "09C", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Transferencia", "fecha_emision": "12/03/2026", "vencimiento": null },
+  { "id": "TKT-014", "pasajero_id": 10, "viaje_id": 12, "asiento": "20A", "estatus": "Apartado", "precio_pagado": 450.00, "metodo_pago": "Pendiente", "fecha_emision": "14/03/2026", "vencimiento": "15/03/2026" },
+  { "id": "TKT-015", "pasajero_id": 12, "viaje_id": 13, "asiento": "18B", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Efectivo", "fecha_emision": "15/03/2026", "vencimiento": null },
+  { "id": "TKT-016", "pasajero_id": 13, "viaje_id": 14, "asiento": "06F", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Tarjeta de Crédito", "fecha_emision": "10/03/2026", "vencimiento": null },
+  { "id": "TKT-017", "pasajero_id": 14, "viaje_id": 15, "asiento": "12C", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Tarjeta de Débito", "fecha_emision": "11/03/2026", "vencimiento": null },
+  { "id": "TKT-018", "pasajero_id": 16, "viaje_id": 16, "asiento": "02A", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Efectivo", "fecha_emision": "12/03/2026", "vencimiento": null },
+  { "id": "TKT-019", "pasajero_id": 17, "viaje_id": 17, "asiento": "04B", "estatus": "Apartado", "precio_pagado": 350.00, "metodo_pago": "Pendiente", "fecha_emision": "13/03/2026", "vencimiento": "14/03/2026" },
+  { "id": "TKT-020", "pasajero_id": 19, "viaje_id": 18, "asiento": "25E", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Transferencia", "fecha_emision": "14/03/2026", "vencimiento": null },
+  { "id": "TKT-021", "pasajero_id": 20, "viaje_id": 19, "asiento": "07D", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Tarjeta de Crédito", "fecha_emision": "15/03/2026", "vencimiento": null },
+  { "id": "TKT-022", "pasajero_id": 4, "viaje_id": 20, "asiento": "19A", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Efectivo", "fecha_emision": "16/03/2026", "vencimiento": null },
+  { "id": "TKT-023", "pasajero_id": 6, "viaje_id": 1, "asiento": "13A", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Efectivo", "fecha_emision": "11/03/2026", "vencimiento": null },
+  { "id": "TKT-024", "pasajero_id": 7, "viaje_id": 2, "asiento": "02B", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Tarjeta de Débito", "fecha_emision": "12/03/2026", "vencimiento": null },
+  { "id": "TKT-025", "pasajero_id": 8, "viaje_id": 3, "asiento": "11C", "estatus": "Pagado", "precio_pagado": 350.00, "metodo_pago": "Efectivo", "fecha_emision": "13/03/2026", "vencimiento": null },
+  { "id": "TKT-026", "pasajero_id": 9, "viaje_id": 4, "asiento": "03C", "estatus": "Pagado", "precio_pagado": 450.00, "metodo_pago": "Transferencia", "fecha_emision": "14/03/2026", "vencimiento": null }
+]

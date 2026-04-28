@@ -1,0 +1,67 @@
+/*
+    Document   : override
+    Created on : March 15th, 2026
+    Author     : Saul DLD
+    Description:
+        This is the file for custom styles for Oaxaca Rosa App
+*/
+
+.send-off-screen {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+
+.appLogo {
+  width:auto;
+  height:65px;
+  content:url("images/sesesp_logo.png")
+}
+
+html:not([dir="rtl"]) .appLogo {
+  margin-top:10px
+}
+
+html:not([dir="rtl"]) .appLogo {
+  *padding-right:4px
+}
+
+html[dir="rtl"] .appLogo {
+  *padding-left:4px
+}
+.appLogo:before {
+  display:inline
+}
+
+
+.demo-appheader-avatar {
+  width:24px;
+  height:24px
+}
+
+
+.demo-appheader-avatar:before {
+  content:url("images/avatar_24px.png")
+}
+@media (-webkit-min-device-pixel-ratio: 1.5), (min-resolution: 144dpi), (min-resolution: 1.5dppx) {
+  .demo-appheader-avatar:before {
+      content:url("images/avatar_24px_2x.png");
+      -webkit-transform:translate(-25%, -25%) scale(0.5);
+      transform:translate(-25%, -25%) scale(0.5)
+  }
+}
+
+.item-viaje {
+  cursor: pointer;
+}
+.item-viaje:hover {
+  box-shadow:0 0px 16px rgba(0,0,0,0.2);
+}
+
+.item-viaje-selected {
+  border: solid 1px greenyellow;
+}
