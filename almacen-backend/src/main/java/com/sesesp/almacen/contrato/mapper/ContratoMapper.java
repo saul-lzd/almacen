@@ -11,17 +11,6 @@ public class ContratoMapper {
     private ContratoMapper() {
     }
 
-//    public static ContratoResumenResponse toResumenResponse(Contrato contrato) {
-//        ContratoResumenResponse dto = new ContratoResumenResponse();
-//
-//        dto.setIdContrato(contrato.getIdContrato());
-//        dto.setIdentificadorContrato(contrato.getIdentificadorContrato());
-//        dto.setMontoTotal(contrato.getMontoTotal());
-//        dto.setFechaTentativaLlegada(contrato.getFechaTentativaLlegada());
-//        dto.setIdEstatusContrato(contrato.getIdEstatusContrato());
-//
-//        return dto;
-//    }
 
     public static Contrato toEntity(ContratoRequest request) {
         Contrato contrato = new Contrato();
@@ -59,6 +48,11 @@ public class ContratoMapper {
     }
 
 
+    /**
+     * Convierte un objeto de la capa de Base de Datos a un objeto de la Capa de servicio
+     * @param contrato
+     * @return
+     */
     public static ContratoResponse toResponse(Contrato contrato) {
         ContratoResponse dto = new ContratoResponse();
 

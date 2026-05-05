@@ -5,13 +5,13 @@ import java.time.LocalDateTime;
 
 public class ContratoResponse {
 
-    private Long idContrato;
+    private Integer idContrato;
     private String identificadorContrato;
 
-    private Long idProveedor;
-    private Long idComprador;
-    private Long idAdministradorContrato;
-    private Long idTipoOrigenContrato;
+    private Integer idProveedor;
+    private Integer idComprador;
+    private Integer idAdministradorContrato;
+    private Integer idTipoOrigenContrato;
 
     private String folioOrigen;
     private LocalDateTime fechaOrigen;
@@ -31,13 +31,13 @@ public class ContratoResponse {
     private Double montoFiniquito;
 
     private LocalDateTime fechaTentativaLlegada;
-    private Long idEstatusContrato;
+    private Integer idEstatusContrato;
 
-    public Long getIdContrato() {
+    public Integer getIdContrato() {
         return idContrato;
     }
 
-    public void setIdContrato(Long idContrato) {
+    public void setIdContrato(Integer idContrato) {
         this.idContrato = idContrato;
     }
 
@@ -49,35 +49,35 @@ public class ContratoResponse {
         this.identificadorContrato = identificadorContrato;
     }
 
-    public Long getIdProveedor() {
+    public Integer getIdProveedor() {
         return idProveedor;
     }
 
-    public void setIdProveedor(Long idProveedor) {
+    public void setIdProveedor(Integer idProveedor) {
         this.idProveedor = idProveedor;
     }
 
-    public Long getIdComprador() {
+    public Integer getIdComprador() {
         return idComprador;
     }
 
-    public void setIdComprador(Long idComprador) {
+    public void setIdComprador(Integer idComprador) {
         this.idComprador = idComprador;
     }
 
-    public Long getIdAdministradorContrato() {
+    public Integer getIdAdministradorContrato() {
         return idAdministradorContrato;
     }
 
-    public void setIdAdministradorContrato(Long idAdministradorContrato) {
+    public void setIdAdministradorContrato(Integer idAdministradorContrato) {
         this.idAdministradorContrato = idAdministradorContrato;
     }
 
-    public Long getIdTipoOrigenContrato() {
+    public Integer getIdTipoOrigenContrato() {
         return idTipoOrigenContrato;
     }
 
-    public void setIdTipoOrigenContrato(Long idTipoOrigenContrato) {
+    public void setIdTipoOrigenContrato(Integer idTipoOrigenContrato) {
         this.idTipoOrigenContrato = idTipoOrigenContrato;
     }
 
@@ -185,11 +185,11 @@ public class ContratoResponse {
         this.fechaTentativaLlegada = fechaTentativaLlegada;
     }
 
-    public Long getIdEstatusContrato() {
+    public Integer getIdEstatusContrato() {
         return idEstatusContrato;
     }
 
-    public void setIdEstatusContrato(Long idEstatusContrato) {
+    public void setIdEstatusContrato(Integer idEstatusContrato) {
         this.idEstatusContrato = idEstatusContrato;
     }
 }

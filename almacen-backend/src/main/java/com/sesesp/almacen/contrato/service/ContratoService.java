@@ -31,11 +31,11 @@ public class ContratoService {
     }
 
     public ContratoResponse save(ContratoRequest request) {
-        request.setIdAdministradorContrato(1L);
-        request.setIdComprador(1L);
-        request.setIdProveedor(1L);
-        request.setIdTipoOrigenContrato(1L);
-        request.setIdEstatusContrato(1L);
+        request.setIdAdministradorContrato(1);
+        request.setIdComprador(1);
+        request.setIdProveedor(1);
+        request.setIdTipoOrigenContrato(1);
+        request.setIdEstatusContrato(1);
         request.setNumeroExhibiciones(2);
 
 

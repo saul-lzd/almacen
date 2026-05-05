@@ -11,22 +11,22 @@ public class Contrato {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_contrato")
-    private Long idContrato;
+    private Integer idContrato;
 
     @Column(name = "identificador_contrato", nullable = true)
     private String identificadorContrato;
 
     @Column(name = "id_proveedor", nullable = false)
-    private Long idProveedor;
+    private Integer idProveedor;
 
     @Column(name = "id_comprador", nullable = false)
-    private Long idComprador;
+    private Integer idComprador;
 
     @Column(name = "id_administrador_contrato", nullable = false)
-    private Long idAdministradorContrato;
+    private Integer idAdministradorContrato;
 
     @Column(name = "id_tipo_origen_contrato")
-    private Long idTipoOrigenContrato;
+    private Integer idTipoOrigenContrato;
 
     @Column(name = "folio_origen")
     private String folioOrigen;
@@ -68,28 +68,28 @@ public class Contrato {
     private LocalDateTime fechaTentativaLlegada;
 
     @Column(name = "id_estatus_contrato", nullable = false)
-    private Long idEstatusContrato;
+    private Integer idEstatusContrato;
 
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion;
 
     @Column(name = "usuario_creacion")
-    private Long usuarioCreacion;
+    private Integer usuarioCreacion;
 
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
     @Column(name = "usuario_modificacion")
-    private Long usuarioModificacion;
+    private Integer usuarioModificacion;
 
     @Column(name = "activo")
     private Boolean activo;
 
-    public Long getIdContrato() {
+    public Integer getIdContrato() {
         return idContrato;
     }
 
-    public void setIdContrato(Long idContrato) {
+    public void setIdContrato(Integer idContrato) {
         this.idContrato = idContrato;
     }
 
@@ -101,35 +101,35 @@ public class Contrato {
         this.identificadorContrato = identificadorContrato;
     }
 
-    public Long getIdProveedor() {
+    public Integer getIdProveedor() {
         return idProveedor;
     }
 
-    public void setIdProveedor(Long idProveedor) {
+    public void setIdProveedor(Integer idProveedor) {
         this.idProveedor = idProveedor;
     }
 
-    public Long getIdComprador() {
+    public Integer getIdComprador() {
         return idComprador;
     }
 
-    public void setIdComprador(Long idComprador) {
+    public void setIdComprador(Integer idComprador) {
         this.idComprador = idComprador;
     }
 
-    public Long getIdAdministradorContrato() {
+    public Integer getIdAdministradorContrato() {
         return idAdministradorContrato;
     }
 
-    public void setIdAdministradorContrato(Long idAdministradorContrato) {
+    public void setIdAdministradorContrato(Integer idAdministradorContrato) {
         this.idAdministradorContrato = idAdministradorContrato;
     }
 
-    public Long getIdTipoOrigenContrato() {
+    public Integer getIdTipoOrigenContrato() {
         return idTipoOrigenContrato;
     }
 
-    public void setIdTipoOrigenContrato(Long idTipoOrigenContrato) {
+    public void setIdTipoOrigenContrato(Integer idTipoOrigenContrato) {
         this.idTipoOrigenContrato = idTipoOrigenContrato;
     }
 
@@ -237,11 +237,11 @@ public class Contrato {
         this.fechaTentativaLlegada = fechaTentativaLlegada;
     }
 
-    public Long getIdEstatusContrato() {
+    public Integer getIdEstatusContrato() {
         return idEstatusContrato;
     }
 
-    public void setIdEstatusContrato(Long idEstatusContrato) {
+    public void setIdEstatusContrato(Integer idEstatusContrato) {
         this.idEstatusContrato = idEstatusContrato;
     }
 
@@ -253,11 +253,11 @@ public class Contrato {
         this.fechaCreacion = fechaCreacion;
     }
 
-    public Long getUsuarioCreacion() {
+    public Integer getUsuarioCreacion() {
         return usuarioCreacion;
     }
 
-    public void setUsuarioCreacion(Long usuarioCreacion) {
+    public void setUsuarioCreacion(Integer usuarioCreacion) {
         this.usuarioCreacion = usuarioCreacion;
     }
 
@@ -269,11 +269,11 @@ public class Contrato {
         this.fechaModificacion = fechaModificacion;
     }
 
-    public Long getUsuarioModificacion() {
+    public Integer getUsuarioModificacion() {
         return usuarioModificacion;
     }
 
-    public void setUsuarioModificacion(Long usuarioModificacion) {
+    public void setUsuarioModificacion(Integer usuarioModificacion) {
         this.usuarioModificacion = usuarioModificacion;
     }
 
