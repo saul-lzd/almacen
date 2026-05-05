@@ -14,6 +14,7 @@ import "ojs/ojtable";
 import 'oj-c/list-view';
 import 'oj-c/list-item-layout';
 import 'oj-c/form-layout';
+import 'oj-c/select-single';
 import 'oj-c/text-area';
 import "oj-c/button";
 import 'oj-c/dialog';
@@ -21,19 +22,11 @@ import 'oj-c/tab-bar';
 import 'oj-c/input-text'
 import "oj-c/input-number";
 
-type ClavePresupuestal = {
-    clave: ko.Observable<string>;
-    partida: ko.Observable<string>;
-    monto: ko.Observable<number>;
-    puedeEliminar: ko.PureComputed<boolean>;
-    eliminar: () => void;
-};
-
 type ClavePresupuestalItemView = {
     id: number;
-    clave: string;
+    clavePresupuestal: string;
     partidaEspecifica: string;
-    montoClave: number;
+    montoAsignado: number;
 };
 
 type BienContratoItemView = {
@@ -49,75 +42,144 @@ type BienContratoItemView = {
 
 class NuevoContratoViewModel {
 
-    constructor() {
-        //this.agregarClavePresupuestal();
+    private router;
+    public modo = ko.observable<"NUEVO" | "EDICION">("NUEVO");
+    public tituloPantalla = ko.pureComputed(() => {
+        return this.modo() === "EDICION" ? "Editar Contrato" : "Nuevo Contrato";
+    });
+
+    constructor(params: any) {
+        this.router = params.router;
+        this.cargarClaves();
+        this.cargarUnidadesMedida();
     }
+
+    public goToInicio = () => {
+        this.router.go({ path: 'dashboard' });
+    }
+
+
 
     // ================================================================
     // CONTRATO
     // ================================================================
 
+    public contratoId = ko.observable<number | null>(null);
+    // info contrato
+    public formNumeroContrato = ko.observable("");
+    public formAdquisicion = ko.observable("");
+    public formCotizacion = ko.observable("");
 
     // ================================================================
     // COMPRADOR
     // ================================================================
 
+    // titular
+    public formTitularDependencia = ko.observable("");
+    public formTitularNombre = ko.observable("");
+    public formTitularCaracter = ko.observable("");
+
+    // administrador
+    public formAdministradorDependencia = ko.observable("");
+    public formAdministradorNombre = ko.observable("");
+    public formAdministradorCaracter = ko.observable("");
+
+
     // ================================================================
     // PROVEEDOR
     // ================================================================
 
-    // ================================================================
-    // PAGO / CLAVES PRESUPUESTALES
-    // ================================================================
-    public listaClaves = ko.observableArray<ClavePresupuestalItemView>([]);
+    // proveedor
+    public formProveedorEmpresa = ko.observable("");
+    public formProveedorDomicilioFiscal = ko.observable("");
+    public formProveedorRepresentante = ko.observable("");
+    public formProveedorCaracter = ko.observable("");
 
-    //public listaClaves = ko.observableArray<ClavePresupuestal>([]);
+    // ================================================================
+    // PAGO 
+    // ================================================================
 
-    public montoSinImpuestos = ko.observable<number>(0);
-    public impuestos = ko.observable<number>(0);
-    public montoTotal = ko.pureComputed(() => {
-        return Number(this.montoSinImpuestos() || 0) + Number(this.impuestos() || 0);
+    public formMontoSinImpuestos = ko.observable<number>(0);
+    public formImpuestos = ko.observable<number>(0);
+    public formMontoTotal = ko.pureComputed(() => {
+        return Number(this.formMontoSinImpuestos() || 0) + Number(this.formImpuestos() || 0);
     });
 
-    public clave = ko.observable<string>("127001-106");
-    public partidaEspecifica = ko.observable<string>("");
-    public montoClave = ko.observable<number>(0);
+    // ================================================================
+    // CLAVES PRESUPUESTALES
+    // ================================================================
 
-    public clavesDataProvider = new ArrayDataProvider(this.listaClaves, {
-        keyAttributes: "id"
-    })
+    public formClavePresupuestal = ko.observable<string>("-seleccionar-");
+    public formPartidaEspecifica = ko.observable<string>("");
+    public formMontoAsignado = ko.observable<number>(0);
 
+    public listaClavesPresupuestales = ko.observableArray<ClavePresupuestalItemView>([]);
+    public clavesDataProvider = new ArrayDataProvider(this.listaClavesPresupuestales, { keyAttributes: "id" })
+
+    public optionsClavesPresupuestales = ko.observableArray();
     private clavePresupuestalIdSequence = 1;
-    public hayClaves = ko.pureComputed( () => {
-        return this.listaClaves().length > 0;
+    
+    public hayClaves = ko.pureComputed(() => {
+        return this.listaClavesPresupuestales().length > 0;
     });
 
     public agregarClavePresupuestal = (): void => {
-
-        if(this.montoClave() < 1) {
-            alert("agregar clave p");
+        if (!this.formClavePresupuestal() 
+                || !this.formPartidaEspecifica() 
+                    || this.formMontoAsignado() < 1) {
+            alert("Faltan Datos");
             return;
         }
-        const item : ClavePresupuestalItemView = {
-            id : this.clavePresupuestalIdSequence++,
-            clave: this.clave(),
-            partidaEspecifica: this.partidaEspecifica(),
-            montoClave: Number(this.montoClave() || 0)
+        const item: ClavePresupuestalItemView = {
+            id: this.clavePresupuestalIdSequence++,
+            clavePresupuestal: this.formClavePresupuestal(),
+            partidaEspecifica: this.formPartidaEspecifica(),
+            montoAsignado: Number(this.formMontoAsignado() || 0)
         }
-
-        this.listaClaves.push(item);
+        this.listaClavesPresupuestales.push(item);
         this.limpiarFormularioClavesPresupuestales();
     };
 
     public eliminarClavePresupuestal = (clave: ClavePresupuestalItemView): void => {
-        this.listaClaves.remove(clave);
-    } 
+        this.listaClavesPresupuestales.remove(clave);
+    }
 
     private limpiarFormularioClavesPresupuestales(): void {
-        this.clave("");
-        this.partidaEspecifica(""),
-        this.montoClave(0);
+        this.formClavePresupuestal("");
+        this.formPartidaEspecifica(""),
+        this.formMontoAsignado(0);
     }
+
+    public async cargarClaves(): Promise<void> {
+        try {
+            const response = await fetch("http://localhost:8080/api/claves");
+            if (!response.ok) {
+                throw new Error("Error al obtener claves");
+            }
+            const data = await response.json();
+            data.unshift({clavePresupuestal: "", partidaEspecifica: ""});
+            console.log("Claves:", data);
+            this.optionsClavesPresupuestales(data);
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    public valueChangedHandler = (event: CustomEvent) => {
+
+        if (event.detail.updatedFrom === "external") {
+            return;
+        }
+      //console.log(event.detail);
+      const claveEncontrada = this.optionsClavesPresupuestales().find(p => p.clavePresupuestal === event.detail.value);
+      console.log(claveEncontrada);
+      this.formPartidaEspecifica(claveEncontrada.partidaEspecifica)
+    };
+
+
+    readonly clavesPresupuestalesDP = new ArrayDataProvider(this.optionsClavesPresupuestales, {
+      keyAttributes: 'clavePresupuestal',
+    });
 
     // ================================================================
     // TAB BENEFICIARIOS   
@@ -132,6 +194,7 @@ class NuevoContratoViewModel {
     public listaBienes = ko.observableArray<BienContratoItemView>([]);
 
     public isBienDescripcionDialogOpened = ko.observable(false);
+    public optionsUnidadesMedida = ko.observableArray();
 
     public bienLote = ko.observable<number>(0);
     public bienPartida = ko.observable<number>(0);
@@ -194,6 +257,90 @@ class NuevoContratoViewModel {
         this.bienDescripcion("");
         this.bienCantidad(0);
         this.bienPrecioUnitario(0);
+    }
+
+    public async cargarUnidadesMedida(): Promise<void> {
+        try {
+            const response = await fetch("http://localhost:8080/api/unidadesMedida");
+            if (!response.ok) {
+                throw new Error("Error al obtener claves");
+            }
+            const data = await response.json();
+            data.unshift({clave: "", descripcion: ""});
+            console.log("Unidades Medida:", data);
+            this.optionsUnidadesMedida(data);
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    public valueChangedHandlerUM = (event: CustomEvent) => {
+
+        if (event.detail.updatedFrom === "external") {
+            return;
+        }
+      const unidadEncontrada = this.optionsUnidadesMedida().find(p => p.clave === event.detail.value);
+      console.log(unidadEncontrada);
+      this.formPartidaEspecifica(unidadEncontrada.clave)
+    };
+
+
+    readonly unidadesMedidaDP = new ArrayDataProvider(this.optionsUnidadesMedida, {
+      keyAttributes: 'clave',
+    });
+
+    // ================================================================
+    // ================================================================
+
+    private count = 1;
+    public guardarBorrador = (): void => {
+        this.count++;
+        const payload = this.crearPayloadContrato();
+
+        console.log(this.count + " Guardar borrador >>", payload);
+
+        // if (!this.contratoId()) {
+        //   this.contratoId(1);
+        //   this.formNumeroContrato(this.formNumeroContrato() || "CNT-BORRADOR");
+        //   this.modo("EDICION");
+        // }
+    };
+
+    private crearPayloadContrato() {
+        return {
+            idContrato: this.contratoId(),
+            numeroContrato: this.formNumeroContrato(),
+            descripcionAdquisicion: this.formAdquisicion(),
+            numeroCotizacion: this.formCotizacion(),
+            titularDependencia: {
+                dependencia: this.formTitularDependencia(),
+                nombre: this.formTitularNombre(),
+                caracter: this.formTitularCaracter()
+            },
+            administradorContrato: {
+                dependencia: this.formAdministradorDependencia(),
+                nombre: this.formAdministradorNombre(),
+                caracter: this.formAdministradorCaracter()
+            },
+            proveedor: {
+                empresa: this.formProveedorEmpresa(),
+                representante: this.formProveedorRepresentante(),
+                domicilio: this.formProveedorDomicilioFiscal(),
+                caracter: this.formProveedorCaracter()
+            },
+            pago: {
+                montoSinImpuestos: this.formMontoSinImpuestos(),
+                impuestos: this.formImpuestos(),
+                montoTotal: this.formMontoTotal(),
+                clavesPresupuestales: this.listaClavesPresupuestales().map(item => ({
+                    clavePresupuestal: item.clavePresupuestal,
+                    partidaEspecifica: item.partidaEspecifica,
+                    montoAsignado: item.montoAsignado
+                }))
+            },
+            beneficiariosTexto: this.beneficiarios(),
+            bienes: this.listaBienes()
+        };
     }
 
 

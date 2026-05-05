@@ -52,11 +52,9 @@ class RootViewModel {
     const navData = [
       { path: "", redirect: "dashboard" },
       { path: "dashboard", detail: { label: "Inicio", iconClass: "oj-ux-ico-home" } },
-      { path: "contrato", detail: { label: "Contrato", iconClass: "oj-ux-ico-document-gears " } },
-      { path: "nuevo-contrato", detail: { label: "Nuevo Contrato", iconClass: "oj-ux-ico-document-gears " } },
-      { path: "incidents", detail: { label: "Almacen", iconClass: "oj-ux-ico-warehouse " } }
-      //{ path: "customers", detail: { label: "Beneficiarios", iconClass: "oj-ux-ico-contact-group" } }
-      //{ path: "about", detail: { label: "About", iconClass: "oj-ux-ico-information-s" } }
+      { path: "nuevo-contrato", detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } },
+      { path: "contrato", detail: { label: "contrato old", iconClass: "oj-ux-ico-document-gears" } }
+      
     ];
     // router setup
     const router = new CoreRouter(navData, {
