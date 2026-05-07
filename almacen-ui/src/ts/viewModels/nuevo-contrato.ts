@@ -1,379 +1,507 @@
 /**
- * @license
- * Copyright (c) 2014, 2026, Oracle and/or its affiliates.
- * Licensed under The Universal Permissive License (UPL), Version 1.0
- * as shown at https://oss.oracle.com/licenses/upl/
- * @ignore
+ * ViewModel: Nuevo / Editar Contrato
+ * Convencion de nombres:
+ * - frm*: valores editables ligados directamente al formulario
+ * - list*: arrays de elementos capturados que se enviaran al backend
+ * - dp*: DataProvider usado por componentes Oracle JET
+ * - cat*: catalogos/listas recibidas desde API
+ * - ui*: estado visual de pantalla
+ * - calc*: computed/calculados
+ * - cmd*: acciones disparadas desde UI
+ * - load*: carga de datos desde API/backend
+ * - clear*: limpieza de formularios internos
+ * - map*: transformacion a payload/backend
+ * - on*: handlers de eventos UI
  */
+
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
 
+//import "ojs/ojknockout";
+//import "ojs/ojbindif";
+
 import "oj-c/collapsible";
-import "ojs/ojtable";
-import 'oj-c/list-view';
-import 'oj-c/list-item-layout';
-import 'oj-c/form-layout';
-import 'oj-c/select-single';
-import 'oj-c/text-area';
+import "oj-c/list-view";
+import "oj-c/list-item-layout";
+import "oj-c/form-layout";
+import "oj-c/select-single";
+import "oj-c/text-area";
 import "oj-c/button";
-import 'oj-c/dialog';
-import 'oj-c/tab-bar';
-import 'oj-c/input-text'
+import "oj-c/dialog";
+import "oj-c/input-text";
 import "oj-c/input-number";
 
-type ClavePresupuestalItemView = {
-    id: number;
-    clavePresupuestal: string;
-    partidaEspecifica: string;
-    montoAsignado: number;
+// ================================================================
+// TYPES BASE
+// ================================================================
+
+type ModoPantalla = "NUEVO" | "EDICION";
+
+type CatalogoOption = {
+  value: string;
+  label: string;
+  metadata?: Record<string, unknown>;
 };
 
-type BienContratoItemView = {
-    id: number;
-    lote: number;
-    partida: number;
-    unidadMedida: string;
-    descripcion: string;
-    cantidad: number;
-    precioUnitario: number;
-    subtotal: number;
+type ClavePresupuestalItem = {
+  idLocal: number;
+  clavePresupuestal: string;
+  partidaEspecifica: string;
+  montoAsignado: number;
+};
+
+type BienContratoItem = {
+  idLocal: number;
+  lote: number;
+  partida: number;
+  unidadMedida: string;
+  descripcionBien: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+};
+
+type ContratoPayload = {
+  idContrato: number | null;
+  numeroContrato: string;
+  descripcionAdquisicion: string;
+  numeroCotizacion: string;
+  titularDependencia: {
+    dependencia: string;
+    nombre: string;
+    caracter: string;
+  };
+  administradorContrato: {
+    dependencia: string;
+    nombre: string;
+    caracter: string;
+  };
+  proveedor: {
+    empresa: string;
+    representante: string;
+    domicilio: string;
+    caracter: string;
+  };
+  pago: {
+    montoSinImpuestos: number;
+    impuestos: number;
+    montoTotal: number;
+    clavesPresupuestales: ClavePresupuestalItem[];
+  };
+  beneficiariosTexto: string;
+  bienes: BienContratoItem[];
 };
 
 class NuevoContratoViewModel {
+  // ================================================================
+  // ROUTER / UI STATE
+  // ================================================================
 
-    private router;
-    public modo = ko.observable<"NUEVO" | "EDICION">("NUEVO");
-    public tituloPantalla = ko.pureComputed(() => {
-        return this.modo() === "EDICION" ? "Editar Contrato" : "Nuevo Contrato";
-    });
+  private router: any;
 
-    constructor(params: any) {
-        this.router = params.router;
-        this.cargarClaves();
-        this.cargarUnidadesMedida();
+  public uiModo = ko.observable<ModoPantalla>("NUEVO");
+  public uiCargandoCatalogos = ko.observable<boolean>(false);
+  public uiGuardando = ko.observable<boolean>(false);
+  public uiError = ko.observable<string>("");
+  public uiEstatusContrato = ko.observable<string>("En captura");
+  public uiBienDescripcionDialogOpened = ko.observable<boolean>(false);
+
+  public contratoId = ko.observable<number | null>(null);
+
+  public calcTituloPantalla = ko.pureComputed(() => {
+    return this.uiModo() === "EDICION" ? "Editar Contrato" : "Nuevo Contrato";
+  });
+
+  public calcNumeroContratoHeader = ko.pureComputed(() => {
+    return this.frmContratoNumero() || "Pendiente";
+  });
+
+  public calcProveedorHeader = ko.pureComputed(() => {
+    return this.frmProveedorEmpresa() || "Pendiente";
+  });
+
+  // ================================================================
+  // CONTRATO - FORM
+  // ================================================================
+
+  public frmContratoNumero = ko.observable<string>("");
+  public frmContratoAdquisicion = ko.observable<string>("");
+  public frmContratoCotizacion = ko.observable<string>("");
+
+  // ================================================================
+  // COMPRADOR - FORM
+  // ================================================================
+
+  public frmCompradorTitularDependencia = ko.observable<string>("");
+  public frmCompradorTitularNombre = ko.observable<string>("");
+  public frmCompradorTitularCaracter = ko.observable<string>("");
+
+  public frmCompradorAdministradorDependencia = ko.observable<string>("");
+  public frmCompradorAdministradorNombre = ko.observable<string>("");
+  public frmCompradorAdministradorCaracter = ko.observable<string>("");
+
+  // ================================================================
+  // PROVEEDOR - FORM
+  // ================================================================
+
+  public frmProveedorEmpresa = ko.observable<string>("");
+  public frmProveedorDomicilioFiscal = ko.observable<string>("");
+  public frmProveedorRepresentante = ko.observable<string>("");
+  public frmProveedorCaracter = ko.observable<string>("");
+
+  // ================================================================
+  // PAGOS - FORM / CALC
+  // ================================================================
+
+  public frmPagoMontoSinImpuestos = ko.observable<number>(0);
+  public frmPagoImpuestos = ko.observable<number>(0);
+
+  public calcPagoMontoTotal = ko.pureComputed(() => {
+    return Number(this.frmPagoMontoSinImpuestos() || 0) + Number(this.frmPagoImpuestos() || 0);
+  });
+
+  // ================================================================
+  // CLAVES PRESUPUESTALES - FORM / LIST / DP / CAT
+  // ================================================================
+
+  public frmClavePresupuestalValue = ko.observable<string | null>(null);
+  public frmClavePresupuestalPartidaEspecifica = ko.observable<string>("");
+  public frmClavePresupuestalMontoAsignado = ko.observable<number>(0);
+
+  public listClavesPresupuestales = ko.observableArray<ClavePresupuestalItem>([]);
+
+  public dpClavesPresupuestales = new ArrayDataProvider(this.listClavesPresupuestales, {
+    keyAttributes: "idLocal"
+  });
+
+  public catClavesPresupuestales = ko.observableArray<CatalogoOption>([]);
+
+  public dpCatClavesPresupuestales = new ArrayDataProvider(this.catClavesPresupuestales, {
+    keyAttributes: "value"
+  });
+
+  private seqClavePresupuestal = 1;
+
+  public calcHayClavesPresupuestales = ko.pureComputed(() => {
+    return this.listClavesPresupuestales().length > 0;
+  });
+
+  // ================================================================
+  // BENEFICIARIOS - FORM
+  // ================================================================
+
+  public frmBeneficiariosTexto = ko.observable<string>("");
+
+  // ================================================================
+  // BIENES / ADQUISICION - FORM / LIST / DP / CAT
+  // ================================================================
+
+  public frmBienLote = ko.observable<number>(0);
+  public frmBienPartida = ko.observable<number>(0);
+  public frmBienUnidadMedidaValue =  ko.observable<string | null>(null);
+  public frmBienDescripcion = ko.observable<string>("");
+  public frmBienCantidad = ko.observable<number>(0);
+  public frmBienPrecioUnitario = ko.observable<number>(0);
+
+  public calcBienSubtotal = ko.pureComputed(() => {
+    return Number(this.frmBienCantidad() || 0) * Number(this.frmBienPrecioUnitario() || 0);
+  });
+
+  public listBienes = ko.observableArray<BienContratoItem>([]);
+
+  public dpBienes = new ArrayDataProvider(this.listBienes, {
+    keyAttributes: "idLocal"
+  });
+
+  public catUnidadesMedida = ko.observableArray<CatalogoOption>([]);
+
+  public dpCatUnidadesMedida = new ArrayDataProvider(this.catUnidadesMedida, {
+    keyAttributes: "value"
+  });
+
+  private seqBien = 1;
+
+  public uiDescripcionBienSeleccionada = ko.observable<string>("N/A");
+
+  public calcHayBienes = ko.pureComputed(() => {
+    return this.listBienes().length > 0;
+  });
+
+  // ================================================================
+  // CONSTRUCTOR / LIFECYCLE
+  // ================================================================
+
+  constructor(params: any) {
+    this.router = params?.router;
+
+    if (params?.idContrato) {
+      this.uiModo("EDICION");
+      this.contratoId(Number(params.idContrato));
+    }
+  }
+
+  connected(): void {
+    AccUtils.announce("Nuevo Contrato page loaded.");
+    document.title = this.calcTituloPantalla();
+
+    void this.loadInicial();
+  }
+
+  disconnected(): void {
+    // Implementar si se requieren limpiezas o cancelaciones.
+  }
+
+  transitionCompleted(): void {
+    // Implementar si se requiere logica posterior a transicion.
+  }
+
+  // ================================================================
+  // LOAD - API / BACKEND
+  // ================================================================
+
+  private async loadInicial(): Promise<void> {
+    this.uiCargandoCatalogos(true);
+    this.uiError("");
+
+    try {
+      await Promise.all([
+        this.loadClavesPresupuestales(),
+        this.loadUnidadesMedida()
+      ]);
+
+      if (this.uiModo() === "EDICION" && this.contratoId()) {
+        await this.loadContrato(this.contratoId() as number);
+      }
+    } catch (error) {
+      console.error("Error en carga inicial:", error);
+      this.uiError("No se pudo cargar la información inicial.");
+    } finally {
+      this.uiCargandoCatalogos(false);
+    }
+  }
+
+  private async loadClavesPresupuestales(): Promise<void> {
+    const response = await fetch("http://localhost:8080/api/claves");
+
+    if (!response.ok) {
+      throw new Error("Error al obtener claves presupuestales");
     }
 
-    public goToInicio = () => {
-        this.router.go({ path: 'dashboard' });
+    const data: CatalogoOption[] = await response.json();
+    this.catClavesPresupuestales(data);
+  }
+
+  private async loadUnidadesMedida(): Promise<void> {
+    const response = await fetch("http://localhost:8080/api/unidadesMedida");
+
+    if (!response.ok) {
+      throw new Error("Error al obtener unidades de medida");
     }
 
+    const data: CatalogoOption[] = await response.json();
+    this.catUnidadesMedida(data);
+  }
 
+  private async loadContrato(idContrato: number): Promise<void> {
+    // Pendiente: integrar endpoint real.
+    console.log("Cargando contrato", idContrato);
+  }
 
-    // ================================================================
-    // CONTRATO
-    // ================================================================
+  // ================================================================
+  // EVENT HANDLERS - COMBOBOX / UI
+  // ================================================================
 
-    public contratoId = ko.observable<number | null>(null);
-    // info contrato
-    public formNumeroContrato = ko.observable("");
-    public formAdquisicion = ko.observable("");
-    public formCotizacion = ko.observable("");
+  public onClavePresupuestalChanged = (event: CustomEvent): void => {
+    if (event.detail.updatedFrom === "external") {
+      return;
+    }
 
-    // ================================================================
-    // COMPRADOR
-    // ================================================================
+    const selectedValue = event.detail.value as string;
+    const selected = this.catClavesPresupuestales().find((item) => item.value === selectedValue);
 
-    // titular
-    public formTitularDependencia = ko.observable("");
-    public formTitularNombre = ko.observable("");
-    public formTitularCaracter = ko.observable("");
+    const partidaEspecifica = selected?.metadata?.partida_especifica as string | undefined;
+    this.frmClavePresupuestalPartidaEspecifica(partidaEspecifica || "");
+  };
 
-    // administrador
-    public formAdministradorDependencia = ko.observable("");
-    public formAdministradorNombre = ko.observable("");
-    public formAdministradorCaracter = ko.observable("");
+  public onBienUnidadMedidaChanged = (event: CustomEvent): void => {
+    if (event.detail.updatedFrom === "external") {
+      return;
+    }
 
+    // Se conserva por si luego se requiere metadata de la unidad seleccionada.
+    const selectedValue = event.detail.value as string;
+    const selected = this.catUnidadesMedida().find((item) => item.value === selectedValue);
 
-    // ================================================================
-    // PROVEEDOR
-    // ================================================================
+    if (!selected) {
+      this.frmBienUnidadMedidaValue("");
+    }
+  };
 
-    // proveedor
-    public formProveedorEmpresa = ko.observable("");
-    public formProveedorDomicilioFiscal = ko.observable("");
-    public formProveedorRepresentante = ko.observable("");
-    public formProveedorCaracter = ko.observable("");
+  // ================================================================
+  // COMMANDS - NAVEGACION
+  // ================================================================
 
-    // ================================================================
-    // PAGO 
-    // ================================================================
+  public cmdGoToInicio = (): void => {
+    this.router?.go({ path: "dashboard" });
+  };
 
-    public formMontoSinImpuestos = ko.observable<number>(0);
-    public formImpuestos = ko.observable<number>(0);
-    public formMontoTotal = ko.pureComputed(() => {
-        return Number(this.formMontoSinImpuestos() || 0) + Number(this.formImpuestos() || 0);
-    });
+  // ================================================================
+  // COMMANDS - CLAVES PRESUPUESTALES
+  // ================================================================
 
-    // ================================================================
-    // CLAVES PRESUPUESTALES
-    // ================================================================
+  public cmdAgregarClavePresupuestal = (): void => {
 
-    public formClavePresupuestal = ko.observable<string>("-seleccionar-");
-    public formPartidaEspecifica = ko.observable<string>("");
-    public formMontoAsignado = ko.observable<number>(0);
+    const selectedClavePresupuestal = this.catClavesPresupuestales()
+    .find(item => item.value === this.frmClavePresupuestalValue());
 
-    public listaClavesPresupuestales = ko.observableArray<ClavePresupuestalItemView>([]);
-    public clavesDataProvider = new ArrayDataProvider(this.listaClavesPresupuestales, { keyAttributes: "id" })
+    // if (!this.frmClavePresupuestalValue() || !this.frmClavePresupuestalPartidaEspecifica() || this.frmClavePresupuestalMontoAsignado() < 1) {
+    //   alert("Faltan datos de la clave presupuestal.");
+    //   return;
+    // }
 
-    public optionsClavesPresupuestales = ko.observableArray();
-    private clavePresupuestalIdSequence = 1;
-    
-    public hayClaves = ko.pureComputed(() => {
-        return this.listaClavesPresupuestales().length > 0;
-    });
+      if (!selectedClavePresupuestal || !this.frmClavePresupuestalPartidaEspecifica || this.frmClavePresupuestalMontoAsignado() < 1) {
+          alert("Faltan datos de la clave presupuestal");
+          return;
+      }
 
-    public agregarClavePresupuestal = (): void => {
-        if (!this.formClavePresupuestal() 
-                || !this.formPartidaEspecifica() 
-                    || this.formMontoAsignado() < 1) {
-            alert("Faltan Datos");
-            return;
-        }
-        const item: ClavePresupuestalItemView = {
-            id: this.clavePresupuestalIdSequence++,
-            clavePresupuestal: this.formClavePresupuestal(),
-            partidaEspecifica: this.formPartidaEspecifica(),
-            montoAsignado: Number(this.formMontoAsignado() || 0)
-        }
-        this.listaClavesPresupuestales.push(item);
-        this.limpiarFormularioClavesPresupuestales();
+      const item: ClavePresupuestalItem = {
+          idLocal: this.seqClavePresupuestal++,
+          clavePresupuestal: selectedClavePresupuestal.value,
+          //descripcion: selected.label,
+          partidaEspecifica: this.frmClavePresupuestalPartidaEspecifica(),
+          montoAsignado: Number(this.frmClavePresupuestalMontoAsignado() || 0)
+      };
+
+    this.listClavesPresupuestales.push(item);
+    this.clearFrmClavePresupuestal();
+  };
+
+  public cmdEliminarClavePresupuestal = (clave: ClavePresupuestalItem): void => {
+    this.listClavesPresupuestales.remove(clave);
+  };
+
+  private clearFrmClavePresupuestal(): void {
+    this.frmClavePresupuestalValue(null);
+    this.frmClavePresupuestalPartidaEspecifica("");
+    this.frmClavePresupuestalMontoAsignado(0);
+  }
+
+  // ================================================================
+  // COMMANDS - BIENES
+  // ================================================================
+
+  public cmdAgregarBien = (): void => {
+
+    const selectedUnidadMedida = this.catUnidadesMedida()
+    .find(item => item.value === this.frmBienUnidadMedidaValue());
+
+    if (!selectedUnidadMedida || 
+        !this.frmBienDescripcion() || 
+        this.frmBienCantidad() < 1 || 
+        this.frmBienPrecioUnitario() < 1
+    ) {
+      alert("Faltan datos del producto.");
+      return;
+    }
+
+    const item: BienContratoItem = {
+      idLocal: this.seqBien++,
+      lote: Number(this.frmBienLote() || 0),
+      partida: Number(this.frmBienPartida() || 0),
+      unidadMedida: selectedUnidadMedida.value,
+      descripcionBien: this.frmBienDescripcion("N/A"),
+      cantidad: Number(this.frmBienCantidad() || 0),
+      precioUnitario: Number(this.frmBienPrecioUnitario() || 0),
+      subtotal: Number(this.calcBienSubtotal() || 0)
     };
 
-    public eliminarClavePresupuestal = (clave: ClavePresupuestalItemView): void => {
-        this.listaClavesPresupuestales.remove(clave);
+    this.listBienes.push(item);
+    this.clearFrmBien();
+  };
+
+  public cmdEliminarBien = (bien: BienContratoItem): void => {
+    this.listBienes.remove(bien);
+  };
+
+  public cmdVerDescripcionBien = (bien: BienContratoItem): void => {
+    this.uiDescripcionBienSeleccionada(bien.descripcionBien);
+    this.cmdOpenBienDescripcionDialog();
+  };
+
+  public cmdOpenBienDescripcionDialog = (): void => {
+    this.uiBienDescripcionDialogOpened(true);
+  };
+
+  public cmdCloseBienDescripcionDialog = (): void => {
+    this.uiBienDescripcionDialogOpened(false);
+  };
+
+  private clearFrmBien(): void {
+    this.frmBienLote(0);
+    this.frmBienPartida(0);
+    this.frmBienUnidadMedidaValue(null);
+    this.frmBienDescripcion("");
+    this.frmBienCantidad(0);
+    this.frmBienPrecioUnitario(0);
+  }
+
+  // ================================================================
+  // COMMANDS - CONTRATO
+  // ================================================================
+
+  public cmdGuardarBorrador = (): void => {
+    this.uiGuardando(true);
+
+    try {
+      const payload = this.mapContratoToPayload();
+      console.log("Guardar borrador >>", payload);
+    } finally {
+      this.uiGuardando(false);
     }
+  };
 
-    private limpiarFormularioClavesPresupuestales(): void {
-        this.formClavePresupuestal("");
-        this.formPartidaEspecifica(""),
-        this.formMontoAsignado(0);
-    }
+  public cmdEnviarAlmacen = (): void => {
+    const payload = this.mapContratoToPayload();
+    console.log("Enviar a almacén >>", payload);
+  };
 
-    public async cargarClaves(): Promise<void> {
-        try {
-            const response = await fetch("http://localhost:8080/api/claves");
-            if (!response.ok) {
-                throw new Error("Error al obtener claves");
-            }
-            const data = await response.json();
-            data.unshift({clavePresupuestal: "", partidaEspecifica: ""});
-            console.log("Claves:", data);
-            this.optionsClavesPresupuestales(data);
-        } catch (error) {
-            console.error("Error:", error);
-        }
-    }
+  // ================================================================
+  // MAPPERS
+  // ================================================================
 
-    public valueChangedHandler = (event: CustomEvent) => {
-
-        if (event.detail.updatedFrom === "external") {
-            return;
-        }
-      //console.log(event.detail);
-      const claveEncontrada = this.optionsClavesPresupuestales().find(p => p.clavePresupuestal === event.detail.value);
-      console.log(claveEncontrada);
-      this.formPartidaEspecifica(claveEncontrada.partidaEspecifica)
+  private mapContratoToPayload(): ContratoPayload {
+    return {
+      idContrato: this.contratoId(),
+      numeroContrato: this.frmContratoNumero(),
+      descripcionAdquisicion: this.frmContratoAdquisicion(),
+      numeroCotizacion: this.frmContratoCotizacion(),
+      titularDependencia: {
+        dependencia: this.frmCompradorTitularDependencia(),
+        nombre: this.frmCompradorTitularNombre(),
+        caracter: this.frmCompradorTitularCaracter()
+      },
+      administradorContrato: {
+        dependencia: this.frmCompradorAdministradorDependencia(),
+        nombre: this.frmCompradorAdministradorNombre(),
+        caracter: this.frmCompradorAdministradorCaracter()
+      },
+      proveedor: {
+        empresa: this.frmProveedorEmpresa(),
+        representante: this.frmProveedorRepresentante(),
+        domicilio: this.frmProveedorDomicilioFiscal(),
+        caracter: this.frmProveedorCaracter()
+      },
+      pago: {
+        montoSinImpuestos: Number(this.frmPagoMontoSinImpuestos() || 0),
+        impuestos: Number(this.frmPagoImpuestos() || 0),
+        montoTotal: Number(this.calcPagoMontoTotal() || 0),
+        clavesPresupuestales: this.listClavesPresupuestales()
+      },
+      beneficiariosTexto: this.frmBeneficiariosTexto(),
+      bienes: this.listBienes()
     };
-
-
-    readonly clavesPresupuestalesDP = new ArrayDataProvider(this.optionsClavesPresupuestales, {
-      keyAttributes: 'clavePresupuestal',
-    });
-
-    // ================================================================
-    // TAB BENEFICIARIOS   
-    // ================================================================
-    public beneficiarios = ko.observable();
-
-
-    // ================================================================
-    // BIENES / PRODUCTOS  
-    // ================================================================
-
-    public listaBienes = ko.observableArray<BienContratoItemView>([]);
-
-    public isBienDescripcionDialogOpened = ko.observable(false);
-    public optionsUnidadesMedida = ko.observableArray();
-
-    public bienLote = ko.observable<number>(0);
-    public bienPartida = ko.observable<number>(0);
-    public bienUnidadMedida = ko.observable<string>("");
-    public bienDescripcion = ko.observable<string>("");
-    public bienCantidad = ko.observable<number>(0);
-    public bienPrecioUnitario = ko.observable<number>(0);
-    public bienSubtotal = ko.pureComputed(() => {
-        return Number(this.bienCantidad() || 0) * Number(this.bienPrecioUnitario() || 0);
-    });
-
-    public bienesDataProvider = new ArrayDataProvider(this.listaBienes, {
-        keyAttributes: "id"
-    });
-
-    private bienIdSequence = 1;
-    public descripcionBienSeleccionada = ko.observable<string>("");
-
-    public hayBienes = ko.pureComputed(() => {
-        return this.listaBienes().length > 0;
-    });
-
-    public agregarBien = (): void => {
-        const bien: BienContratoItemView = {
-            id: this.bienIdSequence++,
-            lote: Number(this.bienLote() || 0),
-            partida: Number(this.bienPartida() || 0),
-            unidadMedida: this.bienUnidadMedida(),
-            descripcion: this.bienDescripcion(),
-            cantidad: Number(this.bienCantidad() || 0),
-            precioUnitario: Number(this.bienPrecioUnitario() || 0),
-            subtotal: Number(this.bienSubtotal() || 0)
-        };
-
-        this.listaBienes.push(bien);
-        this.limpiarFormularioBienes();
-    };
-
-    public eliminarBien = (bien: BienContratoItemView): void => {
-        this.listaBienes.remove(bien);
-    };
-
-    public verDescripcionBien = (bien: BienContratoItemView): void => {
-        this.descripcionBienSeleccionada(bien.descripcion);
-        this.openBienDescripcionDialog()
-    };
-
-    public openBienDescripcionDialog = (): void => {
-        this.isBienDescripcionDialogOpened(true)
-    }
-
-    public closeBienDescripcionDialog = (): void => {
-        this.isBienDescripcionDialogOpened(false)
-    }
-
-    private limpiarFormularioBienes(): void {
-        this.bienLote(0);
-        this.bienPartida(0);
-        this.bienUnidadMedida("");
-        this.bienDescripcion("");
-        this.bienCantidad(0);
-        this.bienPrecioUnitario(0);
-    }
-
-    public async cargarUnidadesMedida(): Promise<void> {
-        try {
-            const response = await fetch("http://localhost:8080/api/unidadesMedida");
-            if (!response.ok) {
-                throw new Error("Error al obtener claves");
-            }
-            const data = await response.json();
-            data.unshift({clave: "", descripcion: ""});
-            console.log("Unidades Medida:", data);
-            this.optionsUnidadesMedida(data);
-        } catch (error) {
-            console.error("Error:", error);
-        }
-    }
-
-    public valueChangedHandlerUM = (event: CustomEvent) => {
-
-        if (event.detail.updatedFrom === "external") {
-            return;
-        }
-      const unidadEncontrada = this.optionsUnidadesMedida().find(p => p.clave === event.detail.value);
-      console.log(unidadEncontrada);
-      this.formPartidaEspecifica(unidadEncontrada.clave)
-    };
-
-
-    readonly unidadesMedidaDP = new ArrayDataProvider(this.optionsUnidadesMedida, {
-      keyAttributes: 'clave',
-    });
-
-    // ================================================================
-    // ================================================================
-
-    private count = 1;
-    public guardarBorrador = (): void => {
-        this.count++;
-        const payload = this.crearPayloadContrato();
-
-        console.log(this.count + " Guardar borrador >>", payload);
-
-        // if (!this.contratoId()) {
-        //   this.contratoId(1);
-        //   this.formNumeroContrato(this.formNumeroContrato() || "CNT-BORRADOR");
-        //   this.modo("EDICION");
-        // }
-    };
-
-    private crearPayloadContrato() {
-        return {
-            idContrato: this.contratoId(),
-            numeroContrato: this.formNumeroContrato(),
-            descripcionAdquisicion: this.formAdquisicion(),
-            numeroCotizacion: this.formCotizacion(),
-            titularDependencia: {
-                dependencia: this.formTitularDependencia(),
-                nombre: this.formTitularNombre(),
-                caracter: this.formTitularCaracter()
-            },
-            administradorContrato: {
-                dependencia: this.formAdministradorDependencia(),
-                nombre: this.formAdministradorNombre(),
-                caracter: this.formAdministradorCaracter()
-            },
-            proveedor: {
-                empresa: this.formProveedorEmpresa(),
-                representante: this.formProveedorRepresentante(),
-                domicilio: this.formProveedorDomicilioFiscal(),
-                caracter: this.formProveedorCaracter()
-            },
-            pago: {
-                montoSinImpuestos: this.formMontoSinImpuestos(),
-                impuestos: this.formImpuestos(),
-                montoTotal: this.formMontoTotal(),
-                clavesPresupuestales: this.listaClavesPresupuestales().map(item => ({
-                    clavePresupuestal: item.clavePresupuestal,
-                    partidaEspecifica: item.partidaEspecifica,
-                    montoAsignado: item.montoAsignado
-                }))
-            },
-            beneficiariosTexto: this.beneficiarios(),
-            bienes: this.listaBienes()
-        };
-    }
-
-
-
-    // ================================================================
-    /**
-     * Optional ViewModel method invoked after the View is inserted into the
-     * document DOM.  The application can put logic that requires the DOM being
-     * attached here.
-     * This method might be called multiple times - after the View is created
-     * and inserted into the DOM and after the View is reconnected
-     * after being disconnected.
-     */
-    connected(): void {
-        AccUtils.announce("Nuevo Contrato  page loaded.");
-        document.title = "Nuevo Contrato";
-        // implement further logic if needed
-    }
-
-    /**
-     * Optional ViewModel method invoked after the View is disconnected from the DOM.
-     */
-    disconnected(): void {
-        // implement if needed
-    }
-
-    /**
-     * Optional ViewModel method invoked after transition to the new View is complete.
-     * That includes any possible animation between the old and the new View.
-     */
-    transitionCompleted(): void {
-        // implement if needed
-    }
+  }
 }
 
 export = NuevoContratoViewModel;
