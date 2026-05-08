@@ -7,133 +7,137 @@
  */
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
+import ArrayDataProvider = require("ojs/ojarraydataprovider");
 
-import "ojs/ojtable";
-import 'oj-c/form-layout';
-import 'oj-c/text-area';
+import "oj-c/list-view";
 import "oj-c/button";
 import 'oj-c/dialog';
-import 'oj-c/tab-bar';
-import 'oj-c/input-text'
-import "oj-c/input-number";
-import { TabData } from 'oj-c/tab-bar';
+import "oj-c/avatar";
 
+
+type ContratoListaItem = {
+  idContrato: number;
+  numeroContrato: string;
+  adquisicion: string;
+  proveedor: string;
+  estatusContrato: string;
+};
 
 class DashboardViewModel {
+  // ================================================================
+  // ROUTER / UI STATE
+  // ================================================================
+  private router;
+  //public isDialogOpened = ko.observable(false);
 
-    private router;
+  // ================================================================
+  // CONTRATO - TABLE
+  // ================================================================
 
-    public isDialogOpened = ko.observable(false);
-    public isPanelContratoVisible = ko.observable(false);
-    public isPanelCompradorVisible = ko.observable(false);
+  public listContratos = ko.observableArray<ContratoListaItem>([]);
+  public dpContratos = new ArrayDataProvider(this.listContratos, {
+      keyAttributes: "idContrato",
+    });
 
-    display = ko.observable('standard');
+  public getStatusBadgeClass(status: string): string {
 
-    constructor(params: any) {
-        this.router = params.router;
+    let badgeClass = "oj-badge oj-badge-subtle ";
+
+    switch (status) {
+
+      case "Contrato en captura progresiva":
+        badgeClass += "oj-badge-success";
+        break;
+
+      case "Pendiente de firma":
+        badgeClass += "oj-badge-warning";
+        break;
+
+      case "Contrato finalizado":
+        badgeClass += "oj-badge-danger";
+        break;
+
+      case "Todos los productos fueron entregados":
+        badgeClass += "oj-badge-info";
+        break;
+
+      default:
+        badgeClass += "oj-badge-neutral";
+        break;
     }
 
-    public goToContrato = () => {
-        this.router.go({ path: 'contrato' });
-    }
+    return badgeClass;
+  }
 
-    public goToNuevoContrato = () => {
-        this.router.go({ path: 'nuevo-contrato' });
-    }
 
-    connected(): void {
-        //AccUtils.announce("Vista de viajes cargada.");
-        //document.title = "Viajes";
-        // implement further logic if needed
-    }
+  // ================================================================
+  // CONSTRUCTOR / LIFECYCLE
+  // ================================================================
+  constructor(params: any) {
+    this.router = params.router;
+    this.cargarContratos();
+  }
 
-    /**
-     * Optional ViewModel method invoked after the View is disconnected from the DOM.
-     */
-    disconnected(): void {
-        // implement if needed
-    }
+  connected(): void {
+    //AccUtils.announce("Vista de viajes cargada.");
+    //document.title = "Viajes";
+    // implement further logic if needed
+  }
 
-    /**
-     * Optional ViewModel method invoked after transition to the new View is complete.
-     * That includes any possible animation between the old and the new View.
-     */
-    transitionCompleted(): void {
-        // implement if needed
+  /**
+   * Optional ViewModel method invoked after the View is disconnected from the DOM.
+   */
+  disconnected(): void {
+    // implement if needed
+  }
+
+  /**
+   * Optional ViewModel method invoked after transition to the new View is complete.
+   * That includes any possible animation between the old and the new View.
+   */
+  transitionCompleted(): void {
+    // implement if needed
+  }
+
+  // ================================================================
+  // LOAD - API / BACKEND
+  // ================================================================
+  private async cargarContratos(): Promise<void> {
+    const response = await fetch("http://localhost:8080/api/contratos");
+    
+    if (!response.ok) {
+      throw new Error("Error al obtener el listado de contratos");
     }
+    
+    const data = await response.json();
+    const contratosArray = Array.isArray(data) ? data : [data];
+
+    const items: ContratoListaItem[] = contratosArray.map((contrato: any) => ({
+      idContrato: contrato.idContrato,
+      numeroContrato: contrato.numeroContrato,
+      adquisicion: contrato.adquisicion,
+      proveedor: contrato.proveedor?.razonSocial ?? "Pendiente de asignar",
+      estatusContrato: contrato.estatusContrato,
+    }));
+
+    this.listContratos(items);
+  }
+
+  public verBeneficiarios = (event: Event, context: any): void => {
+    const contrato = context.item.data as ContratoListaItem;
+
+    console.log("Ver beneficiarios del contrato:", contrato.idContrato);
+
+    // Aquí podrías abrir un dialog, navegar a otra vista,
+    // o consumir /api/contratos/{id}/beneficiarios
+  };
+
+  // ================================================================
+  // COMMANDS - NAVEGACION
+  // ================================================================
+  public cmdGoToCreateContrato = () => {
+    this.router?.go({ path: 'nuevo-contrato' });
+  }
 }
 
 export = DashboardViewModel;
-
-/*
-interface Viaje {
-  autobus_id: number;
-  origen: string;
-  destino: string;
-  hora_salida: string;
-  precio: number;
-  fecha: string;
-  tipo_autobus: string;
-}
-
-interface Boleto {
-  id: number;
-  pasajero_id: number;
-  viaje_id: number;
-  asiento: string;
-  estatus: string;
-  precio_pagado: number;
-  metodo_pago: string;
-  fecha_emision: string;
-  vencimiento: string ;
-}
-
- viajes = ko.observableArray([]);
-  allBoletos: Boleto[] = [];
-  boletosDelViaje = ko.observableArray<Boleto | null>([]);
-  viajeSeleccionado = ko.observable<Viaje | null>(null);
-  selected = ko.observable();
-
-  constructor() {
-    this.loadViajes();
-    this.loadBoletos();
-  }
-
- async loadViajes() {
-    const data = await this.loadJSON("assets/viajes.json");
-    this.viajes(data.slice(0, 6));
-  }
-
-  async loadBoletos() {
-    const data = await this.loadJSON("assets/boleto.json");
-    this.allBoletos = data;
-  }
-
-  mostrarBoletosViaje(viajeId : number) {
-    console.log("loading tickets for trip: " + viajeId);
-    const filteredList = this.allBoletos.filter(b => b.viaje_id === viajeId);
-    this.boletosDelViaje(filteredList);
-  }
-
-  async loadJSON(path: string) {
-    const response = await fetch(path);
-    const data = await response.json();
-    return data;
-  }
-
-  seleccionarViaje = (event: Event, element: any) => {
-
-    if (this.selected()) {
-      this.selected().classList.remove("item-viaje-selected");
-    }
-
-    const idViaje = element.data.precio;
-    this.viajeSeleccionado(element.data);
-    this.mostrarBoletosViaje(element.data.viaje_id);
-
-    // set css to selected panel
-    const panel = event.currentTarget as HTMLElement;
-    this.selected(panel);
-    panel.classList.add("item-viaje-selected");
-  }
-*/

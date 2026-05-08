@@ -9,114 +9,74 @@
 
     <div class="oj-flex-bar oj-sm-align-items-center">
         <div class="oj-flex-bar-end">
-            <!-- <oj-c-button id="button1" label="Open Dialog Nuevo Contrato" on-oj-action="[[openDialog]]">
-                <span slot="startIcon" class="oj-ux-ico-plus"></span>
-            </oj-c-button> -->
-
-            <!-- <oj-c-button id="button2" label="Contrato" on-oj-action="[[goToContrato]]">
-                <span slot="startIcon" class="oj-ux-ico-plus"></span>
-            </oj-c-button> -->
-
-            <oj-c-button id="button2" label="Nuevo Contrato" on-oj-action="[[goToNuevoContrato]]">
+            <oj-c-button label="Nuevo Contrato" on-oj-action="[[cmdGoToCreateContrato]]">
                 <span slot="startIcon" class="oj-ux-ico-plus"></span>
             </oj-c-button>
-
         </div>
+    </div>
+
+    <div class="oj-panel oj-sm-margin-8x-top">
+        <oj-c-list-view id="contractsList" aria-label="Lista de contratos" data="[[dpContratos]]"
+            gridlines.item="visible">
+
+            <template slot="itemTemplate" data-oj-as="item">
+                <div class="contrato-item oj-flex-bar oj-sm-padding-4x-vertical">
+                    <div class="oj-flex-bar-start oj-sm-margin-8x-horizontal oj-sm-align-items-center">
+                        <oj-c-avatar icon-class="oj-ux-ico-data-document" aria-label="Contrato Icon"
+                            title="Contrato Icon" background="blue" shape="circle" size="sm"></oj-c-avatar>
+                    </div>
+                    <div class="oj-flex-bar-middle">
+                        <div class="oj-flex oj-sm-flex-direction-column">
+                            <div class="oj-flex-item oj-typography-subheading-sm oj-sm-padding-2x-bottom">
+                                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-flex oj-sm-align-items-center">
+                                <span class="oj-ux-ico-package"> </span>
+                                <div class="oj-sm-margin-2x-horizontal">
+                                    <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+                                </div>
+                            </div>
+                            <div class="oj-flex-item oj-flex oj-sm-align-items-center">
+                                <span class="oj-ux-ico-truck"> </span>
+                                <div class="oj-sm-margin-2x-horizontal">
+                                    <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="oj-flex oj-sm-4 oj-sm-align-items-center">
+                        <div class="oj-badge oj-badge-warning oj-badge-subtle" :class="[[getStatusBadgeClass(item.data.estatusContrato)]]">
+                            <oj-bind-text value="[[item.data.estatusContrato]]"></oj-bind-text>
+                        </div>
+                        
+                    </div>
+                    <div class="oj-flex-bar-end oj-sm-margin-4x-horizontal">
+                        <oj-c-button label="Beneficiarios" chroming="outlined"
+                            on-oj-action="[[$parent.verBeneficiarios]]">
+                        </oj-c-button>
+                    </div>
+                </div>
+
+            </template>
+
+        </oj-c-list-view>
+
     </div>
 
     <!-- <oj-c-dialog opened="{{isDialogOpened}}" id="modalDialog1" dialog-title="Nuevo Contrato" min-width="65vw"
         height="90vh">
 
-        <div slot="body">
-            <oj-c-tab-bar data="[[data]]" selection="{{selectedItem}}" edge="top" layout="stretch" display="stacked">
-            </oj-c-tab-bar>
-
-           
-
-        </div>
-        <div slot="footer">
-            <oj-c-button id="cancelButton" on-oj-action="[[closeDialog]]" label="Cancelar">
-                <span slot="startIcon" class="oj-ux-ico-close"></span>
-            </oj-c-button>
-            <oj-c-button id="okButton" on-oj-action="[[closeDialog]]" label="Guardar">
-                <span slot="startIcon" class="oj-ux-ico-save"></span>
-            </oj-c-button>
-        </div>
+            <div slot="body">
+                <oj-c-tab-bar data="[[data]]" selection="{{selectedItem}}" edge="top" layout="stretch" display="stacked">
+                </oj-c-tab-bar>
+            </div>
+            <div slot="footer">
+                <oj-c-button id="cancelButton" on-oj-action="[[closeDialog]]" label="Cancelar">
+                    <span slot="startIcon" class="oj-ux-ico-close"></span>
+                </oj-c-button>
+                <oj-c-button id="okButton" on-oj-action="[[closeDialog]]" label="Guardar">
+                    <span slot="startIcon" class="oj-ux-ico-save"></span>
+                </oj-c-button>
+            </div>
     </oj-c-dialog> -->
-
-
-
-
-    <!-- </div> -->
-
 </div>
-
-
-<!--<div class="oj-sm-margin-4x">-->
-<!--    <div class="oj-flex">-->
-<!--        <div class="oj-panel oj-sm-padding-4x oj-flex-item ">-->
-
-<!--            <h4>Autobuses</h4>-->
-<!--            <oj-bind-for-each data="[[viajes]]">-->
-<!--                <template>-->
-<!--                    <div class="item-viaje oj-panel oj-bg-info-30 oj-sm-margin-4x" on-click="[[seleccionarViaje]]">-->
-<!--                        <oj-bind-text value="[['Viaje id: ' + $current.data.viaje_id]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.hora_salida]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.tipo_autobus]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[['$ ' + $current.data.precio]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.autobus_id]]"></oj-bind-text>-->
-
-<!--                    </div>-->
-<!--                </template>-->
-<!--            </oj-bind-for-each>-->
-
-
-<!--        </div>-->
-
-<!--        <div class="oj-panel oj-sm-padding-4x oj-flex-item oj-sm-5 oj-sm-margin-3x-horizontal">-->
-<!--            <h3>Detalle del viaje</h3>-->
-
-<!--            &lt;!&ndash; <oj-bind-if test="[[boletosDelViaje]]"> &ndash;&gt;-->
-
-<!--            <oj-bind-for-each data="[[boletosDelViaje]]">-->
-<!--                <template>-->
-<!--                    <div class="oj-panel oj-bg-success-30 oj-sm-margin-4x">-->
-
-<!--                        <oj-bind-text value="[[$current.data.pasajero_id]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.asiento]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.autobus_id]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.estatus]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.precio_pagado]]"></oj-bind-text>-->
-<!--                        <br />-->
-<!--                        <oj-bind-text value="[[$current.data.metodo_pago]]"></oj-bind-text>-->
-
-<!--                    </div>-->
-<!--                </template>-->
-<!--            </oj-bind-for-each>-->
-<!--            &lt;!&ndash; </oj-bind-if> &ndash;&gt;-->
-
-
-<!--            &lt;!&ndash; <oj-bind-if test="[[viajeSeleccionado]]">-->
-<!--              <div>-->
-<!--                Viaje ID:-->
-<!--                <oj-bind-text value="[[viajeSeleccionado().viaje_id]]"></oj-bind-text>-->
-<!--              </div>-->
-<!--            </oj-bind-if> &ndash;&gt;-->
-<!--        </div>-->
-
-<!--        <div class="oj-panel oj-sm-padding-4x oj-flex-item ">-->
-<!--            <h3>Detalle del asiento</h3>-->
-<!--        </div>-->
-<!--    </div>-->
-
-
-
-<!--</div>-->

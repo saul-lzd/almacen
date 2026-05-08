@@ -22,27 +22,10 @@
   content:url("images/sesesp_logo.png")
 }
 
-html:not([dir="rtl"]) .appLogo {
-  margin-top:10px
-}
-
-html:not([dir="rtl"]) .appLogo {
-  *padding-right:4px
-}
-
-html[dir="rtl"] .appLogo {
-  *padding-left:4px
-}
-.appLogo:before {
-  display:inline
-}
-
-
 .demo-appheader-avatar {
   width:24px;
   height:24px
 }
-
 
 .demo-appheader-avatar:before {
   content:url("images/avatar_24px.png")
@@ -53,15 +36,4 @@ html[dir="rtl"] .appLogo {
       -webkit-transform:translate(-25%, -25%) scale(0.5);
       transform:translate(-25%, -25%) scale(0.5)
   }
-}
-
-.item-viaje {
-  cursor: pointer;
-}
-.item-viaje:hover {
-  box-shadow:0 0px 16px rgba(0,0,0,0.2);
-}
-
-.item-viaje-selected {
-  border: solid 1px greenyellow;
 }
