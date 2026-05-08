@@ -15,7 +15,6 @@ public class ContratoClavePresupuestalMapper {
             Double montoAsignado) {
 
         ContratoClavePresupuestalEntity entity = new ContratoClavePresupuestalEntity();
-
         entity.setContrato(contrato);
         entity.setClavePresupuestal(clavePresupuestal);
         entity.setMontoAsignado(montoAsignado);

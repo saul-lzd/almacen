@@ -1,18 +1,26 @@
 package com.sesesp.almacen.domain.service;
 
+import com.sesesp.almacen.common.types.EstatusContrato;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateResponseDto;
 import com.sesesp.almacen.domain.entity.*;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
 import com.sesesp.almacen.domain.repository.EstatusContratoRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalInt;
 
 @Service
 public class ContratoService {
+
+    Logger logger = LoggerFactory.getLogger(ContratoService.class);
 
     private final ContratoRepository contratoRepository;
     private final ContratoMapper contratoMapper;
@@ -21,7 +29,12 @@ public class ContratoService {
     private final EstatusContratoRepository estatusContratoRepository;
     private final ContratoClavePresupuestalService contratoClavePresupuestalService;
 
-    public ContratoService(ContratoRepository contratoRepository, ContratoMapper contratoMapper, ProveedorService proveedorService, ServidorPublicoService servidorPublicoService, EstatusContratoRepository estatusContratoRepository, ContratoClavePresupuestalService contratoClavePresupuestalService) {
+    public ContratoService(ContratoRepository contratoRepository,
+                           ContratoMapper contratoMapper,
+                           ProveedorService proveedorService,
+                           ServidorPublicoService servidorPublicoService,
+                           EstatusContratoRepository estatusContratoRepository,
+                           ContratoClavePresupuestalService contratoClavePresupuestalService) {
 
         this.contratoRepository = contratoRepository;
         this.contratoMapper = contratoMapper;
@@ -38,24 +51,37 @@ public class ContratoService {
 
     @Transactional
     public ContratoCreateResponseDto createContrato(ContratoCreateRequestDto request) {
+        logger.info("Starting creation of Contrato: {}", request.getNumeroContrato());
 
-        ProveedorEntity proveedor = proveedorService.resolveProveedor(request.getProveedor());
-        ServidorPublicoEntity comprador = servidorPublicoService.resolveServidorPublico(request.getComprador());
-        ServidorPublicoEntity administradorContrato = servidorPublicoService.resolveServidorPublico(request.getAdministradorContrato());
-        EstatusContratoEntity estatusContrato = estatusContratoRepository.findById(request.getIdEstatusContrato()).orElseThrow(() -> new RuntimeException("Estatus de contrato no encontrado"));
+        // 1. Mapeo inicial
+        ContratoEntity contrato = contratoMapper.toEntity(request);
 
-        ContratoEntity contrato;
-        contrato = contratoMapper.mapGeneralInformation(request);
-        contrato.setProveedor(proveedor);
-        contrato.setComprador(comprador);
-        contrato.setAdministradorContrato(administradorContrato);
-        contrato.setEstatusContrato(estatusContrato);
+        // 2. Seteo de estatus seguro
+        EstatusContrato statusEnum = EstatusContrato.EN_CAPTURA;
+        contrato.setEstatusContrato(
+                    estatusContratoRepository
+                        .findById(statusEnum.getId())
+                        .orElseThrow(() -> new EntityNotFoundException("Estatus inicial no encontrado en DB")));
 
+        // 3. Procesar entidades relacionadas (delegar responsabilidad a servicios)
+        contrato.setProveedor(proveedorService.createProveedorFromContrato(request));
+        contrato.setComprador(servidorPublicoService.createCompradorFromContrato(request));
+        contrato.setAdministradorContrato(servidorPublicoService.createAdministradorDelContratoFromContrato(request));
+
+        // 4. Guardar contrato
+        // Lo guardamos aquí para tener el ID generado necesario para las relaciones hijas
         ContratoEntity contratoGuardado = contratoRepository.save(contrato);
-        List<ContratoClavePresupuestalEntity> relationContratosClaves = contratoClavePresupuestalService.createClavesPresupuestales(contratoGuardado, request.getClavesPresupuestales());
-        contratoGuardado.setClavesPresupuestales(relationContratosClaves);
+
+        // 5. Relaciones de detalle
+        if (request.getClavesPresupuestales() != null && !request.getClavesPresupuestales().isEmpty()) {
+            logger.info("Procesando {} llaves presupuestales", request.getClavesPresupuestales().size());
+            var claves = contratoClavePresupuestalService.createClavesPresupuestales(contratoGuardado, request.getClavesPresupuestales());
+            contratoGuardado.setClavesPresupuestales(claves);
+        }
+
         return contratoMapper.toResponse(contratoGuardado);
     }
+
 }
 
 

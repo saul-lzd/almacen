@@ -99,6 +99,5 @@ public class ContratoEntity extends AuditoriaEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<ContratoClavePresupuestalEntity> clavesPresupuestales =
-            new ArrayList<>();
+    private List<ContratoClavePresupuestalEntity> clavesPresupuestales = new ArrayList<>();
 }

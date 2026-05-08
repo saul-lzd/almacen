@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 public class ServidorPublicoMapper {
 
     public ServidorPublicoEntity toEntity(ServidorPublicoDto servidorPublico) {
+        if (servidorPublico == null) {
+            return null;
+        }
         ServidorPublicoEntity entity = new ServidorPublicoEntity();
         entity.setDependencia(servidorPublico.getDependencia());
         entity.setNombre(servidorPublico.getNombre());
@@ -16,6 +19,9 @@ public class ServidorPublicoMapper {
     }
 
     public ServidorPublicoDto toResponse(ServidorPublicoEntity entity) {
+        if (entity == null) {
+            return null;
+        }
         ServidorPublicoDto servidorPublicoDto = new ServidorPublicoDto();
         servidorPublicoDto.setDependencia(entity.getDependencia());
         servidorPublicoDto.setNombre(entity.getNombre());

@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.mapper;
 
+import com.sesesp.almacen.common.types.EstatusContrato;
 import com.sesesp.almacen.domain.dto.*;
 import com.sesesp.almacen.domain.entity.ContratoClavePresupuestalEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
@@ -25,21 +26,14 @@ public class ContratoMapper {
         this.clavePresupuestalMapper = clavePresupuestalMapper;
     }
 
-    /**
-     * Maps all the general attributes even payment.
-     * @param dto
-     * @return
-     */
-    public ContratoEntity mapGeneralInformation(ContratoCreateRequestDto dto) {
+    public ContratoEntity toEntity (ContratoCreateRequestDto dto) {
         ContratoEntity entity = new ContratoEntity();
         entity.setIdentificadorContrato(dto.getNumeroContrato());
         entity.setAdquisicion(dto.getAdquisicion());
         entity.setFolioOrigen(dto.getFolioOrigen());
         entity.setFechaOrigen(dto.getFechaOrigen());
         entity.setFechaTentativaLlegada(dto.getFechaTentativaLlegada());
-
         mapDetallesPago(entity, dto.getDetallesPago());
-
         return entity;
     }
 
@@ -90,12 +84,10 @@ public class ContratoMapper {
         return dto;
     }
 
-    private void mapDetallesPago(ContratoEntity entity, DetallesPagoDto detallesPago) {
-
+    public void mapDetallesPago(ContratoEntity entity, DetallesPagoDto detallesPago) {
         if (detallesPago == null) {
             return;
         }
-
         entity.setMontoSinImpuestos(detallesPago.getMontoSinImpuestos());
         entity.setImpuestos(detallesPago.getImpuestos());
         entity.setMontoTotal(detallesPago.getMontoTotal());

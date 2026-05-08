@@ -1,13 +1,20 @@
 package com.sesesp.almacen.domain.service;
 
+import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ServidorPublicoDto;
 import com.sesesp.almacen.domain.entity.ServidorPublicoEntity;
 import com.sesesp.almacen.domain.mapper.ServidorPublicoMapper;
 import com.sesesp.almacen.domain.repository.ServidorPublicoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class ServidorPublicoService {
+
+    Logger logger = LoggerFactory.getLogger(ServidorPublicoService.class);
 
     private final ServidorPublicoRepository servidorPublicoRepository;
     private final ServidorPublicoMapper servidorPublicoMapper;
@@ -17,17 +24,30 @@ public class ServidorPublicoService {
         this.servidorPublicoMapper = servidorPublicoMapper;
     }
 
-    public ServidorPublicoEntity resolveServidorPublico(ServidorPublicoDto servidorPublico) {
-        if (servidorPublico == null) {
+    public ServidorPublicoEntity createCompradorFromContrato(ContratoCreateRequestDto requestContrato) {
+        logger.info("Processing Comprador for Contrato {}", requestContrato.getNumeroContrato());
+        return createServidorPublicoFromContrato(requestContrato.getComprador());
+    }
+
+    public ServidorPublicoEntity createAdministradorDelContratoFromContrato(ContratoCreateRequestDto requestContrato) {
+        logger.info("Creating Administrador del Contrato for Contrato {}", requestContrato.getNumeroContrato());
+        return createServidorPublicoFromContrato(requestContrato.getAdministradorContrato());
+    }
+
+    private ServidorPublicoEntity createServidorPublicoFromContrato(ServidorPublicoDto servidorPublicoDto) {
+        // If validations are required place them here.
+        if (servidorPublicoDto == null ) {
+            logger.info("Servidor Publico is empty");
             return null;
         }
 
-        if (servidorPublico.getId() != null) {
-            return servidorPublicoRepository.findById(servidorPublico.getId())
-                    .orElseThrow( () -> new RuntimeException("Servidor Publico no Encontrado: " + servidorPublico.getNombre()));
-        }
-
-        ServidorPublicoEntity servidorPublicoEntity = servidorPublicoMapper.toEntity(servidorPublico);
-        return servidorPublicoRepository.save(servidorPublicoEntity);
+        // Flujo de búsqueda o creación (Upsert)
+        return servidorPublicoRepository
+                .findById(servidorPublicoDto.getId())
+                .orElseGet(() -> {
+                    logger.info("Servidor Publico ID {} not found, creating new entry", servidorPublicoDto.getId());
+                    ServidorPublicoEntity newEntity = servidorPublicoMapper.toEntity(servidorPublicoDto);
+                    return servidorPublicoRepository.save(newEntity);
+        });
     }
 }

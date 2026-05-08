@@ -1,7 +1,7 @@
 package com.sesesp.almacen.common.entity;
 
 
-import com.sesesp.almacen.common.types.DefaultUser;
+import com.sesesp.almacen.common.types.UserType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -28,7 +28,7 @@ public abstract class AuditoriaEntity {
 
     @PrePersist
     protected void onCreate() {
-        usuarioCreacion = DefaultUser.SISTEMA.ID;
+        usuarioCreacion = UserType.SISTEMA.getId();
         fechaCreacion = LocalDateTime.now();
         activo = true;
     }

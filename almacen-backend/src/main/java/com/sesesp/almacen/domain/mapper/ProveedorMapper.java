@@ -9,6 +9,10 @@ import org.springframework.stereotype.Component;
 public class ProveedorMapper {
 
     public ProveedorEntity toEntity(ProveedorContratoDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
         ProveedorEntity entity = new ProveedorEntity();
         entity.setRazonSocial(dto.getRazonSocial());
         entity.setDireccion(dto.getDireccion());
@@ -18,6 +22,10 @@ public class ProveedorMapper {
     }
 
     public ProveedorContratoDto toResponse(ProveedorEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
         ProveedorContratoDto response = new ProveedorContratoDto();
         response.setRazonSocial(entity.getRazonSocial());
         response.setDireccion(entity.getDireccion());

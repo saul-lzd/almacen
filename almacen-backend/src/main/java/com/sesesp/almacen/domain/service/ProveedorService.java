@@ -5,10 +5,16 @@ import com.sesesp.almacen.domain.dto.ProveedorContratoDto;
 import com.sesesp.almacen.domain.entity.ProveedorEntity;
 import com.sesesp.almacen.domain.mapper.ProveedorMapper;
 import com.sesesp.almacen.domain.repository.ProveedorRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class ProveedorService {
+
+    Logger logger = LoggerFactory.getLogger(ProveedorService.class);
 
     private final ProveedorRepository proveedorRepository;
     private final ProveedorMapper proveedorMapper;
@@ -18,14 +24,13 @@ public class ProveedorService {
         this.proveedorMapper = proveedorMapper;
     }
 
-    public ProveedorEntity resolveProveedor(ProveedorContratoDto proveedor) {
-        if (proveedor == null) {
-            return null;
-        }
+    public ProveedorEntity createProveedorFromContrato(ContratoCreateRequestDto requestContrato) {
+        logger.info("Creating proveedor for Contrato {}", requestContrato.getNumeroContrato());
 
-        ProveedorEntity proveedorEntity = proveedorMapper.toEntity(proveedor);
-        return proveedorRepository.save(proveedorEntity);
+        return Optional.ofNullable(requestContrato.getProveedor())
+                .map(proveedorMapper::toEntity)
+                .map(proveedorRepository::save)
+                .orElse(null);
     }
-
 
 }
