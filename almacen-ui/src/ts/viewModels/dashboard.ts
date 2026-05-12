@@ -138,6 +138,15 @@ class DashboardViewModel {
   public cmdGoToCreateContrato = () => {
     this.router?.go({ path: 'nuevo-contrato' });
   }
+
+  public cmdEditarContrato = (event: Event, context: any): void => {
+     const idContrato = context.item.data.idContrato;
+     console.log("Editar contrato >>", idContrato);
+     // Pendiente: implementar navegación a pantalla de edición con contratoId.
+      this.router?.go({ path: 'nuevo-contrato/{idContrato}' });
+      
+     // Implementar pantalla de edición reutilizando componentes de captura.
+  }
 }
 
 export = DashboardViewModel;

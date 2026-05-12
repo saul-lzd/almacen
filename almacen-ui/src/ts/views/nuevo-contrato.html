@@ -265,9 +265,9 @@
           <div class="oj-sm-padding-6x-vertical">
             <oj-c-form-layout full-width="true">
               <oj-c-text-area
-                label-edge="start"
+                label-edge="top"
                 value="{{frmBeneficiariosTexto}}"
-                label-hint="Separe cada beneficiario con una coma ','"
+                label-hint="Separe cada beneficiario con una coma ( , )"
                 rows="6"
                 resize-behavior="both"
                 class="oj-form-control-full-width">
@@ -321,11 +321,10 @@
             </oj-c-text-area>
 
             <oj-c-dialog
-              opened="{{uiBienDescripcionDialogOpened}}"
+              opened="{{uiBienDescripcionDialogOpened}}"              
               id="descripcion-bien-dialog"
               dialog-title="Descripción del bien"
               min-width="60vw"
-              min-height="70vh"
               cancel-behavior="icon">
 
               <div slot="body">
@@ -334,9 +333,9 @@
                 </p>
               </div>
 
-              <div slot="footer">
+              <!-- <div slot="footer">
                 <oj-c-button label="Cerrar" on-oj-action="[[cmdCloseBienDescripcionDialog]]"></oj-c-button>
-              </div>
+              </div> -->
             </oj-c-dialog>
 
             <oj-bind-if test="[[calcHayBienes()]]">
@@ -361,7 +360,7 @@
 
                       <div>
                         <strong>
-                          <oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text>
+                          <oj-bind-text value="[[item.data.codigoUnidadMedida]]"></oj-bind-text>
                         </strong>
                         —
                         <oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text>

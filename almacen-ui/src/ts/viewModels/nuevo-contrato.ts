@@ -17,6 +17,7 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
+import MutableArrayDataProvider = require('ojs/ojmutablearraydataprovider');
 
 import "oj-c/collapsible";
 import "oj-c/list-view";
@@ -48,16 +49,18 @@ type ClavePresupuestalItem = {
   montoAsignado: number;
 };
 
+
 type BienContratoItem = {
   idLocal: number;
   lote: number;
   partida: number;
-  unidadMedida: string;
-  descripcionBien: string;
+  descripcionTecnica: string;
+  codigoUnidadMedida: string;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
 };
+
 type ContratoPayload = {
   idContrato: number | null;
   numeroContrato: string;
@@ -95,52 +98,18 @@ type ContratoPayload = {
     montoSinImpuestos: number;
     impuestos: number;
     montoTotal: number;
-
     montoAnticipo: number | null;
     montoFiniquito: number | null;
     porcentajeAnticipo: number | null;
     porcentajeFiniquito: number | null;
-
     tieneAnticipo: boolean | null;
     tieneFiniquito: boolean | null;
-
     numeroExhibiciones: number;
   };
-
+  beneficiarios: string;
   clavesPresupuestales: ClavePresupuestalItem[];
+  productos : BienContratoItem[];
 };
-/*
-type ContratoPayload = {
-  idContrato: number | null;
-  numeroContrato: string;
-  descripcionAdquisicion: string;
-  numeroCotizacion: string;
-  titularDependencia: {
-    dependencia: string;
-    nombre: string;
-    caracter: string;
-  };
-  administradorContrato: {
-    dependencia: string;
-    nombre: string;
-    caracter: string;
-  };
-  proveedor: {
-    empresa: string;
-    representante: string;
-    domicilio: string;
-    caracter: string;
-  };
-  pago: {
-    montoSinImpuestos: number;
-    impuestos: number;
-    montoTotal: number;
-    clavesPresupuestales: ClavePresupuestalItem[];
-  };
-  beneficiariosTexto: string;
-  bienes: BienContratoItem[];
-};
-*/
 
 class NuevoContratoViewModel {
   // ================================================================
@@ -456,8 +425,8 @@ class NuevoContratoViewModel {
       idLocal: this.seqBien++,
       lote: Number(this.frmBienLote() || 0),
       partida: Number(this.frmBienPartida() || 0),
-      unidadMedida: selectedUnidadMedida.value,
-      descripcionBien: this.frmBienDescripcion("N/A"),
+      codigoUnidadMedida: selectedUnidadMedida.value,
+      descripcionTecnica: this.frmBienDescripcion(),
       cantidad: Number(this.frmBienCantidad() || 0),
       precioUnitario: Number(this.frmBienPrecioUnitario() || 0),
       subtotal: Number(this.calcBienSubtotal() || 0)
@@ -472,7 +441,7 @@ class NuevoContratoViewModel {
   };
 
   public cmdVerDescripcionBien = (bien: BienContratoItem): void => {
-    this.uiDescripcionBienSeleccionada(bien.descripcionBien);
+    this.uiDescripcionBienSeleccionada(bien.descripcionTecnica);
     this.cmdOpenBienDescripcionDialog();
   };
 
@@ -497,21 +466,12 @@ class NuevoContratoViewModel {
   // COMMANDS - CONTRATO
   // ================================================================
 
-  public cmdGuardarBorrador_BAK = (): void => {
-    this.uiGuardando(true);
-
-    try {
-      const payload = this.mapContratoToPayload();
-      console.log("Guardar borrador >>", payload);
-    } finally {
-      this.uiGuardando(false);
-    }
-  };
 
   public cmdEnviarAlmacen = (): void => {
     const payload = this.mapContratoToPayload();
     console.log("Enviar a almacén >>", payload);
   };
+    
 
   public cmdGuardarBorrador = async (): Promise<void> => {
   //public async cmdGuardarBorrador (): Promise<void> {
@@ -598,47 +558,13 @@ class NuevoContratoViewModel {
         tieneFiniquito: null,
         numeroExhibiciones: 0
       },
+      beneficiarios: this.frmBeneficiariosTexto(),
       clavesPresupuestales: this.listClavesPresupuestales(),
-      estatusContrato: null
+      estatusContrato: null,
+      productos: this.listBienes()
       //estatusContrato: this.frmContratoEstatusDescripcion()
     };
   }
-
-
-
-  /*
-    private mapContratoToPayload(): ContratoPayload {
-      return {
-        idContrato: this.contratoId(),
-        numeroContrato: this.frmContratoNumero(),
-        descripcionAdquisicion: this.frmContratoAdquisicion(),
-        numeroCotizacion: this.frmContratoCotizacion(),
-        titularDependencia: {
-          dependencia: this.frmCompradorTitularDependencia(),
-          nombre: this.frmCompradorTitularNombre(),
-          caracter: this.frmCompradorTitularCaracter()
-        },
-        administradorContrato: {
-          dependencia: this.frmCompradorAdministradorDependencia(),
-          nombre: this.frmCompradorAdministradorNombre(),
-          caracter: this.frmCompradorAdministradorCaracter()
-        },
-        proveedor: {
-          empresa: this.frmProveedorEmpresa(),
-          representante: this.frmProveedorRepresentante(),
-          domicilio: this.frmProveedorDomicilioFiscal(),
-          caracter: this.frmProveedorCaracter()
-        },
-        pago: {
-          montoSinImpuestos: Number(this.frmPagoMontoSinImpuestos() || 0),
-          impuestos: Number(this.frmPagoImpuestos() || 0),
-          montoTotal: Number(this.calcPagoMontoTotal() || 0),
-          clavesPresupuestales: this.listClavesPresupuestales()
-        },
-        beneficiariosTexto: this.frmBeneficiariosTexto(),
-        bienes: this.listBienes()
-      };
-    }*/
 }
 
 export = NuevoContratoViewModel;
