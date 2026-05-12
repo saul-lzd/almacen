@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +96,19 @@ public class ContratoEntity extends AuditoriaEntity {
     @OneToMany(
             mappedBy = "contrato",
             cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
+            orphanRemoval = true )
     private List<ContratoClavePresupuestalEntity> clavesPresupuestales = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "contrato",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true )
+    private List<ContratoBeneficiarioEntity> beneficiarios = new ArrayList<>();
+
+    @OneToMany(
+            mappedBy = "contrato",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true )
+    private List<ProductoEntity> productos = new ArrayList<>();
+
 }

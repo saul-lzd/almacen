@@ -41,13 +41,19 @@ public class ServidorPublicoService {
             return null;
         }
 
-        // Flujo de búsqueda o creación (Upsert)
-        return servidorPublicoRepository
-                .findById(servidorPublicoDto.getId())
-                .orElseGet(() -> {
-                    logger.info("Servidor Publico ID {} not found, creating new entry", servidorPublicoDto.getId());
-                    ServidorPublicoEntity newEntity = servidorPublicoMapper.toEntity(servidorPublicoDto);
-                    return servidorPublicoRepository.save(newEntity);
-        });
+        if (servidorPublicoDto.getId() == null ) {
+            ServidorPublicoEntity newEntity = servidorPublicoMapper.toEntity(servidorPublicoDto);
+            return servidorPublicoRepository.save(newEntity);
+        } else {
+            return servidorPublicoRepository.findById(servidorPublicoDto.getId()).get();
+        }
+//        // Flujo de búsqueda o creación (Upsert)
+//        return servidorPublicoRepository
+//                .findById(spId)
+//                .orElseGet(() -> {
+//                    logger.info("Servidor Publico ID {} not found, creating new entry", servidorPublicoDto.getId());
+//                    ServidorPublicoEntity newEntity = servidorPublicoMapper.toEntity(servidorPublicoDto);
+//                    return servidorPublicoRepository.save(newEntity);
+//        });
     }
 }

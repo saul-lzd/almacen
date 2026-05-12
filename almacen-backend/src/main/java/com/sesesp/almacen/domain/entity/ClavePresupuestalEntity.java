@@ -2,13 +2,15 @@ package com.sesesp.almacen.domain.entity;
 
 import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 @Entity
 @Table(name = "clave_presupuestal")
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ClavePresupuestalEntity extends AuditoriaEntity {
 
     @Id

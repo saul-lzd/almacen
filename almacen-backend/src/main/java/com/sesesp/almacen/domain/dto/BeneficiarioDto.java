@@ -9,9 +9,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ClavePresupuestalDto {
+public class BeneficiarioDto {
 
-     private String clavePresupuestal;
-     private String partidaEspecifica;
-     private Double montoAsignado;
+    private String nombre;
+    private String contacto;
+    private String direccion;
+
 }

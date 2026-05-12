@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface ClavePresupuestalRepository extends JpaRepository<ClavePresupuestalEntity, Integer> {
 
-    Optional<ClavePresupuestalEntity> findByClavePresupuestal(String clavePresupuestal);
+    Optional<ClavePresupuestalEntity> findByClavePresupuestalAndActivoTrue(String clavePresupuestal);
     List<ClavePresupuestalEntity> findByActivoTrue();
 }

@@ -22,5 +22,4 @@ public class UnidadMedidaEntity extends AuditoriaEntity {
     @Column(name = "descripcion")
     private String descripcion;
 
-    // getters and setter auto-generated
 }

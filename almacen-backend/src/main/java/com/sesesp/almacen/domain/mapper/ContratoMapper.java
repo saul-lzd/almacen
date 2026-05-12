@@ -1,12 +1,12 @@
 package com.sesesp.almacen.domain.mapper;
 
-import com.sesesp.almacen.common.types.EstatusContrato;
 import com.sesesp.almacen.domain.dto.*;
+import com.sesesp.almacen.domain.entity.ContratoBeneficiarioEntity;
 import com.sesesp.almacen.domain.entity.ContratoClavePresupuestalEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
+import com.sesesp.almacen.domain.entity.ProductoEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -14,16 +14,11 @@ public class ContratoMapper {
 
     private final ProveedorMapper proveedorMapper;
     private final ServidorPublicoMapper servidorPublicoMapper;
-    private final ClavePresupuestalMapper clavePresupuestalMapper;
 
-    public ContratoMapper(
-            ProveedorMapper proveedorMapper,
-            ServidorPublicoMapper servidorPublicoMapper,
-            ClavePresupuestalMapper clavePresupuestalMapper) {
-
+    public ContratoMapper(ProveedorMapper proveedorMapper,
+                          ServidorPublicoMapper servidorPublicoMapper) {
         this.proveedorMapper = proveedorMapper;
         this.servidorPublicoMapper = servidorPublicoMapper;
-        this.clavePresupuestalMapper = clavePresupuestalMapper;
     }
 
     public ContratoEntity toEntity (ContratoCreateRequestDto dto) {
@@ -73,15 +68,52 @@ public class ContratoMapper {
                     .toList();
             contratoResponse.setClavesPresupuestales(claves);
         }
+
+        if(contratoEntity.getBeneficiarios() != null) {
+            List<BeneficiarioDto> beneficiarios = contratoEntity.getBeneficiarios()
+                    .stream()
+                    .map(this::mapBeneficiario)
+                    .toList();
+            contratoResponse.setBeneficiarios(beneficiarios);
+        }
+
+        if(contratoEntity.getProductos() != null) {
+            List<ProductoDto> productos = contratoEntity.getProductos()
+                    .stream()
+                    .map(this::mapProducto)
+                    .toList();
+            contratoResponse.setProductos(productos);
+        }
+
         return contratoResponse;
     }
 
-    private ClavePresupuestalDto mapClave(ContratoClavePresupuestalEntity cc) {
-        ClavePresupuestalDto dto = new ClavePresupuestalDto();
-        dto.setClavePresupuestal(cc.getClavePresupuestal().getClavePresupuestal());
-        dto.setPartidaEspecifica(cc.getClavePresupuestal().getPartidaEspecifica());
-        dto.setMontoAsignado(cc.getMontoAsignado());
-        return dto;
+    private ClavePresupuestalDto mapClave(ContratoClavePresupuestalEntity entity) {
+        return ClavePresupuestalDto.builder()
+                .clavePresupuestal(entity.getClavePresupuestal().getClavePresupuestal())
+                .partidaEspecifica(entity.getClavePresupuestal().getPartidaEspecifica())
+                .montoAsignado(entity.getMontoAsignado())
+                .build();
+    }
+
+    private BeneficiarioDto mapBeneficiario(ContratoBeneficiarioEntity entity) {
+        return BeneficiarioDto.builder()
+                .nombre(entity.getBeneficiario().getNombre())
+                .direccion(entity.getBeneficiario().getDireccion())
+                .contacto(entity.getBeneficiario().getContacto())
+                .build();
+    }
+
+    private ProductoDto mapProducto(ProductoEntity entity) {
+        return ProductoDto.builder()
+                .lote(entity.getLote())
+                .partida(entity.getPartida())
+                .descripcionTecnica(entity.getDescripcionTecnica())
+                .codigoUnidadMedida(entity.getUnidadMedida().getClave())
+                .cantidad(entity.getCantidad())
+                .precioUnitario(entity.getPrecioUnitario())
+                .subtotal(entity.getSubtotal())
+                .build();
     }
 
     public void mapDetallesPago(ContratoEntity entity, DetallesPagoDto detallesPago) {

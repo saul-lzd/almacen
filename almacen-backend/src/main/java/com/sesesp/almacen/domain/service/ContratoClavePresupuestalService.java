@@ -15,17 +15,15 @@ import java.util.List;
 public class ContratoClavePresupuestalService {
 
     private final ContratoClavePresupuestalRepository contratoClavePresupuestalRepository;
-    private final ClavePresupuestalRepository clavePresupuestalRepository;
     private final ContratoClavePresupuestalMapper contratoClavePresupuestalMapper;
+    private final ClavePresupuestalRepository clavePresupuestalRepository;
 
-    public ContratoClavePresupuestalService(
-            ContratoClavePresupuestalRepository contratoClavePresupuestalRepository,
-            ClavePresupuestalRepository clavePresupuestalRepository,
-            ContratoClavePresupuestalMapper contratoClavePresupuestalMapper) {
-
+    public ContratoClavePresupuestalService(ContratoClavePresupuestalRepository contratoClavePresupuestalRepository,
+                                            ContratoClavePresupuestalMapper contratoClavePresupuestalMapper,
+                                            ClavePresupuestalRepository clavePresupuestalRepository) {
         this.contratoClavePresupuestalRepository = contratoClavePresupuestalRepository;
-        this.clavePresupuestalRepository = clavePresupuestalRepository;
         this.contratoClavePresupuestalMapper = contratoClavePresupuestalMapper;
+        this.clavePresupuestalRepository = clavePresupuestalRepository;
     }
 
     public List<ContratoClavePresupuestalEntity> createClavesPresupuestales(
@@ -39,7 +37,7 @@ public class ContratoClavePresupuestalService {
         List<ContratoClavePresupuestalEntity> entities = clavesPresupuestales.stream()
                 .map(element -> {
                     ClavePresupuestalEntity clave = clavePresupuestalRepository
-                            .findByClavePresupuestal(element.getClavePresupuestal())
+                            .findByClavePresupuestalAndActivoTrue(element.getClavePresupuestal())
                             .orElseThrow(() -> new RuntimeException(
                                     "Clave presupuestal no encontrada: " + element.getClavePresupuestal()
                             ));

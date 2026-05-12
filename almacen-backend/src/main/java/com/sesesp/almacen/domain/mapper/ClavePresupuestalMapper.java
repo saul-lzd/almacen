@@ -3,6 +3,7 @@ package com.sesesp.almacen.domain.mapper;
 import com.sesesp.almacen.common.dto.CatalogOptionDto;
 import com.sesesp.almacen.domain.dto.ClavePresupuestalDto;
 import com.sesesp.almacen.domain.entity.ClavePresupuestalEntity;
+import com.sesesp.almacen.domain.entity.ContratoClavePresupuestalEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -22,6 +23,14 @@ public class ClavePresupuestalMapper {
         dto.setMetadata(metadata);
 
         return dto;
+    }
+
+    public ClavePresupuestalDto toResponse(ContratoClavePresupuestalEntity entity) {
+        return ClavePresupuestalDto.builder()
+                .clavePresupuestal(entity.getClavePresupuestal().getClavePresupuestal())
+                .partidaEspecifica(entity.getClavePresupuestal().getPartidaEspecifica())
+                .montoAsignado(entity.getMontoAsignado())
+                .build();
     }
 
 }

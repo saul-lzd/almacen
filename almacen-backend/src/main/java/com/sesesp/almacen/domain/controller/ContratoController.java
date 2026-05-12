@@ -2,7 +2,6 @@ package com.sesesp.almacen.domain.controller;
 
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateResponseDto;
-import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.service.ContratoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +24,11 @@ public class ContratoController {
         return ResponseEntity.ok(contratoService.findAllContratos());
     }
 
-//    @GetMapping("/{idContrato}")
-//    public ResponseEntity<ContratoCreateResponseDto> findById(@PathVariable Long idContrato) {
-//        return ResponseEntity.ok(contratoService.findContratoById(idContrato));
-//    }
-//
+    @GetMapping("/{idContrato}")
+    public ResponseEntity<ContratoCreateResponseDto> findContratoById(@PathVariable Long idContrato) {
+        return ResponseEntity.ok(contratoService.findContratoById(idContrato));
+    }
+
     @PostMapping
     public ResponseEntity<ContratoCreateResponseDto> create(@RequestBody ContratoCreateRequestDto request) {
         ContratoCreateResponseDto response = contratoService.createContrato(request);
