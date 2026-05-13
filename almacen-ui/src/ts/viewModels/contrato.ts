@@ -115,7 +115,7 @@ class NuevoContratoViewModel {
   // ROUTER / UI STATE
   // ================================================================
 
-  private router: any;
+  private router;
 
   public uiModo = ko.observable<ModoPantalla>("NUEVO");
   public uiCargandoCatalogos = ko.observable<boolean>(false);
@@ -248,6 +248,8 @@ class NuevoContratoViewModel {
   // ================================================================
 
   constructor(params: any) {
+    this.router = params?.router;
+
     var contratoIdParam = params?.routerState?.params?.id;
     if (contratoIdParam) {
       this.uiModo("EDICION");
@@ -372,7 +374,8 @@ class NuevoContratoViewModel {
   // ================================================================
 
   public cmdGoToInicio = (): void => {
-    this.router?.go({ path: "dashboard" });
+    console.log("Navegar a inicio/dashboard");
+    this.router.go({ path: "dashboard" });
   };
 
   // ================================================================
@@ -486,38 +489,48 @@ class NuevoContratoViewModel {
   };
     
 
-  public cmdGuardarBorrador = async (): Promise<void> => {
-    try {
-      const payload: ContratoPayload = this.mapContratoToPayload();
-      console.log("Guardar borrador >>", payload);
-      const response = await fetch(
-        "http://localhost:8080/api/contratos",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        }
-      );
+  
+public cmdGuardarBorrador = async (): Promise<void> => {
+  try {
+    const payload: ContratoPayload = this.mapContratoToPayload();
+    console.log("Guardar borrador >>", payload);
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error("Error saving contract:", errorBody);
-        throw new Error(
-          `Error ${response.status}: ${response.statusText}`
-        );
-      }
+    const isUpdate = !!this.contratoId();
+    const method = isUpdate ? "PUT" : "POST";
+    const url = isUpdate
+      ? `http://localhost:8080/api/contratos/${this.contratoId()}`
+      : "http://localhost:8080/api/contratos";
 
-      const savedContrato = await response.json();
-      console.log("Contract saved successfully:", savedContrato);
-    } catch (error) {
-      console.error(
-        "Unexpected error while saving contract:",
-        error
-      );
-    }
+    console.log(isUpdate ? "Actualizar contrato existente" : "Crear nuevo contrato", isUpdate ? this.contratoId() : "");
+
+    const savedContrato = await this.saveContract(method, url, payload);
+    console.log("Contract saved successfully:", savedContrato);
+
+    // Optional: Update UI state (e.g., show success message or refresh data)
+    // this.showSuccessMessage("Borrador guardado exitosamente");
+  } catch (error) {
+    console.error("Error saving contract draft:", error);
+    // Handle user-facing error (e.g., show alert or update observable)
+    // this.showErrorMessage(error.message || "Error desconocido al guardar el borrador");
+    throw error; // Re-throw if needed for higher-level handling
   }
+};
+
+private async saveContract(method: string, url: string, payload: ContratoPayload): Promise<any> {
+  const response = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorBody}`);
+  }
+
+  return await response.json();
+}
+
 
   // ================================================================
   // MAPPERS
@@ -579,7 +592,7 @@ class NuevoContratoViewModel {
 
 
   private mapPayloadToContratoUI(payload: ContratoPayload): void {
-    debugger;
+    
     // Cargar datos del Contrato
     this.frmContratoNumero(payload.numeroContrato);
     this.frmContratoAdquisicion(payload.adquisicion);

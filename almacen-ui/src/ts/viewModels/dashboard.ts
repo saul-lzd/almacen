@@ -142,7 +142,7 @@ class DashboardViewModel {
   public cmdEditarContrato = (event: Event, context: any): void => {
      const idContrato = context.item.data.idContrato;
      console.log("Editar contrato >>", idContrato);
-      this.router?.go({ path: 'contrato', params: { id: 32 } });
+      this.router?.go({ path: 'contrato', params: { id: idContrato } });
   }
 }
 
