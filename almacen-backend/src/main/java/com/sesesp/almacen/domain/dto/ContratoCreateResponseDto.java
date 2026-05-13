@@ -25,7 +25,7 @@ public class ContratoCreateResponseDto {
     private ServidorPublicoDto administradorContrato;
     private DetallesPagoDto detallesPago;
     private List<ClavePresupuestalDto> clavesPresupuestales;
-    private List<BeneficiarioDto> beneficiarios;
+    private String beneficiarios;
     private List<ProductoDto> productos;
 
 }

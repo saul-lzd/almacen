@@ -8,6 +8,7 @@ import com.sesesp.almacen.domain.entity.ProductoEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ContratoMapper {
@@ -39,6 +40,7 @@ public class ContratoMapper {
         contratoResponse.setIdContrato(contratoEntity.getIdContrato());
         contratoResponse.setNumeroContrato(contratoEntity.getIdentificadorContrato());
         contratoResponse.setAdquisicion(contratoEntity.getAdquisicion());
+        contratoResponse.setFolioOrigen(contratoEntity.getFolioOrigen());
         contratoResponse.setDetallesPago(mapDetallesPagoResponse(contratoEntity));
 
 
@@ -69,12 +71,11 @@ public class ContratoMapper {
             contratoResponse.setClavesPresupuestales(claves);
         }
 
-        if(contratoEntity.getBeneficiarios() != null) {
-            List<BeneficiarioDto> beneficiarios = contratoEntity.getBeneficiarios()
-                    .stream()
-                    .map(this::mapBeneficiario)
-                    .toList();
-            contratoResponse.setBeneficiarios(beneficiarios);
+        if (contratoEntity.getBeneficiarios() != null) {
+            String nombresBeneficiarios = contratoEntity.getBeneficiarios().stream()
+                    .map(cb -> cb.getBeneficiario().getNombre())
+                    .collect(Collectors.joining(", "));
+            contratoResponse.setBeneficiarios(nombresBeneficiarios);
         }
 
         if(contratoEntity.getProductos() != null) {
@@ -96,12 +97,16 @@ public class ContratoMapper {
                 .build();
     }
 
-    private BeneficiarioDto mapBeneficiario(ContratoBeneficiarioEntity entity) {
-        return BeneficiarioDto.builder()
-                .nombre(entity.getBeneficiario().getNombre())
-                .direccion(entity.getBeneficiario().getDireccion())
-                .contacto(entity.getBeneficiario().getContacto())
-                .build();
+//    private BeneficiarioDto mapBeneficiario(ContratoBeneficiarioEntity entity) {
+//        return BeneficiarioDto.builder()
+//                .nombre(entity.getBeneficiario().getNombre())
+//                .direccion(entity.getBeneficiario().getDireccion())
+//                .contacto(entity.getBeneficiario().getContacto())
+//                .build();
+//    }
+
+    private String mapBeneficiario(ContratoBeneficiarioEntity entity) {
+        return entity.getBeneficiario().getNombre();
     }
 
     private ProductoDto mapProducto(ProductoEntity entity) {
