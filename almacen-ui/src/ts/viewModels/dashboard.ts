@@ -75,11 +75,11 @@ class DashboardViewModel {
   // ================================================================
   constructor(params: any) {
     this.router = params.router;
-    this.cargarContratos();
+    this.loadContratos();
   }
 
   connected(): void {
-    //AccUtils.announce("Vista de viajes cargada.");
+    AccUtils.announce("Lista de contratos cargada.");
     //document.title = "Viajes";
     // implement further logic if needed
   }
@@ -102,7 +102,7 @@ class DashboardViewModel {
   // ================================================================
   // LOAD - API / BACKEND
   // ================================================================
-  private async cargarContratos(): Promise<void> {
+  private async loadContratos(): Promise<void> {
     const response = await fetch("http://localhost:8080/api/contratos");
     
     if (!response.ok) {
@@ -136,16 +136,13 @@ class DashboardViewModel {
   // COMMANDS - NAVEGACION
   // ================================================================
   public cmdGoToCreateContrato = () => {
-    this.router?.go({ path: 'nuevo-contrato' });
+    this.router?.go( { path: 'contrato' });
   }
 
   public cmdEditarContrato = (event: Event, context: any): void => {
      const idContrato = context.item.data.idContrato;
      console.log("Editar contrato >>", idContrato);
-     // Pendiente: implementar navegación a pantalla de edición con contratoId.
-      this.router?.go({ path: 'nuevo-contrato/{idContrato}' });
-      
-     // Implementar pantalla de edición reutilizando componentes de captura.
+      this.router?.go({ path: 'contrato', params: { id: 32 } });
   }
 }
 

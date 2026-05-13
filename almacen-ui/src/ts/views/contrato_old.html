@@ -1,0 +1,244 @@
+<!--
+ Copyright (c) 2014, 2026, Oracle and/or its affiliates.
+ Licensed under The Universal Permissive License (UPL), Version 1.0
+ as shown at https://oss.oracle.com/licenses/upl/
+ -->
+<div class="oj-hybrid-padding">
+    <h1>Nuevo Contrato</h1>
+    <oj-c-tab-bar data="[[tabDataSource]]" selection="{{selectedTab}}" edge="top" layout="stretch" display="standard">
+    </oj-c-tab-bar>
+
+    <!-- TAB CONTRATO -->
+
+    <oj-bind-if test='[[selectedTab() === "contrato"]]'>
+        <div class="oj-panel oj-sm-padding-6x" id="form-contrato">
+            <h2 class="oj-typography-subheading-xs">Información del Contrato</h2>
+            <oj-c-form-layout id="formLayoutOptions" max-columns="1" direction="column"
+                user-assistance-density="compact" full-width="true">
+
+                <oj-c-input-text label-hint="Numero de Contrato" placeholder="SESESP/XXX/XXX/XXX/XXX"></oj-c-input-text>
+                <oj-c-input-text label-hint="Descripcion de la Adquisicion"></oj-c-input-text>
+                <oj-c-input-text label-hint="Numero de Cotizacion"></oj-c-input-text>
+
+            </oj-c-form-layout>
+        </div>
+    </oj-bind-if>
+
+    <!-- TAB COMPRADOR -->
+
+    <oj-bind-if test='[[selectedTab() === "comprador"]]'>
+        <div class="oj-panel oj-sm-padding-6x oj-flex" id="form-comprador">
+            <div class="oj-flex-item oj-sm-padding-8x-end">
+                <h2 class="oj-typography-subheading-xs">Titular de la Dependencia</h2>
+                <oj-c-form-layout id="formTitular" max-columns="1" direction="column" user-assistance-density="compact"
+                    full-width="true">
+
+                    <oj-c-input-text label-hint="Dependencia"></oj-c-input-text>
+                    <oj-c-input-text label-hint="Nombre"></oj-c-input-text>
+                    <oj-c-input-text label-hint="Caracter"></oj-c-input-text>
+                </oj-c-form-layout>
+            </div>
+            <div class="oj-flex-item">
+                <h2 class="oj-typography-subheading-xs">Administrador del Contrato</h2>
+                <oj-c-form-layout id="formAdminContrato" max-columns="1" direction="column"
+                    user-assistance-density="compact" full-width="true">
+
+                    <oj-c-input-text label-hint="Dependencia"></oj-c-input-text>
+                    <oj-c-input-text label-hint="Nombre"></oj-c-input-text>
+                    <oj-c-input-text label-hint="Caracter"></oj-c-input-text>
+                </oj-c-form-layout>
+            </div>
+        </div>
+    </oj-bind-if>
+
+    <!-- TAB PROVEEDOR -->
+    <oj-bind-if test='[[selectedTab() === "proveedor"]]'>
+        <div class="oj-panel oj-sm-padding-6x" id="form-proveedor">
+            <h2 class="oj-typography-subheading-xs">Información del Proveedor</h2>
+            <oj-c-form-layout id="formProveedor" max-columns="1" direction="column" user-assistance-density="compact"
+                full-width="true">
+
+                <oj-c-input-text label-hint="Empresa"></oj-c-input-text>
+                <oj-c-input-text label-hint="Representante"></oj-c-input-text>
+                <oj-c-input-text label-hint="Caracter"></oj-c-input-text>
+                <oj-c-input-text label-hint="Domicilio Fiscal"></oj-c-input-text>
+            </oj-c-form-layout>
+        </div>
+    </oj-bind-if>
+
+    <!-- TAB PAGO -->
+    <oj-bind-if test='[[selectedTab() === "pago"]]'>
+        <div class="oj-panel oj-sm-padding-6x" id="form-montos">
+            <h2 class="oj-typography-subheading-xs">Informacion de Pago</h2>
+
+            <div class="oj-flex-item oj-sm-10">
+                <oj-c-form-layout max-columns="3" direction="row">
+                    <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="{{montoSinImpuestos}}">
+                    </oj-c-input-number>
+                    <oj-c-input-number label-hint="Impuestos" input-prefix="$" value="{{impuestos}}">
+                    </oj-c-input-number>
+                    <oj-c-input-number label-hint="Monto Total" input-prefix="$" value=[[montoTotal]] readonly="true">
+                    </oj-c-input-number>
+                </oj-c-form-layout>
+            </div>
+
+            <div class="oj-sm-padding-6x-top" id="form-claves">
+                <h2 class="oj-typography-subheading-xs">Claves Presupuestarias</h2>
+
+                <oj-bind-for-each data="[[listaClaves]]">
+                    <template>
+                        <div class="oj-flex">
+                            <div class="oj-flex-item oj-sm-10">
+                                <oj-c-form-layout max-columns="3" direction="row">
+                                    <oj-c-input-text label-hint="Clave"
+                                        value="{{$current.data.clave}}"></oj-c-input-text>
+                                    <oj-c-input-text label-hint="Partida"
+                                        value="{{$current.data.partida}}"></oj-c-input-text>
+                                    <oj-c-input-number label-hint="Monto" input-prefix="$"
+                                        value="{{$current.data.monto}}"></oj-c-input-number>
+                                </oj-c-form-layout>
+                            </div>
+
+                            <div class="oj-flex-item oj-sm-padding-8x-start">
+                                <oj-button chroming="danger" disabled="[[!$current.data.puedeEliminar()]]"
+                                    on-oj-action="[[$current.data.eliminar]]" label="Quitar">
+                                    <span slot="startIcon" class="oj-ux-ico-minus-circle"></span>
+                                </oj-button>
+                            </div>
+                        </div>
+                    </template>
+                </oj-bind-for-each>
+
+                <oj-button chroming="callToAction" on-oj-action="[[agregarClave]]" label="Agregar Clave">
+                    <span slot="startIcon" class="oj-ux-ico-key"></span>
+                </oj-button>
+                <!-- <oj-button on-oj-action="[[guardar]]" label="Guardar Claves"></oj-button> -->
+            </div>
+        </div>
+    </oj-bind-if>
+
+    <!-- TAB BENEFICIARIOS -->
+    <oj-bind-if test='[[selectedTab() === "beneficiarios"]]'>
+        <div class="oj-panel oj-sm-padding-6x" id="form-beneficiarios">
+            <h2 class="oj-typography-subheading-xs">Informacion de los Beneficiarios</h2>
+            <oj-c-form-layout full-width="true">
+                <oj-c-text-area label-edge="start" value="{{beneficiarios}}"
+                    label-hint="Separe cada beneficiario con una coma ' , '" rows="6" resize-behavior="both"
+                    class="oj-form-control-full-width"></oj-c-text-area>
+            </oj-c-form-layout>
+            <span id="temporal">
+                <oj-bind-text value="[[beneficiarios]]"></oj-bind-text>
+            </span>
+        </div>
+    </oj-bind-if>
+
+    <!-- TAB BIENES -->
+    <oj-bind-if test='[[selectedTab() === "bienes"]]'>
+        <div class="oj-panel oj-sm-padding-6x" id="form-bienes">
+
+            <div class="oj-flex-bar oj-sm-align-items-center">
+                <div class="oj-flex-bar-start">
+                    <h2 class="oj-typography-subheading-xs">Detalles de la Adquisición</h2>
+                </div>
+                <div class="oj-flex-bar-end">
+                    <oj-button chroming="callToAction" on-oj-action="[[agregarBien]]" label="Agregar"
+                        class="oj-sm-margin-4x-top">
+                        <span slot="startIcon" class="oj-ux-ico-key"></span>
+                    </oj-button>
+                </div>
+            </div>
+
+            <!-- <oj-bind-for-each data="[[listaProductos]]">
+                <template>
+                    <oj-c-form-layout columns="7" direction="row" class="oj-sm-margin-4x-top">
+                        <oj-c-input-number label-hint="Lote" value="{{$current.data.lote}}"></oj-c-input-number>
+                        <oj-c-input-number label-hint="Partida" value="{{$current.data.partida}}"></oj-c-input-number>
+                        <oj-c-input-text label-hint="Unidad de Medida" value="{{$current.data.unidadMedida}}" placeholder="Vehiculo, Kilogramo, Pieza, Litro" column-span="2"></oj-c-input-text>
+                        <oj-c-input-number label-hint="Cantidad" value="{{$current.data.cantidad}}"></oj-c-input-number>
+                        <oj-c-input-number label-hint="Precio Unitario" value="{{$current.data.precioUnitario}}" input-prefix="$"></oj-c-input-number>
+                        <oj-c-input-number label-hint="Subtotal" value="{{$current.data.subtotal}}" input-prefix="$"></oj-c-input-number>
+                    </oj-c-form-layout>
+                    <oj-c-text-area label-edge="top" value="{{beneficiarios}}"
+                        label-hint="Descripcion Detallada del Producto" rows="6"
+                        class="oj-form-control-full-width"></oj-c-text-area>
+                </template>
+            </oj-bind-for-each> -->
+
+
+            <oj-c-form-layout columns="7" direction="row" class="oj-sm-margin-4x-top">
+                <oj-c-input-number label-hint="Lote" value="{{lote}}"></oj-c-input-number>
+                <oj-c-input-number label-hint="Partida" value="{{partida}}"></oj-c-input-number>
+                <oj-c-input-text label-hint="Unidad de Medida" value="{{unidadMedida}}"
+                    placeholder="Vehiculo, Kilogramo, Pieza, Litro" column-span="2"></oj-c-input-text>
+                <oj-c-input-number label-hint="Cantidad" value="{{cantidad}}"></oj-c-input-number>
+                <oj-c-input-number label-hint="Precio Unitario" value="{{precioUnitario}}"
+                    input-prefix="$"></oj-c-input-number>
+                <oj-c-input-number label-hint="Subtotal" value="{{subtotal}}" input-prefix="$"></oj-c-input-number>
+            </oj-c-form-layout>
+            <oj-c-text-area label-edge="top" value="{{descripcion}}" label-hint="Descripcion Detallada del Bien"
+                rows="6" class="oj-form-control-full-width"></oj-c-text-area>
+
+
+            <oj-c-dialog opened="{{isDescripcionDialogOpened}}" id="descripcionDialog" dialog-title="Descripción del bien">
+
+                <div slot="body">
+                    <p>
+                        <oj-bind-text value="[[descripcionSeleccionada]]"></oj-bind-text>
+                    </p>
+                </div>
+
+                <div slot="footer">
+                    <oj-c-button label="Cerrar"
+                        on-oj-action="[[() => closeDescripcionDialog(item.data)]]">
+                    </oj-c-button>
+                </div>
+
+            </oj-c-dialog>
+
+
+            <oj-c-list-view aria-label="Listado de Bienes" data="[[bienesDataProvider]]" id="listview">
+                <template slot="itemTemplate" data-oj-as="item">
+                    <oj-c-list-item-layout>
+                        <div slot="overline">
+                            Lote
+                            <oj-bind-text value="[[item.data.lote]]"></oj-bind-text>
+                            · Partida
+                            <oj-bind-text value="[[item.data.partida]]"></oj-bind-text>
+                        </div>
+
+                        <div>
+                            <strong>
+                                <oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text>
+                            </strong>
+                            —
+                            <oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text>
+                            unidades
+                        </div>
+
+                        <div slot="secondary">
+                            Precio unitario:
+                            $
+                            <oj-bind-text value="[[item.data.precioUnitario]]"></oj-bind-text>
+                            · Subtotal:
+                            $
+                            <oj-bind-text value="[[item.data.subtotal]]"></oj-bind-text>
+                        </div>
+
+                        <div slot="action" class="oj-flex oj-sm-align-items-center">
+                            <oj-c-button label="Ver descripción" chroming="borderless"
+                                on-oj-action="[[() => verDescripcion(item.data)]]">
+                            </oj-c-button>
+
+                            <oj-c-button label="Eliminar" chroming="borderless"
+                                on-oj-action="[[() => eliminarBien(item.data)]]">
+                            </oj-c-button>
+                        </div>
+                    </oj-c-list-item-layout>
+                </template>
+            </oj-c-list-view>
+
+
+        </div>
+    </oj-bind-if>
+
+</div>
