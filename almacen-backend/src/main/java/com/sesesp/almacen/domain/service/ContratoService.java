@@ -1,11 +1,10 @@
 package com.sesesp.almacen.domain.service;
 
 import com.sesesp.almacen.common.types.EstatusContrato;
-import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
-import com.sesesp.almacen.domain.dto.ContratoCreateResponseDto;
+import com.sesesp.almacen.domain.dto.*;
 import com.sesesp.almacen.domain.entity.*;
-import com.sesesp.almacen.domain.repository.ContratoRepository;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
+import com.sesesp.almacen.domain.repository.ContratoRepository;
 import com.sesesp.almacen.domain.repository.EstatusContratoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -29,6 +28,7 @@ public class ContratoService {
     private final ServidorPublicoService servidorPublicoService;
     private final EstatusContratoRepository estatusContratoRepository;
     private final ProductoService productoService;
+    private final ClavePresupuestalService clavePresupuestalService;
 
     public ContratoService(ContratoRepository contratoRepository,
                            ContratoMapper contratoMapper,
@@ -37,7 +37,8 @@ public class ContratoService {
                            ProveedorService proveedorService,
                            ServidorPublicoService servidorPublicoService,
                            EstatusContratoRepository estatusContratoRepository,
-                           ProductoService productoService) {
+                           ProductoService productoService,
+                           ClavePresupuestalService clavePresupuestalService) {
         this.contratoRepository = contratoRepository;
         this.contratoMapper = contratoMapper;
         this.contratoClavePresupuestalService = contratoClavePresupuestalService;
@@ -46,11 +47,17 @@ public class ContratoService {
         this.servidorPublicoService = servidorPublicoService;
         this.estatusContratoRepository = estatusContratoRepository;
         this.productoService = productoService;
+        this.clavePresupuestalService = clavePresupuestalService;
     }
 
     public List<ContratoCreateResponseDto> findAllContratos() {
         List<ContratoEntity> contratos = contratoRepository.findAll();
         return contratos.stream().map(c -> contratoMapper.toResponse(c)).toList();
+    }
+
+    public ContratoCreateResponseDto findContratoById(Long idContrato) {
+        Optional<ContratoEntity> entity =  contratoRepository.findById(idContrato);
+        return contratoMapper.toResponse(entity.get());
     }
 
     @Transactional
@@ -107,10 +114,118 @@ public class ContratoService {
         return contratoMapper.toResponse(contratoGuardado);
     }
 
-    public ContratoCreateResponseDto findContratoById(Long idContrato) {
-        Optional<ContratoEntity> entity =  contratoRepository.findById(idContrato);
-        return contratoMapper.toResponse(entity.get());
+    @Transactional
+    public ContratoCreateResponseDto updateContrato(
+            Long idContrato,
+            ContratoCreateRequestDto request) {
+
+        ContratoEntity contratoFound = contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado"));
+
+        // map general information
+        ContratoEntity contratoToUpdate = contratoMapper.toEntity(request);
+
+        contratoToUpdate.setEstatusContrato(contratoFound.getEstatusContrato());
+        contratoToUpdate.setBeneficiarios(contratoFound.getBeneficiarios());
+        contratoToUpdate.setProveedor(contratoFound.getProveedor());
+
+        // map auditoria fields
+        contratoToUpdate.setUsuarioCreacion(contratoFound.getUsuarioCreacion());
+        contratoToUpdate.setFechaModificacion(contratoFound.getFechaCreacion());
+        contratoToUpdate.setActivo(contratoFound.getActivo());
+
+        ContratoEntity contratoEntity = contratoRepository.save(contratoToUpdate);
+        return contratoMapper.toResponse(contratoEntity);
     }
+
+    private void actualizarDatosBasicos(
+            ContratoEntity contrato,
+            ContratoCreateRequestDto request) {
+
+        contrato.setIdentificadorContrato(request.getNumeroContrato());
+        contrato.setAdquisicion(request.getAdquisicion());
+        contrato.setFolioOrigen(request.getFolioOrigen());
+
+    }
+
+    private void actualizarProveedor(
+            ContratoEntity contrato,
+            ProveedorContratoDto proveedor ) {
+
+        contrato.getProveedor().setRazonSocial(proveedor.getRazonSocial());
+        contrato.getProveedor().setRepresentanteEmpresa(proveedor.getRepresentanteEmpresa());
+        contrato.getProveedor().setCaracterRepresentante(proveedor.getCaracterRepresentante());
+        contrato.getProveedor().setDireccion(proveedor.getDireccion());
+
+    }
+
+    private void actualizarServidorPublico(
+            ContratoEntity contrato,
+            ServidorPublicoDto servidorPublicoDto
+            ) {
+
+        // comprador y administrador del contrato
+        contrato.getComprador().setDependencia(servidorPublicoDto.getDependencia());
+        contrato.getComprador().setNombre(servidorPublicoDto.getNombre());
+        contrato.getComprador().setCargo(servidorPublicoDto.getCargo());
+    }
+
+    private void actualizarDetallesPago(
+            ContratoEntity contrato,
+            DetallesPagoDto detallesPago ) {
+
+        if (detallesPago == null) {
+            return;
+        }
+        contrato.setMontoSinImpuestos(detallesPago.getMontoSinImpuestos());
+        contrato.setImpuestos(detallesPago.getImpuestos());
+        contrato.setMontoTotal(detallesPago.getMontoTotal());
+        contrato.setTieneAnticipo(detallesPago.getTieneAnticipo());
+        contrato.setPorcentajeAnticipo(detallesPago.getPorcentajeAnticipo());
+        contrato.setMontoAnticipo(detallesPago.getMontoAnticipo());
+        contrato.setNumeroExhibiciones(detallesPago.getNumeroExhibiciones());
+        contrato.setTieneFiniquito(detallesPago.getTieneFiniquito());
+        contrato.setPorcentajeFiniquito(detallesPago.getPorcentajeFiniquito());
+        contrato.setMontoFiniquito(detallesPago.getMontoFiniquito());
+    }
+
+    private void actualizarBeneficiarios(
+            ContratoEntity contrato,
+            String beneficiarios) {
+
+
+
+    }
+
+    private void actualizarClavesPresupuestales(
+            ContratoEntity contrato,
+            List<ClavePresupuestalDto> clavesPresupuestales) {
+
+        if (clavesPresupuestales == null) {
+            return;
+        }
+
+        List<ContratoClavePresupuestalEntity> claves = clavesPresupuestales.stream()
+                .map(dto -> crearContratoClavePresupuestal(contrato, dto))
+                .toList();
+
+        contrato.setClavesPresupuestales(claves);
+    }
+
+    private ContratoClavePresupuestalEntity crearContratoClavePresupuestal(
+            ContratoEntity contrato,
+            ClavePresupuestalDto dto) {
+
+        ClavePresupuestalEntity clave = clavePresupuestalService
+                .findByClavePresupuestal(dto.getClavePresupuestal());
+
+        return ContratoClavePresupuestalEntity.builder()
+                .contrato(contrato)
+                .clavePresupuestal(clave)
+                .montoAsignado(dto.getMontoAsignado())
+                .build();
+    }
+
 
 }
 

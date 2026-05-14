@@ -1,6 +1,7 @@
 package com.sesesp.almacen.domain.service;
 
 import com.sesesp.almacen.common.dto.CatalogOptionDto;
+import com.sesesp.almacen.domain.entity.ClavePresupuestalEntity;
 import com.sesesp.almacen.domain.mapper.ClavePresupuestalMapper;
 import com.sesesp.almacen.domain.repository.ClavePresupuestalRepository;
 import org.springframework.stereotype.Service;
@@ -23,5 +24,11 @@ public class ClavePresupuestalService {
                 .stream()
                 .map(this.mapper::toOption)
                 .toList();
+    }
+
+    public ClavePresupuestalEntity findByClavePresupuestal(String clavePresupuestal) {
+        return this.repository
+                .findByClavePresupuestalAndActivoTrue(clavePresupuestal)
+                .orElseGet(null);
     }
 }

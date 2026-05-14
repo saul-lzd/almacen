@@ -33,4 +33,11 @@ public class ClavePresupuestalMapper {
                 .build();
     }
 
+    public ClavePresupuestalEntity toEntity(ClavePresupuestalDto dto) {
+        return ClavePresupuestalEntity.builder()
+                .clavePresupuestal(dto.getClavePresupuestal())
+                .partidaEspecifica(dto.getPartidaEspecifica())
+                .build();
+    }
+
 }

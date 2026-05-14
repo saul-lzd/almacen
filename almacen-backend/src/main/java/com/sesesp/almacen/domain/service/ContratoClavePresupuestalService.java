@@ -34,7 +34,8 @@ public class ContratoClavePresupuestalService {
             return null;
         }
 
-        List<ContratoClavePresupuestalEntity> entities = clavesPresupuestales.stream()
+        List<ContratoClavePresupuestalEntity> entities = clavesPresupuestales
+                .stream()
                 .map(element -> {
                     ClavePresupuestalEntity clave = clavePresupuestalRepository
                             .findByClavePresupuestalAndActivoTrue(element.getClavePresupuestal())

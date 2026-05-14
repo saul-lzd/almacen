@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class ContratoCreateRequestDto {
 
+    private Integer idContrato;
     private String numeroContrato;
     private String adquisicion;
     private String folioOrigen;

@@ -5,5 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ServidorPublicoRepository extends JpaRepository<ServidorPublicoEntity, Integer> {
 
-    ServidorPublicoEntity save(ServidorPublicoEntity entity);
 }

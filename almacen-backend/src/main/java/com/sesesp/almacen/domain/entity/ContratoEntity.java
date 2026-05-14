@@ -2,8 +2,7 @@ package com.sesesp.almacen.domain.entity;
 
 import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,6 +12,9 @@ import java.util.List;
 @Table(name = "contrato")
 @Data
 @EqualsAndHashCode(callSuper = true)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ContratoEntity extends AuditoriaEntity {
 
     @Id
@@ -97,18 +99,18 @@ public class ContratoEntity extends AuditoriaEntity {
             mappedBy = "contrato",
             cascade = CascadeType.ALL,
             orphanRemoval = true )
-    private List<ContratoClavePresupuestalEntity> clavesPresupuestales = new ArrayList<>();
+    private List<ContratoClavePresupuestalEntity> clavesPresupuestales;
 
     @OneToMany(
             mappedBy = "contrato",
             cascade = CascadeType.ALL,
             orphanRemoval = true )
-    private List<ContratoBeneficiarioEntity> beneficiarios = new ArrayList<>();
+    private List<ContratoBeneficiarioEntity> beneficiarios;
 
     @OneToMany(
             mappedBy = "contrato",
             cascade = CascadeType.ALL,
             orphanRemoval = true )
-    private List<ProductoEntity> productos = new ArrayList<>();
+    private List<ProductoEntity> productos;
 
 }
