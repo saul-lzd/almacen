@@ -4,13 +4,23 @@ import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Relación N:M entre Contrato y Beneficiario.
+ * Un contrato puede tener múltiples beneficiarios (municipios/dependencias).
+ * Un beneficiario puede aparecer en múltiples contratos.
+ *
+ * tabla contrato_beneficiario
+ */
 @Entity
-@Table(name = "contrato_beneficiario")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Table(name = "contrato_beneficiario",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_contrato_beneficiario",
+                columnNames = {"id_contrato", "id_beneficiario"}))
+@Getter
+@Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ContratoBeneficiarioEntity extends AuditoriaEntity {
 
     @Id
@@ -26,7 +36,6 @@ public class ContratoBeneficiarioEntity extends AuditoriaEntity {
     @JoinColumn(name = "id_beneficiario", nullable = false)
     private BeneficiarioEntity beneficiario;
 
-    @Column(name = "observaciones")
+    @Column(name = "observaciones", length = 500)
     private String observaciones;
-
 }

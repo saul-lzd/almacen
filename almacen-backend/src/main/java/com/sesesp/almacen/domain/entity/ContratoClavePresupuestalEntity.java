@@ -4,13 +4,27 @@ import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
+/**
+ * Relación N:M entre Contrato y ClavePresupuestal.
+ * Cada clave aporta un monto_asignado al financiamiento del contrato.
+ *
+ * Validación financiera:
+ *   SUM(monto_asignado) de todas las claves del contrato = contrato.monto_total
+ *
+ * tabla contrato_clave_presupuestal
+ */
 @Entity
-@Table(name = "contrato_clave_presupuestal")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Table(name = "contrato_clave_presupuestal",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_contrato_clave_presupuestal",
+                columnNames = {"id_contrato", "id_clave_presupuestal"}))
+@Getter
+@Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ContratoClavePresupuestalEntity extends AuditoriaEntity {
 
     @Id
@@ -18,24 +32,18 @@ public class ContratoClavePresupuestalEntity extends AuditoriaEntity {
     @Column(name = "id_contrato_clave_presupuestal")
     private Integer idContratoClavePresupuestal;
 
-    /**
-     * Contrato al que pertenece la clave presupuestal.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_contrato", nullable = false)
     private ContratoEntity contrato;
 
-    /**
-    /**
-     * Clave presupuestal del catálogo.
-     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_clave_presupuestal", nullable = false)
     private ClavePresupuestalEntity clavePresupuestal;
 
     /**
-     * Monto asignado a esta clave presupuestal dentro del contrato.
+     * Monto de esta clave que financia al contrato.
+     * SUM de todos los montos = contrato.monto_total
      */
-    @Column(name = "monto_asignado", precision = 15)
-    private Double montoAsignado;
+    @Column(name = "monto_asignado", precision = 15, scale = 2)
+    private BigDecimal montoAsignado;
 }

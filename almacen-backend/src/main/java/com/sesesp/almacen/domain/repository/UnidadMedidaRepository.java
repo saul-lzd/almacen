@@ -8,6 +8,13 @@ import java.util.Optional;
 
 public interface UnidadMedidaRepository extends JpaRepository<UnidadMedidaEntity, Integer> {
 
+    /** Lista todas las unidades activas para el dropdown de bienes */
     List<UnidadMedidaEntity> findByActivoTrue();
-    Optional<UnidadMedidaEntity> findByClaveAndActivoTrue(String clave);
+
+    /**
+     * Busca una unidad por nombre exacto.
+     * Se usa al guardar bienes del contrato para obtener la entidad
+     * a partir del nombre seleccionado en el dropdown.
+     */
+    Optional<UnidadMedidaEntity> findByNombreAndActivoTrue(String nombre);
 }

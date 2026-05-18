@@ -1,6 +1,5 @@
 package com.sesesp.almacen.domain.mapper;
 
-import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ProveedorContratoDto;
 import com.sesesp.almacen.domain.entity.ProveedorEntity;
 import org.springframework.stereotype.Component;
@@ -15,9 +14,9 @@ public class ProveedorMapper {
 
         ProveedorEntity entity = new ProveedorEntity();
         entity.setRazonSocial(dto.getRazonSocial());
-        entity.setDireccion(dto.getDireccion());
-        entity.setRepresentanteEmpresa(dto.getRepresentanteEmpresa());
-        entity.setCaracterRepresentante(dto.getCaracterRepresentante());
+        entity.setDomicilioFiscal(dto.getDomicilioFiscal());
+        entity.setRepresentante(dto.getRepresentante());
+        entity.setCaracter(dto.getCaracter());
         return entity;
     }
 
@@ -28,10 +27,12 @@ public class ProveedorMapper {
 
         ProveedorContratoDto response = new ProveedorContratoDto();
         response.setRazonSocial(entity.getRazonSocial());
-        response.setDireccion(entity.getDireccion());
-        response.setRepresentanteEmpresa(entity.getRepresentanteEmpresa());
-        response.setCaracterRepresentante(entity.getCaracterRepresentante());
+        response.setDomicilioFiscal(entity.getDomicilioFiscal());
+        response.setRepresentante(entity.getRepresentante());
+        response.setCaracter(entity.getCaracter());
         return response;
     }
 
 }
+
+

@@ -11,33 +11,30 @@ public class BeneficiarioMapper {
     public BeneficiarioEntity toEntity(BeneficiarioDto dto) {
         return BeneficiarioEntity.builder()
                 .nombre(dto.getNombre())
-                .contacto(dto.getContacto())
-                .direccion(dto.getDireccion())
                 .build();
     }
 
     public BeneficiarioEntity toEntity(String nombreBeneficiario) {
         return BeneficiarioEntity.builder()
                 .nombre(nombreBeneficiario)
-                .contacto("")
-                .direccion("")
                 .build();
     }
 
-    public BeneficiarioDto toResponse(BeneficiarioEntity entity) {
-        return BeneficiarioDto.builder()
-                .nombre(entity.getNombre())
-                .contacto(entity.getContacto())
-                .direccion(entity.getDireccion())
-                .build();
-    }
 
-    private BeneficiarioDto mapBeneficiario(ContratoBeneficiarioEntity entity) {
-        return BeneficiarioDto.builder()
-                .nombre(entity.getBeneficiario().getNombre())
-                .contacto(entity.getBeneficiario().getContacto())
-                .direccion(entity.getBeneficiario().getDireccion())
-                .build();
-    }
+//    public BeneficiarioDto toResponse(BeneficiarioEntity entity) {
+//        return BeneficiarioDto.builder()
+//                .nombre(entity.getNombre())
+//                .contacto(entity.getContacto())
+//                .direccion(entity.getDireccion())
+//                .build();
+//    }
+//
+//    private BeneficiarioDto mapBeneficiario(ContratoBeneficiarioEntity entity) {
+//        return BeneficiarioDto.builder()
+//                .nombre(entity.getBeneficiario().getNombre())
+//                .contacto(entity.getBeneficiario().getContacto())
+//                .direccion(entity.getBeneficiario().getDireccion())
+//                .build();
+//    }
 
 }

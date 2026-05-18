@@ -1,17 +1,17 @@
 package com.sesesp.almacen.domain.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+import java.math.BigDecimal;
+
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ClavePresupuestalDto {
 
-     private String clavePresupuestal;
+     private String clave;
      private String partidaEspecifica;
-     private Double montoAsignado;
+     private BigDecimal montoAsignado;
 }

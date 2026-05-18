@@ -4,13 +4,24 @@ import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Municipio o dependencia de gobierno que recibe los bienes.
+ * Funciona como catálogo: se busca por nombre antes de crear uno nuevo.
+ *
+ * La persona que físicamente recibe en el momento de la entrega
+ * se registra en SalidaAlmacenEntity.nombreRecibeBeneficiario,
+ * no aquí — puede ser diferente en cada entrega.
+ *
+ * tabla beneficiario
+ *   solo nombre
+ */
 @Entity
 @Table(name = "beneficiario")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class BeneficiarioEntity extends AuditoriaEntity {
 
     @Id
@@ -18,13 +29,6 @@ public class BeneficiarioEntity extends AuditoriaEntity {
     @Column(name = "id_beneficiario")
     private Integer idBeneficiario;
 
-    @Column(name = "nombre")
+    @Column(name = "nombre", nullable = false, length = 255)
     private String nombre;
-
-    @Column(name = "contacto")
-    private String contacto;
-
-    @Column(name = "direccion")
-    private String direccion;
-
 }

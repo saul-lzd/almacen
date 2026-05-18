@@ -26,9 +26,9 @@ public class ClavePresupuestalService {
                 .toList();
     }
 
-    public ClavePresupuestalEntity findByClavePresupuestal(String clavePresupuestal) {
-        return this.repository
-                .findByClavePresupuestalAndActivoTrue(clavePresupuestal)
-                .orElseGet(null);
-    }
+//    public ClavePresupuestalEntity findByClavePresupuestal(String clavePresupuestal) {
+//        return this.repository
+//                .findByClavePresupuestalAndActivoTrue(clavePresupuestal)
+//                .orElseGet(null);
+//    }
 }

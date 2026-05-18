@@ -4,17 +4,31 @@ import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Contrato de adquisición. Punto de entrada del sistema.
+ *
+ * Reglas de negocio importantes:
+ *   - numero_contrato y adquisicion son los únicos campos obligatorios al crear.
+ *   - El resto de campos se completan en captura progresiva.
+ *   - Una vez que el estatus pasa a POR_RECIBIR el contrato se bloquea para edición,
+ *     excepto fecha_tentativa_llegada (prórrogas del proveedor).
+ *   - SUM(contrato_bien.subtotal) debe ser igual a monto_sin_impuestos.
+ *   - SUM(contrato_clave_presupuestal.monto_asignado) debe ser igual a monto_total.
+ *
+ * tabla contrato
+ */
 @Entity
 @Table(name = "contrato")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ContratoEntity extends AuditoriaEntity {
 
     @Id
@@ -22,95 +36,100 @@ public class ContratoEntity extends AuditoriaEntity {
     @Column(name = "id_contrato")
     private Integer idContrato;
 
-    @Column(name = "identificador_contrato", length = 100)
-    private String identificadorContrato;
+    /** Número oficial del contrato. Obligatorio desde la creación. */
+    @Column(name = "numero_contrato", nullable = false, length = 100)
+    private String numeroContrato;
 
-    @Column(name = "adquisicion", length = 500)
+    /** Descripción breve de lo que se está comprando. Obligatorio desde la creación. */
+    @Column(name = "adquisicion", nullable = false, length = 300)
     private String adquisicion;
 
-    @Column(name = "folio_origen", length = 100)
-    private String folioOrigen;
-
-    @Column(name = "fecha_origen")
-    private LocalDateTime fechaOrigen;
-
+    /**
+     * Fecha estimada en que el proveedor hará la primera entrega.
+     * Es el único campo editable después de enviar el contrato al almacén
+     * (para manejar prórrogas).
+     */
     @Column(name = "fecha_tentativa_llegada")
     private LocalDateTime fechaTentativaLlegada;
 
     // =========================================================
-    // RELACIONES
+    // MONTOS — parte de la cadena de validación financiera:
+    //   monto_sin_impuestos + impuestos = monto_total
+    //   SUM(clave_presupuestal.monto_asignado) = monto_total
+    //   SUM(contrato_bien.subtotal) = monto_sin_impuestos
     // =========================================================
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_estatus_contrato")
-    private EstatusContratoEntity estatusContrato;
+    @Column(name = "monto_sin_impuestos", precision = 15, scale = 2)
+    private BigDecimal montoSinImpuestos;
 
+    @Column(name = "impuestos", precision = 15, scale = 2)
+    private BigDecimal impuestos;
+
+    @Column(name = "monto_total", precision = 15, scale = 2)
+    private BigDecimal montoTotal;
+
+    // =========================================================
+    // ESTATUS — ciclo de vida del contrato
+    // =========================================================
+
+    /**
+     * Estatus actual del contrato.
+     * Valores: CAPTURA → POR_RECIBIR → EN_ALMACEN → LISTO_PARA_ENTREGAR
+     *          → ENTREGA_PARCIAL → ENTREGADO → CERRADO
+     */
+    @Column(name = "estatus", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    //private EstatusContrato estatus = EstatusContrato.CAPTURA;
+    private EstatusContrato estatus;
+
+    // =========================================================
+    // RELACIONES CON PARTICIPANTES DEL CONTRATO
+    // =========================================================
+
+    /** Proveedor que entrega los bienes */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_proveedor")
     private ProveedorEntity proveedor;
 
+    /** Titular de la dependencia — firma como comprador */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_comprador")
-    private ServidorPublicoEntity comprador;
+    private FuncionarioEntity comprador;
 
+    /** Director operativo — administra el contrato */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_administrador_contrato")
-    private ServidorPublicoEntity administradorContrato;
-
-    // =========================================================
-    // DETALLES DE PAGO
-    // =========================================================
-
-    @Column(name = "monto_sin_impuestos", precision = 15)
-    private Double montoSinImpuestos;
-
-    @Column(name = "impuestos", precision = 15)
-    private Double impuestos;
-
-    @Column(name = "monto_total", precision = 15)
-    private Double montoTotal;
-
-    @Column(name = "tiene_anticipo")
-    private Boolean tieneAnticipo;
-
-    @Column(name = "porcentaje_anticipo", precision = 5)
-    private Double porcentajeAnticipo;
-
-    @Column(name = "monto_anticipo", precision = 15)
-    private Double montoAnticipo;
-
-    @Column(name = "numero_exhibiciones")
-    private Integer numeroExhibiciones;
-
-    @Column(name = "tiene_finiquito")
-    private Boolean tieneFiniquito;
-
-    @Column(name = "porcentaje_finiquito", precision = 5)
-    private Double porcentajeFiniquito;
-
-    @Column(name = "monto_finiquito", precision = 15)
-    private Double montoFiniquito;
+    private FuncionarioEntity administradorContrato;
 
     // =========================================================
     // RELACIONES HIJAS
+    // Cascade ALL + orphanRemoval: cuando se elimina el contrato
+    // o se reemplaza la lista, JPA limpia los registros huérfanos.
     // =========================================================
 
-    @OneToMany(
-            mappedBy = "contrato",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true )
-    private List<ContratoClavePresupuestalEntity> clavesPresupuestales;
+    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ContratoClavePresupuestalEntity> clavesPresupuestales = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "contrato",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true )
-    private List<ContratoBeneficiarioEntity> beneficiarios;
+    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ContratoBeneficiarioEntity> beneficiarios = new ArrayList<>();
 
-    @OneToMany(
-            mappedBy = "contrato",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true )
-    private List<ProductoEntity> productos;
+    @OneToMany(mappedBy = "contrato", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ContratoBienEntity> bienes = new ArrayList<>();
 
+    // =========================================================
+    // Enum del ciclo de vida — vive aquí porque es propio del contrato
+    // =========================================================
+
+    public enum EstatusContrato {
+        CAPTURA,
+        POR_RECIBIR,
+        EN_ALMACEN,
+        LISTO_PARA_ENTREGAR,
+        ENTREGA_PARCIAL,
+        ENTREGADO,
+        CERRADO
+    }
 }

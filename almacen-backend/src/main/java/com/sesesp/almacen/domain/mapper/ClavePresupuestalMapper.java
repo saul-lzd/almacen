@@ -18,24 +18,24 @@ public class ClavePresupuestalMapper {
         metadata.put("partida_especifica", entity.getPartidaEspecifica());
 
         CatalogOptionDto dto = new CatalogOptionDto();
-        dto.setValue(entity.getClavePresupuestal());
-        dto.setLabel(entity.getClavePresupuestal());
+        dto.setValue(entity.getClave());
+        dto.setLabel(entity.getPartidaEspecifica());
         dto.setMetadata(metadata);
 
         return dto;
     }
 
-    public ClavePresupuestalDto toResponse(ContratoClavePresupuestalEntity entity) {
-        return ClavePresupuestalDto.builder()
-                .clavePresupuestal(entity.getClavePresupuestal().getClavePresupuestal())
-                .partidaEspecifica(entity.getClavePresupuestal().getPartidaEspecifica())
-                .montoAsignado(entity.getMontoAsignado())
-                .build();
-    }
+//    public ClavePresupuestalDto toResponse(ContratoClavePresupuestalEntity entity) {
+//        return ClavePresupuestalDto.builder()
+//                .clave(entity.getClavePresupuestal().getClave())
+//                .partidaEspecifica(entity.getClavePresupuestal().getPartidaEspecifica())
+//                .montoAsignado(entity.getMontoAsignado())
+//                .build();
+//    }
 
     public ClavePresupuestalEntity toEntity(ClavePresupuestalDto dto) {
         return ClavePresupuestalEntity.builder()
-                .clavePresupuestal(dto.getClavePresupuestal())
+                .clave(dto.getClave())
                 .partidaEspecifica(dto.getPartidaEspecifica())
                 .build();
     }

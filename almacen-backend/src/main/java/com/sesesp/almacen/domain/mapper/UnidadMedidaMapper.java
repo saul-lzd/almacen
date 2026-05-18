@@ -9,8 +9,8 @@ public class UnidadMedidaMapper {
 
     public CatalogOptionDto toOption(UnidadMedidaEntity entity) {
         CatalogOptionDto dto = new CatalogOptionDto();
-        dto.setValue(entity.getClave());
-        dto.setLabel(entity.getDescripcion());
+        dto.setValue(String.valueOf(entity.getIdUnidadMedida()));
+        dto.setLabel(entity.getNombre());
         return dto;
     }
 }

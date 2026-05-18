@@ -1,18 +1,25 @@
 package com.sesesp.almacen.common.entity;
 
-
-import com.sesesp.almacen.common.types.UserType;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+/**
+ * Clase base para auditoría. Todos los campos de creación y modificación
+ * se heredan de aquí. No se expone como tabla — es solo un mapeo compartido.
+ */
+@Getter
+@Setter
 @MappedSuperclass
 public abstract class AuditoriaEntity {
 
-    @Column(name = "usuario_creacion", nullable = false)
+    @Column(name = "usuario_creacion", nullable = false, updatable = false)
     private Integer usuarioCreacion;
+
+    @Column(name = "fecha_creacion", nullable = false, updatable = false)
+    private LocalDateTime fechaCreacion;
 
     @Column(name = "usuario_modificacion")
     private Integer usuarioModificacion;
@@ -20,15 +27,15 @@ public abstract class AuditoriaEntity {
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
-    @Column(name = "fecha_creacion", nullable = false, updatable = false)
-    private LocalDateTime fechaCreacion;
-
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
     @PrePersist
     protected void onCreate() {
-        usuarioCreacion = UserType.SISTEMA.getId();
+        // Usuario sistema por defecto hasta que se implemente autenticación
+        if (usuarioCreacion == null) {
+            usuarioCreacion = 1;
+        }
         fechaCreacion = LocalDateTime.now();
         activo = true;
     }
@@ -37,6 +44,4 @@ public abstract class AuditoriaEntity {
     protected void onUpdate() {
         fechaModificacion = LocalDateTime.now();
     }
-
-    // getters and setter auto-generated
 }

@@ -8,6 +8,13 @@ import java.util.Optional;
 
 public interface ClavePresupuestalRepository extends JpaRepository<ClavePresupuestalEntity, Integer> {
 
-    Optional<ClavePresupuestalEntity> findByClavePresupuestalAndActivoTrue(String clavePresupuestal);
+    /** Lista todas las claves activas para el dropdown del contrato */
     List<ClavePresupuestalEntity> findByActivoTrue();
+
+    /**
+     * Busca una clave por su identificador alfanumérico.
+     * Se usa al guardar las claves del contrato para obtener
+     * la entidad completa a partir del valor seleccionado en el dropdown.
+     */
+    Optional<ClavePresupuestalEntity> findByClaveAndActivoTrue(String clave);
 }

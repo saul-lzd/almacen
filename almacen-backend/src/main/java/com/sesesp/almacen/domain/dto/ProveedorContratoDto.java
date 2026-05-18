@@ -1,16 +1,19 @@
 package com.sesesp.almacen.domain.dto;
 
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ProveedorContratoDto {
 
     private String razonSocial;
-    private String direccion;
-    private String representanteEmpresa;
-    private String caracterRepresentante;
-    private String telefono;
-    private String correo;
+    private String domicilioFiscal;
+    private String representante;
+    private String caracter;
 
 }

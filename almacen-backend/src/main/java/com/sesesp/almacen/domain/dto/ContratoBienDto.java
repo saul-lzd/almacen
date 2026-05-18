@@ -1,23 +1,24 @@
 package com.sesesp.almacen.domain.dto;
 
-import com.sesesp.almacen.domain.entity.UnidadMedidaEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProductoDto {
+public class ContratoBienDto {
 
-    private Integer lote;
-    private Integer partida;
+    private Short lote;
+    private Short partida;
     private String descripcionTecnica;
-    private String codigoUnidadMedida;
+    private String unidadMedida;
     private Integer cantidad;
-    private Double precioUnitario;
-    private Double subtotal;
+    private BigDecimal precioUnitario;
+    private BigDecimal subtotal;
 
 }

@@ -23,10 +23,10 @@ public class ContratoCreateRequestDto {
     private Integer idEstatusContrato;
     private String beneficiarios;
     private ProveedorContratoDto proveedor;
-    private ServidorPublicoDto comprador;
-    private ServidorPublicoDto administradorContrato;
-    private DetallesPagoDto detallesPago;
+    private FuncionarioDto comprador;
+    private FuncionarioDto administradorContrato;
+    //private DetallesPagoDto detallesPago;
     private List<ClavePresupuestalDto> clavesPresupuestales;
-    private List<ProductoDto> productos;
+    private List<ContratoBienDto> productos;
 
 }

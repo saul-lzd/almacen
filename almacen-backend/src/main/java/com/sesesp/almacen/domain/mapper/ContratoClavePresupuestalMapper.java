@@ -6,19 +6,21 @@ import com.sesesp.almacen.domain.entity.ContratoClavePresupuestalEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 @Component
 public class ContratoClavePresupuestalMapper {
 
     public ContratoClavePresupuestalEntity toEntity(
             ContratoEntity contrato,
             ClavePresupuestalEntity clavePresupuestal,
-            Double montoAsignado) {
+            BigDecimal montoAsignado) {
 
-        ContratoClavePresupuestalEntity entity = new ContratoClavePresupuestalEntity();
-        entity.setContrato(contrato);
-        entity.setClavePresupuestal(clavePresupuestal);
-        entity.setMontoAsignado(montoAsignado);
+        return ContratoClavePresupuestalEntity.builder()
+                .contrato(contrato)
+                .clavePresupuestal(clavePresupuestal)
+                .montoAsignado(montoAsignado)
+                .build();
 
-        return entity;
     }
 }

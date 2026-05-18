@@ -4,5 +4,4 @@ import com.sesesp.almacen.domain.entity.ProveedorEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProveedorRepository extends JpaRepository<ProveedorEntity, Integer> {
-
 }

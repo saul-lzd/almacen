@@ -2,13 +2,22 @@ package com.sesesp.almacen.domain.entity;
 
 import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.*;
 
+/**
+ * Proveedor que realiza la entrega de los bienes al almacén.
+ * Los datos se toman directamente del contrato físico.
+ *
+ * tabla proveedor
+ *   razon_social, domicilio_fiscal, representante, caracter
+ */
 @Entity
 @Table(name = "proveedor")
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProveedorEntity extends AuditoriaEntity {
 
     @Id
@@ -16,23 +25,19 @@ public class ProveedorEntity extends AuditoriaEntity {
     @Column(name = "id_proveedor")
     private Integer idProveedor;
 
-    @Column(name = "razon_social")
+    /** Nombre fiscal de la empresa proveedora */
+    @Column(name = "razon_social", nullable = false, length = 255)
     private String razonSocial;
 
-    @Column(name = "representante_empresa")
-    private String representanteEmpresa;
+    /** Domicilio fiscal tal como aparece en el contrato */
+    @Column(name = "domicilio_fiscal", length = 500)
+    private String domicilioFiscal;
 
-    @Column(name = "caracter_representante")
-    private String caracterRepresentante;
+    /** Persona con facultades para firmar el contrato */
+    @Column(name = "representante", length = 255)
+    private String representante;
 
-    @Column(name = "telefono")
-    private String telefono;
-
-    @Column(name = "correo")
-    private String correo;
-
-    @Column(name = "direccion")
-    private String direccion;
-
-    // getters and setter auto-generated
+    /** Puesto o rol que avala al representante (ej: "Apoderado Legal") */
+    @Column(name = "caracter", length = 150)
+    private String caracter;
 }
