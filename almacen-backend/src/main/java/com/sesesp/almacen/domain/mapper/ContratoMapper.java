@@ -52,18 +52,21 @@ public class ContratoMapper {
 
     private String joinNames(List<ContratoBeneficiarioEntity> beneficiarios) {
         return beneficiarios.stream()
+                .filter(cb -> Boolean.TRUE.equals(cb.getActivo()))
                 .map(cb -> cb.getBeneficiario().getNombre())
                 .collect(Collectors.joining(", "));
     }
 
     private List<ClavePresupuestalDto> convertClaves(List<ContratoClavePresupuestalEntity> clavesPresupuestales ) {
         return clavesPresupuestales.stream()
+                .filter(c -> Boolean.TRUE.equals(c.getActivo()))
                 .map(this::toClaveDto)
                 .toList();
     }
 
     private List<ContratoBienDto> convertBienes(List<ContratoBienEntity> bienes) {
         return bienes.stream()
+                .filter(b -> Boolean.TRUE.equals(b.getActivo()))
                 .map(this::toProductoDto)
                 .toList();
     }
@@ -78,10 +81,11 @@ public class ContratoMapper {
 
     private ContratoBienDto toProductoDto(ContratoBienEntity entity) {
         return ContratoBienDto.builder()
+                .idContratoBien(entity.getIdContratoBien())
                 .lote(entity.getLote())
                 .partida(entity.getPartida())
                 .descripcionTecnica(entity.getDescripcionTecnica())
-                .unidadMedida(entity.getUnidadMedida().getNombre())
+                .idUnidadMedida(entity.getUnidadMedida().getIdUnidadMedida())
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
                 .subtotal(entity.getSubtotal())

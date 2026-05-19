@@ -16,14 +16,14 @@ public class ContratoDto {
     private Integer idContrato;
     private String numeroContrato;
     private String adquisicion;
+    private String estatus;
     private LocalDateTime fechaTentativaLlegada;
+
     private BigDecimal montoSinImpuestos;
     private BigDecimal impuestos;
     private BigDecimal montoTotal;
-    private String estatus;
 
     private String beneficiarios;
-
     private ProveedorContratoDto proveedor;
     private FuncionarioDto comprador;
     private FuncionarioDto administradorContrato;

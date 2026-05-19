@@ -10,9 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BeneficiarioDto {
-
     private String nombre;
-    private String contacto;
-    private String direccion;
-
 }

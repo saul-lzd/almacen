@@ -44,4 +44,9 @@ public class FuncionarioEntity extends AuditoriaEntity {
      */
     @Column(name = "caracter", length = 150)
     private String caracter;
+
+
+    /** El funcionario esta activo en su rol*/
+    @Column(name = "es_activo_en_rol", nullable = false)
+    private Boolean esActivoEnRol;
 }

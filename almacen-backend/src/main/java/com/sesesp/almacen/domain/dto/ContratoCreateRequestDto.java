@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -17,16 +18,19 @@ public class ContratoCreateRequestDto {
     private Integer idContrato;
     private String numeroContrato;
     private String adquisicion;
-    private String folioOrigen;
-    private LocalDateTime fechaOrigen;
+    private String estatus;
     private LocalDateTime fechaTentativaLlegada;
-    private Integer idEstatusContrato;
+
+    private BigDecimal montoSinImpuestos;
+    private BigDecimal impuestos;
+    private BigDecimal montoTotal;
+
     private String beneficiarios;
     private ProveedorContratoDto proveedor;
     private FuncionarioDto comprador;
     private FuncionarioDto administradorContrato;
-    //private DetallesPagoDto detallesPago;
+
     private List<ClavePresupuestalDto> clavesPresupuestales;
-    private List<ContratoBienDto> productos;
+    private List<ContratoBienDto> bienes;
 
 }

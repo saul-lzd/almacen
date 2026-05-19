@@ -25,6 +25,7 @@ public class FuncionarioMapper {
         }
 
         return FuncionarioDto.builder()
+                .id(entity.getIdFuncionario())
                 .nombre(entity.getNombre())
                 .dependencia(entity.getDependencia())
                 .caracter(entity.getCaracter())

@@ -13,10 +13,11 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class ContratoBienDto {
 
+    private Integer idContratoBien;
     private Short lote;
     private Short partida;
     private String descripcionTecnica;
-    private String unidadMedida;
+    private Integer idUnidadMedida;
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
