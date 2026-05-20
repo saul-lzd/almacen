@@ -1,0 +1,401 @@
+<!--
+  View: Nuevo / Editar Contrato
+  Notas:
+  - Se mantiene contenedor padre para futuro panel de resumen lateral.
+  - El panel lateral esta comentado para no alterar la estructura futura.
+  - Convencion de bindings: {{ }} para valores editables; [[ ]] para lectura.
+-->
+
+<div class="oj-hybrid-padding contrato-editor-page">
+
+  <oj-c-button
+    chroming="ghost"
+    label="Ir a Inicio"
+    on-oj-action="[[cmdGoToInicio]]">
+    <span slot="startIcon" class="oj-ux-ico-arrow-left-alt"></span>
+  </oj-c-button>
+
+  <h1>
+    <oj-bind-text value="[[calcTituloPantalla]]"></oj-bind-text>
+  </h1>
+
+  <oj-bind-if test="[[uiError()]]">
+    <div class="oj-messagebanner-error oj-sm-margin-4x-bottom">
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
+  <!-- HEADER / TOOLBAR -->
+  <div class="oj-panel oj-panel-shadow-md oj-flex oj-sm-flex-items-initial oj-sm-justify-content-space-between oj-sm-padding-8x oj-sm-margin-10x-top">
+
+    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
+      <div class="oj-flex-item oj-sm-margin-2x-bottom">
+        <span class="oj-typography-body-md">Número de Contrato</span>
+      </div>
+      <div class="oj-flex-item">
+        <span class="oj-typography-subheading-xs">
+          <oj-bind-text value="[[calcNumeroContratoHeader]]"></oj-bind-text>
+        </span>
+      </div>
+    </div>
+
+    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
+      <div class="oj-flex-item oj-sm-margin-2x-bottom">
+        <span class="oj-typography-body-md">Proveedor</span>
+      </div>
+      <div class="oj-flex-item">
+        <span class="oj-typography-subheading-xs">
+          <oj-bind-text value="[[calcProveedorHeader]]"></oj-bind-text>
+        </span>
+      </div>
+    </div>
+
+    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
+      <div class="oj-flex-item oj-sm-margin-2x-bottom">
+        <span class="oj-typography-body-md">Estatus</span>
+      </div>
+      <div class="oj-flex-item">
+        <span class="oj-badge oj-badge-warning oj-badge-subtle">
+          <oj-bind-text value="[[uiEstatusContrato]]"></oj-bind-text>
+        </span>
+      </div>
+    </div>
+
+    <div class="oj-flex-item">
+      <oj-c-button
+        chroming="solid"
+        on-oj-action="[[cmdGuardarBorrador]]"
+        label="Guardar Cambios"
+        class="oj-sm-margin-2x-horizontal">
+        <span slot="startIcon" class="oj-ux-ico-save"></span>
+      </oj-c-button>
+
+      <oj-c-button
+        chroming="callToAction"
+        on-oj-action="[[cmdEnviarAlmacen]]"
+        label="Enviar a Almacén">
+        <span slot="startIcon" class="oj-ux-ico-send"></span>
+      </oj-c-button>
+    </div>
+  </div>
+
+  <!-- SHELL: preparado para futuro resumen lateral + formulario -->
+  <div class="oj-flex oj-sm-padding-6x-top contrato-editor-shell">
+
+    <!--
+    <aside id="contrato-editor-sidebar" class="oj-flex-item oj-panel oj-sm-2 oj-sm-margin-4x-end">
+      Futuro resumen del contrato
+    </aside>
+    -->
+
+    <main id="contrato-editor-main" class="oj-flex-item contrato-editor-main">
+
+      <!-- INFORMACION DEL CONTRATO -->
+      <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-contrato" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Información del Contrato</h6>
+          <hr>
+          <div class="oj-sm-padding-6x-vertical">
+            <oj-c-form-layout max-columns="4" direction="row" label-edge="top" user-assistance-density="compact">
+              <oj-c-input-text
+                label-hint="Número de Contrato"
+                value="{{frmContratoNumero}}"
+                placeholder="SESESP/...">
+              </oj-c-input-text>
+
+              <oj-c-input-text
+                label-hint="Adquisición"
+                value="{{frmContratoAdquisicion}}"
+                placeholder="Descripción de la adquisición"
+                column-span="2">
+              </oj-c-input-text>
+
+              <oj-c-input-text
+                label-hint="Cotización o Presupuesto"
+                value="{{frmContratoCotizacion}}"
+                placeholder="Folio">
+              </oj-c-input-text>
+            </oj-c-form-layout>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+      <!-- COMPRADOR -->
+      <div class="oj-panel oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-comprador" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Comprador</h6>
+          <hr>
+          <div class="oj-flex oj-sm-padding-6x-vertical" id="form-comprador">
+            <div class="oj-flex-item">
+              <h2 class="oj-typography-subheading-xs">Titular de la Dependencia</h2>
+              <oj-c-form-layout max-columns="1" direction="column" label-edge="top" user-assistance-density="compact">
+                <oj-c-input-text label-hint="Dependencia" value="{{frmCompradorTitularDependencia}}"></oj-c-input-text>
+                <oj-c-input-text label-hint="Nombre" value="{{frmCompradorTitularNombre}}"></oj-c-input-text>
+                <oj-c-input-text label-hint="Carácter" value="{{frmCompradorTitularCaracter}}"></oj-c-input-text>
+              </oj-c-form-layout>
+            </div>
+
+            <div class="oj-flex-item">
+              <h2 class="oj-typography-subheading-xs">Administrador del Contrato</h2>
+              <oj-c-form-layout max-columns="1" direction="column" label-edge="top" user-assistance-density="compact">
+                <oj-c-input-text label-hint="Dependencia" value="{{frmCompradorAdministradorDependencia}}"></oj-c-input-text>
+                <oj-c-input-text label-hint="Nombre" value="{{frmCompradorAdministradorNombre}}"></oj-c-input-text>
+                <oj-c-input-text label-hint="Carácter" value="{{frmCompradorAdministradorCaracter}}"></oj-c-input-text>
+              </oj-c-form-layout>
+            </div>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+      <!-- PROVEEDOR -->
+      <div class="oj-panel oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-proveedor" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Proveedor</h6>
+          <hr>
+          <div class="oj-sm-padding-6x-vertical">
+            <oj-c-form-layout max-columns="2" direction="column" label-edge="top" user-assistance-density="compact">
+              <oj-c-input-text label-hint="Empresa" value="{{frmProveedorEmpresa}}"></oj-c-input-text>
+              <oj-c-input-text label-hint="Domicilio Fiscal" value="{{frmProveedorDomicilioFiscal}}"></oj-c-input-text>
+              <oj-c-input-text label-hint="Representante" value="{{frmProveedorRepresentante}}"></oj-c-input-text>
+              <oj-c-input-text label-hint="Carácter" value="{{frmProveedorCaracter}}"></oj-c-input-text>
+            </oj-c-form-layout>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+      <!-- PAGOS / CLAVES PRESUPUESTALES -->
+      <div class="oj-panel oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-pagos" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Pagos / Claves Presupuestales</h6>
+          <hr>
+          <div class="oj-sm-padding-6x-vertical">
+            <div class="oj-flex-item oj-sm-10">
+              <oj-c-form-layout max-columns="3" direction="row" label-edge="top">
+                <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="{{frmPagoMontoSinImpuestos}}" min="1"></oj-c-input-number>
+                <oj-c-input-number label-hint="Impuestos" input-prefix="$" value="{{frmPagoImpuestos}}" min="1"></oj-c-input-number>
+                <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="[[calcPagoMontoTotal]]" readonly="true"></oj-c-input-number>
+              </oj-c-form-layout>
+            </div>
+
+            <div class="oj-sm-padding-6x-top" id="form-claves-presupuestales">
+              <div class="oj-flex-bar">
+                <div class="oj-flex-bar-start">
+                  <h2 class="oj-typography-subheading-xs">Claves Presupuestales</h2>
+                </div>
+                <div class="oj-flex-bar-end">
+                  <oj-c-button chroming="solid" on-oj-action="[[cmdAgregarClavePresupuestal]]" label="Agregar Clave">
+                    <span slot="startIcon" class="oj-ux-ico-key"></span>
+                  </oj-c-button>
+                </div>
+              </div>
+
+              <hr>
+
+              <oj-c-form-layout max-columns="4" direction="row" label-edge="top">
+                <oj-c-select-single 
+                    label-hint="Clave Presupuestal" 
+                    placeholder="Seleccione una clave"
+                    item-text="label" 
+                    value="{{frmClavePresupuestalValue}}"
+                    data="[[dpCatClavesPresupuestales]]" 
+                    on-value-changed="[[onClavePresupuestalChanged]]">
+                </oj-c-select-single>
+
+                <oj-c-input-text
+                  column-span="2"
+                  label-hint="Partida Específica"
+                  value="{{frmClavePresupuestalPartidaEspecifica}}"
+                  readonly="true">
+                </oj-c-input-text>
+
+                <oj-c-input-number
+                  label-hint="Monto Asignado"
+                  input-prefix="$"
+                  value="{{frmClavePresupuestalMontoAsignado}}"
+                  min="1">
+                </oj-c-input-number>
+              </oj-c-form-layout>
+
+              <oj-bind-if test="[[calcHayClavesPresupuestales()]]">
+                <div class="oj-sm-padding-6x-vertical">
+                  <h2 class="oj-typography-subheading-xs">Listado de Claves</h2>
+
+                  <oj-c-list-view
+                    aria-label="Listado de Claves Presupuestales"
+                    data="[[dpClavesPresupuestales]]"
+                    gridlines.item="visible"
+                    gridlines.bottom="visible">
+
+                    <template slot="itemTemplate" data-oj-as="item">
+                      <oj-c-list-item-layout>
+                        <div slot="overline">
+                            <strong>
+                                <oj-bind-text value="[[item.data.partidaEspecifica]]"></oj-bind-text>
+                            </strong>
+                            <br>
+                            <oj-bind-text value="[[item.data.clavePresupuestal]]"></oj-bind-text>
+                        </div>
+
+                        <div>
+                            <oj-bind-text value="[['$ ' + item.data.montoAsignado]]"></oj-bind-text>
+                        </div>
+
+                        <div slot="action" class="oj-flex oj-sm-align-items-center">
+                          <oj-c-button
+                            label="Eliminar Clave"
+                            chroming="borderless"
+                            on-oj-action="[[() => cmdEliminarClavePresupuestal(item.data)]]">
+                          </oj-c-button>
+                        </div>
+                      </oj-c-list-item-layout>
+                    </template>
+                  </oj-c-list-view>
+                </div>
+              </oj-bind-if>
+            </div>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+      <!-- BENEFICIARIOS -->
+      <div class="oj-panel oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-beneficiarios" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Beneficiarios</h6>
+          <hr>
+          <div class="oj-sm-padding-6x-vertical">
+            <oj-c-form-layout full-width="true">
+              <oj-c-text-area
+                label-edge="top"
+                value="{{frmBeneficiariosTexto}}"
+                label-hint="Separe cada beneficiario con una coma ( , )"
+                rows="6"
+                resize-behavior="both"
+                class="oj-form-control-full-width">
+              </oj-c-text-area>
+            </oj-c-form-layout>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+      <!-- BIENES / ADQUISICION -->
+      <div class="oj-panel oj-sm-margin-4x-bottom">
+        <oj-c-collapsible id="collapsible-adquisicion" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+          <h6 slot="header">Adquisición</h6>
+          <hr>
+          <div class="oj-sm-padding-6x-vertical">
+            <div class="oj-flex-bar">
+              <div class="oj-flex-bar-start">
+                <h2 class="oj-typography-subheading-xs">Agregar bienes</h2>
+              </div>
+              <div class="oj-flex-bar-end">
+                <oj-c-button chroming="solid" on-oj-action="[[cmdAgregarBien]]" label="Agregar Bien">
+                  <span slot="startIcon" class="oj-ux-ico-plus-square"></span>
+                </oj-c-button>
+              </div>
+            </div>
+
+            <oj-c-form-layout columns="6" direction="row" label-edge="top" class="oj-sm-margin-4x-top">
+              <oj-c-input-number label-hint="Lote" value="{{frmBienLote}}" min="1"></oj-c-input-number>
+              <oj-c-input-number label-hint="Partida" value="{{frmBienPartida}}" min="1"></oj-c-input-number>
+
+              <oj-c-select-single
+                label-hint="Unidad de Medida"
+                placeholder="Seleccione unidad"
+                item-text="label"
+                value="{{frmBienUnidadMedidaValue}}"
+                data="[[dpCatUnidadesMedida]]"
+                on-value-changed="[[onBienUnidadMedidaChanged]]">
+              </oj-c-select-single>
+
+              <oj-c-input-number label-hint="Cantidad" value="{{frmBienCantidad}}" min="1"></oj-c-input-number>
+              <oj-c-input-number label-hint="Precio Unitario" value="{{frmBienPrecioUnitario}}" input-prefix="$" min="1"></oj-c-input-number>
+              <oj-c-input-number label-hint="Subtotal" value="[[calcBienSubtotal]]" input-prefix="$" readonly="true"></oj-c-input-number>
+            </oj-c-form-layout>
+
+            <oj-c-text-area
+              label-edge="top"
+              value="{{frmBienDescripcion}}"
+              label-hint="Descripción Detallada del Bien"
+              rows="6"
+              class="oj-form-control-full-width">
+            </oj-c-text-area>
+
+            <oj-c-dialog
+              opened="{{uiBienDescripcionDialogOpened}}"              
+              id="descripcion-bien-dialog"
+              dialog-title="Descripción del bien"
+              min-width="60vw"
+              cancel-behavior="icon">
+
+              <div slot="body">
+                <p>
+                  <oj-bind-text value="[[uiDescripcionBienSeleccionada]]"></oj-bind-text>
+                </p>
+              </div>
+
+              <!-- <div slot="footer">
+                <oj-c-button label="Cerrar" on-oj-action="[[cmdCloseBienDescripcionDialog]]"></oj-c-button>
+              </div> -->
+            </oj-c-dialog>
+
+            <oj-bind-if test="[[calcHayBienes()]]">
+              <div class="oj-sm-padding-6x-vertical">
+                <h2 class="oj-typography-subheading-xs">Listado de Bienes</h2>
+
+                <oj-c-list-view
+                  aria-label="Listado de Bienes"
+                  data="[[dpBienes]]"
+                  id="list-view-bienes"
+                  gridlines.item="visible"
+                  gridlines.bottom="visible">
+
+                  <template slot="itemTemplate" data-oj-as="item">
+                    <oj-c-list-item-layout>
+                      <div slot="overline">
+                        Lote
+                        <oj-bind-text value="[[item.data.lote]]"></oj-bind-text>
+                        · Partida
+                        <oj-bind-text value="[[item.data.partida]]"></oj-bind-text>
+                      </div>
+
+                      <div>
+                        <strong>
+                          <oj-bind-text value="[[item.data.codigoUnidadMedida]]"></oj-bind-text>
+                        </strong>
+                        —
+                        <oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text>
+                        unidades
+                      </div>
+
+                      <div slot="secondary">
+                        Precio unitario: $
+                        <oj-bind-text value="[[item.data.precioUnitario]]"></oj-bind-text>
+                        · Subtotal: $
+                        <oj-bind-text value="[[item.data.subtotal]]"></oj-bind-text>
+                      </div>
+
+                      <div slot="action" class="oj-flex oj-sm-align-items-center">
+                        <oj-c-button
+                          label="Ver descripción"
+                          chroming="borderless"
+                          on-oj-action="[[() => cmdVerDescripcionBien(item.data)]]">
+                        </oj-c-button>
+
+                        <oj-c-button
+                          label="Eliminar"
+                          chroming="borderless"
+                          on-oj-action="[[() => cmdEliminarBien(item.data)]]">
+                        </oj-c-button>
+                      </div>
+                    </oj-c-list-item-layout>
+                  </template>
+                </oj-c-list-view>
+              </div>
+            </oj-bind-if>
+          </div>
+        </oj-c-collapsible>
+      </div>
+
+    </main>
+  </div>
+</div>

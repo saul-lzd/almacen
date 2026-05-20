@@ -1,0 +1,31 @@
+{
+  "name": "quill-editor",
+  "version": "1.0.0",
+  "jetVersion": "^17.0.0",
+  "properties": {
+    "value": {
+      "type": "string",
+      "description": "Contenido HTML del editor"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Texto placeholder cuando el editor está vacío"
+    },
+    "readonly": {
+      "type": "boolean",
+      "description": "Si true, el editor es de solo lectura",
+      "value": false
+    }
+  },
+  "events": {
+    "valueChanged": {
+      "description": "Se dispara cuando el contenido del editor cambia",
+      "bubbles": true
+    }
+  },
+  "methods": {
+    "reset": {
+      "description": "Limpia el contenido del editor"
+    }
+  }
+}

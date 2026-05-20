@@ -1,22 +1,25 @@
 /**
  * ViewModel: Nuevo / Editar Contrato
+ *
  * Convencion de nombres:
- * - frm*: valores editables ligados directamente al formulario
- * - list*: arrays de elementos capturados que se enviaran al backend
- * - dp*: DataProvider usado por componentes Oracle JET
- * - cat*: catalogos/listas recibidas desde API
- * - ui*: estado visual de pantalla
- * - calc*: computed/calculados
- * - cmd*: acciones disparadas desde UI
- * - load*: carga de datos desde API/backend
+ * - frm*:   valores editables ligados directamente al formulario
+ * - list*:  arrays de elementos capturados que se enviaran al backend
+ * - dp*:    DataProvider usado por componentes Oracle JET
+ * - cat*:   catalogos/listas recibidas desde API
+ * - ui*:    estado visual de pantalla
+ * - calc*:  computed/calculados
+ * - cmd*:   acciones disparadas desde UI
+ * - load*:  carga de datos desde API/backend
  * - clear*: limpieza de formularios internos
- * - map*: transformacion a payload/backend
- * - on*: handlers de eventos UI
+ * - map*:   transformacion a payload/backend
+ * - on*:    handlers de eventos UI
  */
 
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
+import { IntlDateTimeConverter } from "ojs/ojconverter-datetime";
+import "../jet-composites/quill-editor/quill-editor"; // Importar el componente QuillEditorViewModel para que se registre globalmente
 
 import "oj-c/collapsible";
 import "oj-c/list-view";
@@ -28,9 +31,11 @@ import "oj-c/button";
 import "oj-c/dialog";
 import "oj-c/input-text";
 import "oj-c/input-number";
+import "oj-c/input-date-text";
+import 'oj-c/input-date-picker';
 
 // ================================================================
-// TYPES BASE
+// TIPOS
 // ================================================================
 
 type ModoPantalla = "NUEVO" | "EDICION";
@@ -41,207 +46,280 @@ type CatalogoOption = {
   metadata?: Record<string, unknown>;
 };
 
+type FuncionarioOption = {
+  value: number;
+  label: string;
+  dependencia: string;
+  caracter: string;
+};
+
 type ClavePresupuestalItem = {
   idLocal: number;
-  clavePresupuestal: string;
+  clave: string;
   partidaEspecifica: string;
   montoAsignado: number;
 };
 
-
 type BienContratoItem = {
   idLocal: number;
+  idContratoBien: number | null;  // null si es nuevo, número si ya existe en BD
   lote: number;
   partida: number;
-  descripcionTecnica: string;
-  codigoUnidadMedida: string;
+  descripcionTecnica: string;     // HTML generado por Quill
+  idUnidadMedida: number;
+  unidadMedida: string;           // nombre para mostrar en el listado
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
 };
 
-type ContratoPayload = {
-  idContrato: number | null;
+// DTO de salida hacia el backend — alineado con ContratoCreateRequestDto.java
+type ContratoRequestPayload = {
   numeroContrato: string;
   adquisicion: string;
-
-  fechaOrigen: string | null;
   fechaTentativaLlegada: string | null;
-  folioOrigen: string | null;
-
-  idEstatusContrato: number | null;
-  estatusContrato: string | null;
-
-  comprador: {
-    id: number | null;
-    dependencia: string;
-    nombre: string;
-    cargo: string;
-  };
-
-  administradorContrato: {
-    id: number | null;
-    dependencia: string;
-    nombre: string;
-    cargo: string;
-  };
-
+  montoSinImpuestos: number | null;
+  impuestos: number | null;
+  montoTotal: number | null;
   proveedor: {
     razonSocial: string;
-    representanteEmpresa: string;
-    direccion: string;
-    caracterRepresentante: string;
-  };
-
-  detallesPago: {
-    montoSinImpuestos: number;
-    impuestos: number;
-    montoTotal: number;
-    montoAnticipo: number | null;
-    montoFiniquito: number | null;
-    porcentajeAnticipo: number | null;
-    porcentajeFiniquito: number | null;
-    tieneAnticipo: boolean | null;
-    tieneFiniquito: boolean | null;
-    numeroExhibiciones: number;
-  };
+    domicilioFiscal: string;
+    representante: string;
+    caracter: string;
+  } | null;
+  comprador: {
+    id: number | null;
+  } | null;
+  administradorContrato: {
+    id: number | null;
+  } | null;
   beneficiarios: string;
-  clavesPresupuestales: ClavePresupuestalItem[];
-  productos : BienContratoItem[];
+  clavesPresupuestales: {
+    clave: string;
+    partidaEspecifica: string;
+    montoAsignado: number;
+  }[];
+  bienes: {
+    idContratoBien: number | null;
+    lote: number;
+    partida: number;
+    descripcionTecnica: string;
+    idUnidadMedida: number;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }[];
 };
 
+// DTO de entrada desde el backend — alineado con ContratoDto.java
+type ContratoResponsePayload = {
+  idContrato: number;
+  numeroContrato: string;
+  adquisicion: string;
+  fechaTentativaLlegada: string | null;
+  montoSinImpuestos: number | null;
+  impuestos: number | null;
+  montoTotal: number | null;
+  estatus: string;
+  proveedor: {
+    razonSocial: string;
+    domicilioFiscal: string;
+    representante: string;
+    caracter: string;
+  } | null;
+  comprador: {
+    id: number;
+    nombre: string;
+    dependencia: string;
+    caracter: string;
+  } | null;
+  administradorContrato: {
+    id: number;
+    nombre: string;
+    dependencia: string;
+    caracter: string;
+  } | null;
+  beneficiarios: string;
+  clavesPresupuestales: {
+    clave: string;
+    partidaEspecifica: string;
+    montoAsignado: number;
+  }[];
+  bienes: {
+    idContratoBien: number;
+    lote: number;
+    partida: number;
+    descripcionTecnica: string;
+    idUnidadMedida: number;
+    unidadMedida: string;
+    cantidad: number;
+    precioUnitario: number;
+    subtotal: number;
+  }[];
+};
+
+// ================================================================
+// VIEWMODEL
+// ================================================================
+
 class NuevoContratoViewModel {
-  // ================================================================
+
+  // ----------------------------------------------------------------
   // ROUTER / UI STATE
-  // ================================================================
+  // ----------------------------------------------------------------
 
-  private router;
+  private router: any;
 
-  public uiModo = ko.observable<ModoPantalla>("NUEVO");
-  public uiCargandoCatalogos = ko.observable<boolean>(false);
-  public uiGuardando = ko.observable<boolean>(false);
-  public uiError = ko.observable<string>("");
-  public uiEstatusContrato = ko.observable<string>("En captura");
-  public uiBienDescripcionDialogOpened = ko.observable<boolean>(false);
+  public uiModo                      = ko.observable<ModoPantalla>("NUEVO");
+  public uiCargando                  = ko.observable<boolean>(false);
+  public uiGuardando                 = ko.observable<boolean>(false);
+  public uiError                     = ko.observable<string>("");
+  public uiEstatusContrato           = ko.observable<string>("En captura");
+  public uiBienDescripcionDialogOpen = ko.observable<boolean>(false);
 
   public contratoId = ko.observable<number | null>(null);
 
-  public calcTituloPantalla = ko.pureComputed(() => {
-    return this.uiModo() === "EDICION" ? "Editar Contrato" : "Nuevo Contrato";
-  });
+  // ----------------------------------------------------------------
+  // COMPUTED - HEADER
+  // ----------------------------------------------------------------
 
-  public calcNumeroContratoHeader = ko.pureComputed(() => {
-    return this.frmContratoNumero() || "Pendiente";
-  });
+  public calcTituloPantalla = ko.pureComputed(() =>
+    this.uiModo() === "EDICION" ? "Editar Contrato" : "Nuevo Contrato"
+  );
 
-  public calcProveedorHeader = ko.pureComputed(() => {
-    return this.frmProveedorEmpresa() || "Pendiente";
-  });
+  public calcNumeroContratoHeader = ko.pureComputed(() =>
+    this.frmNumeroContrato() || "Pendiente"
+  );
 
-  // ================================================================
-  // CONTRATO - FORM
-  // ================================================================
+  public calcProveedorHeader = ko.pureComputed(() =>
+    this.frmProveedorRazonSocial() || "Pendiente"
+  );
 
-  public frmContratoNumero = ko.observable<string>("");
-  public frmContratoAdquisicion = ko.observable<string>("");
-  public frmContratoCotizacion = ko.observable<string>("");
+  // ----------------------------------------------------------------
+  // INFORMACIÓN DEL CONTRATO
+  // ----------------------------------------------------------------
 
-  // ================================================================
-  // COMPRADOR - FORM
-  // ================================================================
+  public frmNumeroContrato        = ko.observable<string>("");
+  public frmAdquisicion           = ko.observable<string>("");
+  public frmFechaTentativaLlegada = ko.observable<string>(new Date().toISOString().split("T")[0]); // formato "YYYY-MM-DD"
 
-  public frmCompradorTitularDependencia = ko.observable<string>("");
-  public frmCompradorTitularNombre = ko.observable<string>("");
-  public frmCompradorTitularCaracter = ko.observable<string>("");
 
-  public frmCompradorAdministradorDependencia = ko.observable<string>("");
-  public frmCompradorAdministradorNombre = ko.observable<string>("");
-  public frmCompradorAdministradorCaracter = ko.observable<string>("");
+  // ----------------------------------------------------------------
+  // COMPRADOR Y ADMINISTRADOR DEL CONTRATO
+  // Se seleccionan desde un dropdown del catálogo de funcionarios.
+  // Los campos de texto son solo lectura — se llenan al seleccionar.
+  // ----------------------------------------------------------------
 
-  // ================================================================
-  // PROVEEDOR - FORM
-  // ================================================================
+  public frmCompradorId = ko.observable<number | null>(null);
+  public frmAdministradorId = ko.observable<number | null>(null);
 
-  public frmProveedorEmpresa = ko.observable<string>("");
-  public frmProveedorDomicilioFiscal = ko.observable<string>("");
-  public frmProveedorRepresentante = ko.observable<string>("");
-  public frmProveedorCaracter = ko.observable<string>("");
+  // Solo lectura — se actualizan al seleccionar del dropdown
+  public uiCompradorNombre      = ko.observable<string>("");
+  public uiCompradorDependencia = ko.observable<string>("");
+  public uiCompradorCaracter    = ko.observable<string>("");
 
-  // ================================================================
-  // PAGOS - FORM / CALC
-  // ================================================================
+  public uiAdministradorNombre      = ko.observable<string>("");
+  public uiAdministradorDependencia = ko.observable<string>("");
+  public uiAdministradorCaracter    = ko.observable<string>("");
 
-  public frmPagoMontoSinImpuestos = ko.observable<number>(0);
-  public frmPagoImpuestos = ko.observable<number>(0);
-
-  public calcPagoMontoTotal = ko.pureComputed(() => {
-    return Number(this.frmPagoMontoSinImpuestos() || 0) + Number(this.frmPagoImpuestos() || 0);
-  });
-
-  // ================================================================
-  // CLAVES PRESUPUESTALES - FORM / LIST / DP / CAT
-  // ================================================================
-
-  public frmClavePresupuestalValue = ko.observable<string | null>(null);
-  public frmClavePresupuestalPartidaEspecifica = ko.observable<string>("");
-  public frmClavePresupuestalMontoAsignado = ko.observable<number>(0);
-
-  public listClavesPresupuestales = ko.observableArray<ClavePresupuestalItem>([]);
-
-  public dpClavesPresupuestales = new ArrayDataProvider(this.listClavesPresupuestales, {
-    keyAttributes: "idLocal"
-  });
-
-  public catClavesPresupuestales = ko.observableArray<CatalogoOption>([]);
-
-  public dpCatClavesPresupuestales = new ArrayDataProvider(this.catClavesPresupuestales, {
+  public catFuncionarios   = ko.observableArray<FuncionarioOption>([]);
+  public dpCatFuncionarios = new ArrayDataProvider(this.catFuncionarios, {
     keyAttributes: "value"
   });
 
-  private seqClavePresupuestal = 1;
+  // ----------------------------------------------------------------
+  // PROVEEDOR
+  // ----------------------------------------------------------------
 
-  public calcHayClavesPresupuestales = ko.pureComputed(() => {
-    return this.listClavesPresupuestales().length > 0;
+  public frmProveedorRazonSocial        = ko.observable<string>("");
+  public frmProveedorDomicilioFiscal    = ko.observable<string>("");
+  public frmProveedorRepresentante      = ko.observable<string>("");
+  public frmProveedorCaracter           = ko.observable<string>("");
+
+  // ----------------------------------------------------------------
+  // PAGOS / MONTOS
+  // ----------------------------------------------------------------
+
+  public frmMontoSinImpuestos = ko.observable<number | null>(0);
+  public frmImpuestos         = ko.observable<number | null>(0);
+
+  public calcMontoTotal = ko.pureComputed(() => {
+    const base = Number(this.frmMontoSinImpuestos() || 0);
+    const imp  = Number(this.frmImpuestos() || 0);
+    return base + imp;
   });
 
-  // ================================================================
-  // BENEFICIARIOS - FORM
-  // ================================================================
+  // ----------------------------------------------------------------
+  // CLAVES PRESUPUESTALES
+  // ----------------------------------------------------------------
 
-  public frmBeneficiariosTexto = ko.observable<string>("");
+  public frmClaveValue              = ko.observable<string | null>(null);
+  public frmClavePartidaEspecifica  = ko.observable<string>("");
+  public frmClaveMontoAsignado      = ko.observable<number>(0);
 
-  // ================================================================
-  // BIENES / ADQUISICION - FORM / LIST / DP / CAT
-  // ================================================================
-
-  public frmBienLote = ko.observable<number>(0);
-  public frmBienPartida = ko.observable<number>(0);
-  public frmBienUnidadMedidaValue = ko.observable<string | null>(null);
-  public frmBienDescripcion = ko.observable<string>("");
-  public frmBienCantidad = ko.observable<number>(0);
-  public frmBienPrecioUnitario = ko.observable<number>(0);
-
-  public calcBienSubtotal = ko.pureComputed(() => {
-    return Number(this.frmBienCantidad() || 0) * Number(this.frmBienPrecioUnitario() || 0);
-  });
-
-  public listBienes = ko.observableArray<BienContratoItem>([]);
-  public dpBienes = new ArrayDataProvider(this.listBienes, {
+  public listClaves                 = ko.observableArray<ClavePresupuestalItem>([]);
+  public dpListClaves               = new ArrayDataProvider(this.listClaves, {
     keyAttributes: "idLocal"
   });
 
-  public catUnidadesMedida = ko.observableArray<CatalogoOption>([]);
+  public catClaves                  = ko.observableArray<CatalogoOption>([]);
+  public dpCatClaves                = new ArrayDataProvider(this.catClaves, {
+    keyAttributes: "value"
+  });
+
+  private seqClave = 1;
+
+  public calcHayClaves = ko.pureComputed(() =>
+    this.listClaves().length > 0
+  );
+
+  // ----------------------------------------------------------------
+  // BENEFICIARIOS
+  // Por ahora textarea — autocomplete en versión futura
+  // ----------------------------------------------------------------
+
+  public frmBeneficiariosTexto = ko.observable<string>("");
+
+  // ----------------------------------------------------------------
+  // BIENES
+  // ----------------------------------------------------------------
+
+  public frmBienLote           = ko.observable<number>(1);
+  public frmBienPartida        = ko.observable<number>(1);
+  public frmBienIdUnidadMedida = ko.observable<number | null>(null);
+  public frmBienCantidad       = ko.observable<number>(1);
+  public frmBienPrecioUnitario = ko.observable<number>(0);
+
+  // La descripción técnica la maneja Quill directamente en el DOM.
+  // Este observable almacena el HTML resultante para incluirlo en el payload.
+  public frmBienDescripcionHtml = ko.observable<string>("");
+
+  public calcBienSubtotal = ko.pureComputed(() =>
+    Number(this.frmBienCantidad() || 0) * Number(this.frmBienPrecioUnitario() || 0)
+  );
+
+  public listBienes   = ko.observableArray<BienContratoItem>([]);
+  public dpListBienes = new ArrayDataProvider(this.listBienes, {
+    keyAttributes: "idLocal"
+  });
+
+  public catUnidadesMedida   = ko.observableArray<CatalogoOption>([]);
   public dpCatUnidadesMedida = new ArrayDataProvider(this.catUnidadesMedida, {
     keyAttributes: "value"
   });
 
   private seqBien = 1;
 
-  public uiDescripcionBienSeleccionada = ko.observable<string>("N/A");
+  public calcHayBienes = ko.pureComputed(() =>
+    this.listBienes().length > 0
+  );
 
-  public calcHayBienes = ko.pureComputed(() => {
-    return this.listBienes().length > 0;
-  });
+  // Descripción seleccionada para mostrar en el dialog (HTML renderizado)
+  public uiDescripcionBienSeleccionada = ko.observable<string>("");
+
+  public onQuillChanged = (event: CustomEvent): void => {
+    this.frmBienDescripcionHtml(event.detail.value);
+  };
 
   // ================================================================
   // CONSTRUCTOR / LIFECYCLE
@@ -250,205 +328,238 @@ class NuevoContratoViewModel {
   constructor(params: any) {
     this.router = params?.router;
 
-    var contratoIdParam = params?.routerState?.params?.id;
-    if (contratoIdParam) {
+    this.frmFechaTentativaLlegada(this.calcDiasHabiles(10)); // fecha tentativa por defecto: 10 días hábiles a partir de hoy
+
+    const idParam = params?.routerState?.params?.id;
+    if (idParam) {
       this.uiModo("EDICION");
-      this.contratoId(Number(contratoIdParam));
-      console.log("Modo edición, contratoId >>", this.contratoId());
+      this.contratoId(Number(idParam));
     }
   }
 
   connected(): void {
-    AccUtils.announce("Edicion Contrato page loaded.");
+    AccUtils.announce(this.calcTituloPantalla());
     document.title = this.calcTituloPantalla();
-
     void this.loadInicial();
   }
 
-  disconnected(): void {
-    // Implementar si se requieren limpiezas o cancelaciones.
-  }
-
-  transitionCompleted(): void {
-    // Implementar si se requiere logica posterior a transicion.
-  }
+  disconnected(): void {}
+  transitionCompleted(): void {}
 
   // ================================================================
-  // LOAD - API / BACKEND
+  // LOAD
   // ================================================================
 
   private async loadInicial(): Promise<void> {
-    this.uiCargandoCatalogos(true);
+    this.uiCargando(true);
     this.uiError("");
 
     try {
       await Promise.all([
-        this.loadClavesPresupuestales(),
-        this.loadUnidadesMedida()
+        this.loadCatalogoClaves(),
+        this.loadCatalogoUnidadesMedida(),
+        this.loadCatalogoFuncionarios()
       ]);
 
       if (this.uiModo() === "EDICION" && this.contratoId()) {
-        await this.loadContrato(this.contratoId() as number);
+        await this.loadContrato(this.contratoId()!);
       }
-    } catch (error) {
-      console.error("Error en carga inicial:", error);
-      this.uiError("No se pudo cargar la información inicial.");
+    } catch (err) {
+      console.error("Error en carga inicial:", err);
+      this.uiError("No se pudo cargar la información. Intenta de nuevo.");
     } finally {
-      this.uiCargandoCatalogos(false);
+      this.uiCargando(false);
     }
   }
 
-  private async loadContrato(idContrato: number): Promise<void> {
-    const apiContrato = 'http://localhost:8080/api/contratos/' + idContrato;
-    console.log("API contrato >>", apiContrato);
+  private async loadContrato(id: number): Promise<void> {
+    const res = await fetch(`http://localhost:8080/api/contratos/${id}`);
+    if (!res.ok) throw new Error(`Error al cargar contrato ${id}`);
 
-    const response = await fetch(apiContrato);
-
-    if (!response.ok) {
-      throw new Error("Error al obtener el contrato");
-    }
-
-    const contratoPayload : ContratoPayload = await response.json();
-    console.log("Contrato cargado >>", contratoPayload);
-
-    this.mapPayloadToContratoUI(contratoPayload);
-
+    const data: ContratoResponsePayload = await res.json();
+    console.log("=== JSON CRUDO DEL BACKEND ===", JSON.stringify(data, null, 2));
+    this.mapResponseToUI(data);
   }
 
-  private async loadClavesPresupuestales(): Promise<void> {
-    const response = await fetch("http://localhost:8080/api/claves-presupuestales");
+  private async loadCatalogoClaves(): Promise<void> {
+    const res = await fetch("http://localhost:8080/api/claves-presupuestales");
+    if (!res.ok) throw new Error("Error al cargar claves presupuestales");
 
-    if (!response.ok) {
-      throw new Error("Error al obtener claves presupuestales");
-    }
-
-    const data: CatalogoOption[] = await response.json();
-    this.catClavesPresupuestales(data);
+    const data: CatalogoOption[] = await res.json();
+    this.catClaves(data);
   }
 
-  private async loadUnidadesMedida(): Promise<void> {
-    const response = await fetch("http://localhost:8080/api/unidadesMedida");
+  private async loadCatalogoUnidadesMedida(): Promise<void> {
+    const res = await fetch("http://localhost:8080/api/unidadesMedida");
+    if (!res.ok) throw new Error("Error al cargar unidades de medida");
 
-    if (!response.ok) {
-      throw new Error("Error al obtener unidades de medida");
-    }
-
-    const data: CatalogoOption[] = await response.json();
+    const data: CatalogoOption[] = await res.json();
     this.catUnidadesMedida(data);
   }
 
+  private async loadCatalogoFuncionarios(): Promise<void> {
+    const res = await fetch("http://localhost:8080/api/funcionarios");
+    if (!res.ok) throw new Error("Error al cargar funcionarios");
 
+    const data: any[] = await res.json();
+
+    // El backend devuelve { id, nombre, dependencia, caracter }
+    // Lo adaptamos al formato que necesita oj-c-select-single
+    const options: FuncionarioOption[] = data.map(f => ({
+      value: f.id,
+      label: f.nombre,
+      dependencia: f.dependencia,
+      caracter: f.caracter
+    }));
+
+    this.catFuncionarios(options);
+  }
 
   // ================================================================
-  // EVENT HANDLERS - COMBOBOX / UI
+  // EVENT HANDLERS
   // ================================================================
 
-  public onClavePresupuestalChanged = (event: CustomEvent): void => {
-    if (event.detail.updatedFrom === "external") {
-      return;
-    }
+  /**
+   * Al seleccionar un comprador del dropdown, actualiza los campos
+   * informativos de solo lectura con los datos del funcionario.
+   */
+  public onCompradorChanged = (event: CustomEvent): void => {
+    if (event.detail.updatedFrom === "external") return;
 
-    const selectedValue = event.detail.value as string;
-    const selected = this.catClavesPresupuestales().find((item) => item.value === selectedValue);
+    const id = event.detail.value as number;
+    const funcionario = this.catFuncionarios().find(f => f.value === id);
 
-    const partidaEspecifica = selected?.metadata?.partida_especifica as string | undefined;
-    this.frmClavePresupuestalPartidaEspecifica(partidaEspecifica || "");
+    this.uiCompradorNombre(funcionario?.label || "");
+    this.uiCompradorDependencia(funcionario?.dependencia || "");
+    this.uiCompradorCaracter(funcionario?.caracter || "");
   };
 
-  public onBienUnidadMedidaChanged = (event: CustomEvent): void => {
-    if (event.detail.updatedFrom === "external") {
-      return;
-    }
+  /**
+   * Al seleccionar un administrador del dropdown, actualiza los campos
+   * informativos de solo lectura.
+   */
+  public onAdministradorChanged = (event: CustomEvent): void => {
+    if (event.detail.updatedFrom === "external") return;
 
-    // Se conserva por si luego se requiere metadata de la unidad seleccionada.
-    const selectedValue = event.detail.value as string;
-    const selected = this.catUnidadesMedida().find((item) => item.value === selectedValue);
+    const id = event.detail.value as number;
+    const funcionario = this.catFuncionarios().find(f => f.value === id);
 
-    if (!selected) {
-      this.frmBienUnidadMedidaValue("");
-    }
+    this.uiAdministradorNombre(funcionario?.label || "");
+    this.uiAdministradorDependencia(funcionario?.dependencia || "");
+    this.uiAdministradorCaracter(funcionario?.caracter || "");
+  };
+
+  /**
+   * Al seleccionar una clave presupuestal, autocompleta la partida específica.
+   */
+  public onClaveChanged = (event: CustomEvent): void => {
+    if (event.detail.updatedFrom === "external") return;
+
+    const clave = this.catClaves().find(c => c.value === event.detail.value);
+    this.frmClavePartidaEspecifica(
+      (clave?.metadata?.partida_especifica as string) || ""
+    );
   };
 
   // ================================================================
-  // COMMANDS - NAVEGACION
+  // COMMANDS — NAVEGACIÓN
   // ================================================================
 
   public cmdGoToInicio = (): void => {
-    console.log("Navegar a inicio/dashboard");
     this.router.go({ path: "dashboard" });
   };
 
   // ================================================================
-  // COMMANDS - CLAVES PRESUPUESTALES
+  // COMMANDS — CLAVES PRESUPUESTALES
   // ================================================================
 
-  public cmdAgregarClavePresupuestal = (): void => {
+  public cmdAgregarClave = (): void => {
+    const clave = this.catClaves().find(c => c.value === this.frmClaveValue());
 
-    const selectedClavePresupuestal = this.catClavesPresupuestales()
-      .find(item => item.value === this.frmClavePresupuestalValue());
-
-    // if (!this.frmClavePresupuestalValue() || !this.frmClavePresupuestalPartidaEspecifica() || this.frmClavePresupuestalMontoAsignado() < 1) {
-    //   alert("Faltan datos de la clave presupuestal.");
-    //   return;
-    // }
-
-    if (!selectedClavePresupuestal || !this.frmClavePresupuestalPartidaEspecifica || this.frmClavePresupuestalMontoAsignado() < 1) {
-      alert("Faltan datos de la clave presupuestal");
+    if (!clave || this.frmClaveMontoAsignado() < 1) {
+      alert("Selecciona una clave presupuestal y asigna un monto mayor a 0.");
       return;
     }
 
-    const item: ClavePresupuestalItem = {
-      idLocal: this.seqClavePresupuestal++,
-      clavePresupuestal: selectedClavePresupuestal.value,
-      //descripcion: selected.label,
-      partidaEspecifica: this.frmClavePresupuestalPartidaEspecifica(),
-      montoAsignado: Number(this.frmClavePresupuestalMontoAsignado() || 0)
-    };
+    // Verificar que la clave no esté ya en la lista
+    const yaExiste = this.listClaves().some(c => c.clave === clave.value);
+    if (yaExiste) {
+      alert("Esta clave presupuestal ya fue agregada.");
+      return;
+    }
 
-    this.listClavesPresupuestales.push(item);
-    this.clearFrmClavePresupuestal();
+    this.listClaves.push({
+      idLocal: this.seqClave++,
+      clave: clave.value,
+      partidaEspecifica: this.frmClavePartidaEspecifica(),
+      montoAsignado: Number(this.frmClaveMontoAsignado())
+    });
+
+    this.clearFrmClave();
   };
 
-  public cmdEliminarClavePresupuestal = (clave: ClavePresupuestalItem): void => {
-    this.listClavesPresupuestales.remove(clave);
+  public cmdEliminarClave = (item: ClavePresupuestalItem): void => {
+    this.listClaves.remove(item);
   };
 
-  private clearFrmClavePresupuestal(): void {
-    this.frmClavePresupuestalValue(null);
-    this.frmClavePresupuestalPartidaEspecifica("");
-    this.frmClavePresupuestalMontoAsignado(0);
+  private clearFrmClave(): void {
+    this.frmClaveValue(null);
+    this.frmClavePartidaEspecifica("");
+    this.frmClaveMontoAsignado(0);
   }
 
   // ================================================================
-  // COMMANDS - BIENES
+  // COMMANDS — BIENES
   // ================================================================
 
+  /**
+   * Agrega un bien al listado.
+   * La descripción técnica se toma del observable frmBienDescripcionHtml,
+   * que debe ser actualizado por el editor Quill antes de llamar este método.
+   * Ver contrato.html para la integración con Quill.
+   */
   public cmdAgregarBien = (): void => {
+    const idUnidad = this.frmBienIdUnidadMedida();
+    const unidad   = this.catUnidadesMedida().find(u => Number(u.value) === Number(idUnidad));
 
-    const selectedUnidadMedida = this.catUnidadesMedida()
-      .find(item => item.value === this.frmBienUnidadMedidaValue());
-
-    if (!selectedUnidadMedida ||
-      !this.frmBienDescripcion() ||
-      this.frmBienCantidad() < 1 ||
-      this.frmBienPrecioUnitario() < 1
-    ) {
-      alert("Faltan datos del producto.");
+    if (!idUnidad || !unidad) {
+      alert("Selecciona una unidad de medida.");
       return;
     }
 
-    const item: BienContratoItem = {
-      idLocal: this.seqBien++,
-      lote: Number(this.frmBienLote() || 0),
-      partida: Number(this.frmBienPartida() || 0),
-      codigoUnidadMedida: selectedUnidadMedida.value,
-      descripcionTecnica: this.frmBienDescripcion(),
-      cantidad: Number(this.frmBienCantidad() || 0),
-      precioUnitario: Number(this.frmBienPrecioUnitario() || 0),
-      subtotal: Number(this.calcBienSubtotal() || 0)
-    };
+    if (!this.frmBienDescripcionHtml() || this.frmBienDescripcionHtml() === "<p><br></p>") {
+      alert("Escribe la descripción técnica del bien.");
+      return;
+    }
 
-    this.listBienes.push(item);
+    if (this.frmBienCantidad() < 1 || this.frmBienPrecioUnitario() < 1) {
+      alert("La cantidad y el precio unitario deben ser mayores a 0.");
+      return;
+    }
+
+    this.listBienes.push({
+      idLocal:           this.seqBien++,
+      idContratoBien:    null,          // null = nuevo, el backend genera el ID
+      lote:              Number(this.frmBienLote()),
+      partida:           Number(this.frmBienPartida()),
+      descripcionTecnica: this.frmBienDescripcionHtml(),
+      idUnidadMedida:    idUnidad,
+      unidadMedida:      unidad.label,  // nombre para mostrar en el listado
+      cantidad:          Number(this.frmBienCantidad()),
+      precioUnitario:    Number(this.frmBienPrecioUnitario()),
+      subtotal:          Number(this.calcBienSubtotal())
+    });
+
+    console.log("Bien agregado:", {
+      lote: this.frmBienLote(),
+      partida: this.frmBienPartida(),
+      descripcionTecnica: this.frmBienDescripcionHtml(),
+      idUnidadMedida: this.frmBienIdUnidadMedida(),
+      cantidad: this.frmBienCantidad(),
+      precioUnitario: this.frmBienPrecioUnitario(),
+      subtotal: this.calcBienSubtotal()
+    });
+
     this.clearFrmBien();
   };
 
@@ -456,193 +567,300 @@ class NuevoContratoViewModel {
     this.listBienes.remove(bien);
   };
 
+  /**
+   * Abre el dialog de descripción del bien.
+   * Renderiza el HTML de Quill directamente en el dialog.
+   * Ver contrato.html para el binding con innerHTML.
+   */
   public cmdVerDescripcionBien = (bien: BienContratoItem): void => {
     this.uiDescripcionBienSeleccionada(bien.descripcionTecnica);
-    this.cmdOpenBienDescripcionDialog();
+    this.uiBienDescripcionDialogOpen(true);
   };
 
-  public cmdOpenBienDescripcionDialog = (): void => {
-    this.uiBienDescripcionDialogOpened(true);
-  };
-
-  public cmdCloseBienDescripcionDialog = (): void => {
-    this.uiBienDescripcionDialogOpened(false);
+  public cmdCerrarDescripcionDialog = (): void => {
+    this.uiBienDescripcionDialogOpen(false);
   };
 
   private clearFrmBien(): void {
-    this.frmBienLote(0);
-    this.frmBienPartida(0);
-    this.frmBienUnidadMedidaValue(null);
-    this.frmBienDescripcion("");
-    this.frmBienCantidad(0);
+    this.frmBienLote(1);
+    this.frmBienPartida(1);
+    this.frmBienIdUnidadMedida(null);
+    this.frmBienDescripcionHtml("");
+    this.frmBienCantidad(1);
     this.frmBienPrecioUnitario(0);
+    // El reset del editor Quill se maneja en el HTML con un evento custom
+    document.dispatchEvent(new CustomEvent("quill:reset"));
   }
 
   // ================================================================
-  // COMMANDS - CONTRATO
+  // COMMANDS — CONTRATO
   // ================================================================
 
+  public cmdGuardarBorrador = async (): Promise<void> => {
+    this.uiGuardando(true);
+    this.uiError("");
 
-  public cmdEnviarAlmacen = (): void => {
-    const payload = this.mapContratoToPayload();
-    console.log("Enviar a almacén >>", payload);
+    console.log("=== PAYLOAD QUE SE ENVIARÁ AL BACKEND ===", JSON.stringify(this.mapUIToRequest(), null, 2));
+
+    // try {
+    //   const payload = this.mapUIToRequest();
+    //   const isUpdate = !!this.contratoId();
+    //   const method   = isUpdate ? "PUT" : "POST";
+    //   const url      = isUpdate
+    //     ? `http://localhost:8080/api/contratos/${this.contratoId()}`
+    //     : "http://localhost:8080/api/contratos";
+
+    //   const res = await fetch(url, {
+    //     method,
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify(payload)
+    //   });
+
+    //   if (!res.ok) {
+    //     const errBody = await res.text();
+    //     throw new Error(`HTTP ${res.status}: ${errBody}`);
+    //   }
+
+    //   const saved: ContratoResponsePayload = await res.json();
+
+    //   // Si era nuevo, actualizar el ID para que los siguientes guardados sean PUT
+    //   if (!isUpdate) {
+    //     this.contratoId(saved.idContrato);
+    //     this.uiModo("EDICION");
+    //   }
+
+    //   // Recargar el contrato para sincronizar IDs de bienes y claves generados por el backend
+    //   await this.loadContrato(saved.idContrato);
+
+    //   console.log("Contrato guardado:", saved.idContrato);
+    // } catch (err: any) {
+    //   console.error("Error al guardar:", err);
+    //   this.uiError(err.message || "Error desconocido al guardar.");
+    // } finally {
+    //   this.uiGuardando(false);
+    // }
   };
-    
 
-  
-public cmdGuardarBorrador = async (): Promise<void> => {
-  try {
-    const payload: ContratoPayload = this.mapContratoToPayload();
-    console.log("Guardar borrador >>", payload);
+  public cmdEnviarAlmacen = async (): Promise<void> => {
+    if (!this.contratoId()) {
+      alert("Guarda el contrato antes de enviarlo al almacén.");
+      return;
+    }
 
-    const isUpdate = !!this.contratoId();
-    const method = isUpdate ? "PUT" : "POST";
-    const url = isUpdate
-      ? `http://localhost:8080/api/contratos/${this.contratoId()}`
-      : "http://localhost:8080/api/contratos";
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/contratos/${this.contratoId()}/enviar-almacen`,
+        { method: "PATCH" }
+      );
 
-    console.log(isUpdate ? "Actualizar contrato existente" : "Crear nuevo contrato", isUpdate ? this.contratoId() : "");
+      if (!res.ok) {
+        const errBody = await res.json();
+        // El backend devuelve { mensaje, errores: string[] }
+        const errores = errBody.errores?.join("\n") || "Error desconocido.";
+        alert("No se puede enviar al almacén:\n\n" + errores);
+        return;
+      }
 
-    const savedContrato = await this.saveContract(method, url, payload);
-    console.log("Contract saved successfully:", savedContrato);
-
-    // Optional: Update UI state (e.g., show success message or refresh data)
-    // this.showSuccessMessage("Borrador guardado exitosamente");
-  } catch (error) {
-    console.error("Error saving contract draft:", error);
-    // Handle user-facing error (e.g., show alert or update observable)
-    // this.showErrorMessage(error.message || "Error desconocido al guardar el borrador");
-    throw error; // Re-throw if needed for higher-level handling
-  }
-};
-
-private async saveContract(method: string, url: string, payload: ContratoPayload): Promise<any> {
-  const response = await fetch(url, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorBody}`);
-  }
-
-  return await response.json();
-}
-
+      this.uiEstatusContrato("Pendiente de recibir");
+      alert("Contrato enviado al almacén correctamente.");
+      this.router.go({ path: "dashboard" });
+    } catch (err: any) {
+      console.error("Error al enviar al almacén:", err);
+      this.uiError(err.message || "Error al enviar al almacén.");
+    }
+  };
 
   // ================================================================
   // MAPPERS
   // ================================================================
 
-  private mapContratoToPayload(): ContratoPayload {
-
+  /**
+   * UI → Request payload (hacia el backend)
+   */
+  private mapUIToRequest(): ContratoRequestPayload {
     return {
-      idContrato: this.contratoId(),
-      numeroContrato: this.frmContratoNumero(),
-      adquisicion: this.frmContratoAdquisicion(),
-      fechaOrigen: null,
-      fechaTentativaLlegada: null,
-      folioOrigen: this.frmContratoCotizacion() || null,
-      idEstatusContrato: null,
-      // fechaOrigen: this.frmContratoFechaOrigen() || null,
-      // fechaTentativaLlegada: this.frmContratoFechaTentativaLlegada() || null,
-      // folioOrigen: this.frmContratoFolioOrigen() || null,
-      // idEstatusContrato: this.frmContratoEstatusId() || null,
+      numeroContrato:        this.frmNumeroContrato(),
+      adquisicion:           this.frmAdquisicion(),
+      fechaTentativaLlegada: this.toDateTime(this.frmFechaTentativaLlegada()),
+      montoSinImpuestos:     this.frmMontoSinImpuestos(),
+      impuestos:             this.frmImpuestos(),
+      montoTotal:            this.calcMontoTotal(),
 
-      comprador: {
-        id: null,
-        dependencia: this.frmCompradorTitularDependencia(),
-        nombre: this.frmCompradorTitularNombre(),
-        cargo: this.frmCompradorTitularCaracter()
-      },
-      administradorContrato: {
-        id: null,
-        dependencia: this.frmCompradorAdministradorDependencia(),
-        nombre: this.frmCompradorAdministradorNombre(),
-        cargo: this.frmCompradorAdministradorCaracter()
-      },
+      proveedor: this.frmProveedorRazonSocial() ? {
+        razonSocial:     this.frmProveedorRazonSocial(),
+        domicilioFiscal: this.frmProveedorDomicilioFiscal(),
+        representante:   this.frmProveedorRepresentante(),
+        caracter:        this.frmProveedorCaracter()
+      } : null,
 
-      proveedor: {
-        razonSocial: this.frmProveedorEmpresa(),
-        representanteEmpresa: this.frmProveedorRepresentante(),
-        direccion: this.frmProveedorDomicilioFiscal(),
-        caracterRepresentante: this.frmProveedorCaracter()
-      },
-      detallesPago: {
-        montoSinImpuestos: Number(this.frmPagoMontoSinImpuestos() || 0),
-        impuestos: Number(this.frmPagoImpuestos() || 0),
-        montoTotal: Number(this.calcPagoMontoTotal() || 0),
-        montoAnticipo: null,
-        montoFiniquito: null,
-        porcentajeAnticipo: null,
-        porcentajeFiniquito: null,
-        tieneAnticipo: null,
-        tieneFiniquito: null,
-        numeroExhibiciones: 0
-      },
+      comprador: this.frmCompradorId() ? {
+        id: this.frmCompradorId()
+      } : null,
+
+      administradorContrato: this.frmAdministradorId() ? {
+        id: this.frmAdministradorId()
+      } : null,
+
       beneficiarios: this.frmBeneficiariosTexto(),
-      clavesPresupuestales: this.listClavesPresupuestales(),
-      estatusContrato: null,
-      productos: this.listBienes()
-      //estatusContrato: this.frmContratoEstatusDescripcion()
+
+      clavesPresupuestales: this.listClaves().map(c => ({
+        clave:            c.clave,
+        partidaEspecifica: c.partidaEspecifica,
+        montoAsignado:    c.montoAsignado
+      })),
+
+      bienes: this.listBienes().map(b => ({
+        idContratoBien:    b.idContratoBien,
+        lote:              b.lote,
+        partida:           b.partida,
+        descripcionTecnica: b.descripcionTecnica,
+        idUnidadMedida:    b.idUnidadMedida,
+        cantidad:          b.cantidad,
+        precioUnitario:    b.precioUnitario,
+        subtotal:          b.subtotal
+      }))
     };
   }
 
+  /**
+   * Response payload (desde el backend) → UI
+   * Se llama al cargar el contrato en modo edición y después de guardar.
+   */
+  private mapResponseToUI(data: ContratoResponsePayload): void {
 
-  private mapPayloadToContratoUI(payload: ContratoPayload): void {
-    
-    // Cargar datos del Contrato
-    this.frmContratoNumero(payload.numeroContrato);
-    this.frmContratoAdquisicion(payload.adquisicion);
-    this.frmContratoCotizacion(payload.folioOrigen || "");
+    console.log("=== DIAGNÓSTICO CONTRATO ===");
 
-    // Cargar datos del Comprador - Titular
-    this.frmCompradorTitularDependencia(payload.comprador.dependencia);
-    this.frmCompradorTitularNombre(payload.comprador.nombre);
-    this.frmCompradorTitularCaracter(payload.comprador.cargo);
+    console.log("1. Datos básicos:");
+    // Datos básicos
+    this.frmNumeroContrato(data.numeroContrato);
+    this.frmAdquisicion(data.adquisicion);
+    this.frmFechaTentativaLlegada(this.toDateOnly(data.fechaTentativaLlegada));
 
-    // Cargar datos del Administrador del Contrato
-    this.frmCompradorAdministradorDependencia(payload.administradorContrato.dependencia);
-    this.frmCompradorAdministradorNombre(payload.administradorContrato.nombre);
-    this.frmCompradorAdministradorCaracter(payload.administradorContrato.cargo);
+    console.log("2. Estatus:");
+    // Estatus en español
+    this.uiEstatusContrato(this.mapEstatusToLabel(data.estatus));
 
-    // Cargar Beneficiarios
-    this.frmProveedorEmpresa(payload.proveedor.razonSocial);
-    this.frmProveedorRepresentante(payload.proveedor.representanteEmpresa);
-    this.frmProveedorDomicilioFiscal(payload.proveedor.direccion);
-    this.frmProveedorCaracter(payload.proveedor.caracterRepresentante);
+    console.log("3. Montos:");
+    // Montos
+    this.frmMontoSinImpuestos(data.montoSinImpuestos);
+    this.frmImpuestos(data.impuestos);
 
-    // Cargar Beneficiarios
-    this.frmBeneficiariosTexto(payload.beneficiarios);
-    
-    // Cargar claves presupuestales
-    const claves = payload.clavesPresupuestales.map((item, index) => ({
-      idLocal: index + 1,
-      clavePresupuestal: item.clavePresupuestal,
-      partidaEspecifica: item.partidaEspecifica,
-      montoAsignado: item.montoAsignado
-    }));
-    this.listClavesPresupuestales(claves);
-    this.seqClavePresupuestal = claves.length + 1;
-  
 
-    // Cargar bienes / productos
-    const bienesCargados = payload.productos.map((item, index) => ({
-      idLocal: index + 1,
-      lote: item.lote,
-      partida: item.partida,
-      descripcionTecnica: item.descripcionTecnica,
-      codigoUnidadMedida: item.codigoUnidadMedida,
-      cantidad: item.cantidad,
-      precioUnitario: item.precioUnitario,
-      subtotal: item.subtotal
-    }));
-    this.listBienes(bienesCargados);
-    this.seqBien = bienesCargados.length + 1;
+    // Proveedor
+    if (data.proveedor) {
+        console.log("4. Proveedor:");
+      this.frmProveedorRazonSocial(data.proveedor?.razonSocial || "");
+      this.frmProveedorDomicilioFiscal(data.proveedor?.domicilioFiscal || "");
+      this.frmProveedorRepresentante(data.proveedor?.representante || "");
+      this.frmProveedorCaracter(data.proveedor?.caracter || "");
+    }
+
+    // Comprador — seleccionar en dropdown y actualizar campos informativos
+    if (data.comprador) {
+        console.log("5. Comprador:");
+      this.frmCompradorId(data.comprador.id);
+      this.uiCompradorNombre(data.comprador?.nombre || "");
+      this.uiCompradorDependencia(data.comprador?.dependencia || "");
+      this.uiCompradorCaracter(data.comprador?.caracter || "");
+    }
+
+    // Administrador del contrato
+    if (data.administradorContrato) {
+        console.log("6. Administrador del contrato:");
+      this.frmAdministradorId(data.administradorContrato.id);
+      this.uiAdministradorNombre(data.administradorContrato?.nombre || "");
+      this.uiAdministradorDependencia(data.administradorContrato?.dependencia || "");
+      this.uiAdministradorCaracter(data.administradorContrato?.caracter || "");
+    }
+
+    // Beneficiarios
+    console.log("7. Beneficiarios:");
+    this.frmBeneficiariosTexto(data.beneficiarios || "");
+
+    // Claves presupuestales
+    console.log("8. Claves presupuestales:");
+    this.listClaves(
+      data.clavesPresupuestales.map((c, i) => ({
+        idLocal:           i + 1,
+        clave:             c.clave,
+        partidaEspecifica: c.partidaEspecifica,
+        montoAsignado:     c.montoAsignado
+      }))
+    );
+    this.seqClave = data.clavesPresupuestales?.length + 1;
+
+    console.log("9. Bienes:");
+    // Bienes — incluyen idContratoBien para que el PUT pueda hacer upsert
+    this.listBienes(
+      data.bienes.map((b, i) => ({
+        idLocal:           i + 1,
+        idContratoBien:    b.idContratoBien,
+        lote:              b.lote,
+        partida:           b.partida,
+        descripcionTecnica: b.descripcionTecnica,
+        idUnidadMedida:    b.idUnidadMedida,
+        unidadMedida:      b.unidadMedida,
+        cantidad:          b.cantidad,
+        precioUnitario:    b.precioUnitario,
+        subtotal:          b.subtotal
+      }))
+    );
+    this.seqBien = data.bienes.length + 1;
+
+    console.log("=== FIN DIAGNÓSTICO ===");
   }
 
+  /**
+   * Convierte el enum del backend a etiqueta en español para la UI.
+   */
+  private mapEstatusToLabel(estatus: string): string {
+    const etiquetas: Record<string, string> = {
+      CAPTURA:               "En captura",
+      POR_RECIBIR:           "Pendiente de recibir",
+      EN_ALMACEN:            "En almacén",
+      LISTO_PARA_ENTREGAR:   "Listo para entregar",
+      ENTREGA_PARCIAL:       "Entrega parcial",
+      ENTREGADO:             "Entregado",
+      CERRADO:               "Cerrado"
+    };
+    return etiquetas[estatus] || estatus;
+  }
+
+    // Convierte "2026-06-15T09:00:00" → "2026-06-15" para el input-date-text
+    private toDateOnly(isoDateTime: string | null): string {
+        console.log("Convirtiendo fecha:", isoDateTime);
+        if (!isoDateTime) return this.calcDiasHabiles(10); // valor por defecto si no hay fecha);
+        return isoDateTime.split("T")[0];
+    }
+
+    // Convierte "2026-06-15" → "2026-06-15T00:00:00" para el backend
+    private toDateTime(dateOnly: string | null): string | null {
+        if (!dateOnly) return null;
+        return dateOnly + "T00:00:00";
+    }
+
+     // Utilidad: calcula N días hábiles a partir de hoy
+    private calcDiasHabiles(diasHabiles: number): string {
+        const fecha = new Date();
+        let contados = 0;
+
+        while (contados < diasHabiles) {
+            fecha.setDate(fecha.getDate() + 1);
+            const diaSemana = fecha.getDay();
+            // 0 = domingo, 6 = sábado
+            if (diaSemana !== 0 && diaSemana !== 6) {
+                contados++;
+            }
+        }
+        // Retorna formato YYYY-MM-DD
+        return fecha.toISOString().split("T")[0];
+    }
+
+    // Converter para mostrar dd/MM/yyyy al usuario
+    // El valor interno sigue siendo YYYY-MM-DD (ISO)
+    public converterFecha = new IntlDateTimeConverter({
+        pattern: "dd/MM/yyyy"
+    });
 
 }
 

@@ -20,7 +20,7 @@ type ContratoListaItem = {
   numeroContrato: string;
   adquisicion: string;
   proveedor: string;
-  estatusContrato: string;
+  estatus: string;
 };
 
 class DashboardViewModel {
@@ -45,19 +45,19 @@ class DashboardViewModel {
 
     switch (status) {
 
-      case "Contrato en captura progresiva":
+      case "CAPTURA":
         badgeClass += "oj-badge-success";
         break;
 
-      case "Pendiente de firma":
+      case "POR_RECIBIR":
         badgeClass += "oj-badge-warning";
         break;
 
-      case "Contrato finalizado":
+      case "EN_ALMACEN":
         badgeClass += "oj-badge-danger";
         break;
 
-      case "Todos los productos fueron entregados":
+      case "CERRADO":
         badgeClass += "oj-badge-info";
         break;
 
@@ -117,7 +117,7 @@ class DashboardViewModel {
       numeroContrato: contrato.numeroContrato,
       adquisicion: contrato.adquisicion,
       proveedor: contrato.proveedor?.razonSocial ?? "Pendiente de asignar",
-      estatusContrato: contrato.estatusContrato,
+      estatus: contrato.estatus,
     }));
 
     this.listContratos(items);

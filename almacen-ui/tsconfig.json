@@ -29,6 +29,9 @@
       ],
       "preact": [
         "./node_modules/preact"
+      ],
+      "text!*": [
+        "./*"
       ]
     },
     "declaration": true,
