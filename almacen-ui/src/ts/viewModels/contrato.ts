@@ -20,6 +20,7 @@ import * as ko from "knockout";
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
 import { IntlDateTimeConverter } from "ojs/ojconverter-datetime";
 import "../jet-composites/quill-editor/quill-editor"; // Importar el componente QuillEditorViewModel para que se registre globalmente
+import { mapEstatusToLabel } from "../utils/contratoUtils";
 
 import "oj-c/collapsible";
 import "oj-c/list-view";
@@ -602,43 +603,43 @@ class NuevoContratoViewModel {
 
     console.log("=== PAYLOAD QUE SE ENVIARÁ AL BACKEND ===", JSON.stringify(this.mapUIToRequest(), null, 2));
 
-    // try {
-    //   const payload = this.mapUIToRequest();
-    //   const isUpdate = !!this.contratoId();
-    //   const method   = isUpdate ? "PUT" : "POST";
-    //   const url      = isUpdate
-    //     ? `http://localhost:8080/api/contratos/${this.contratoId()}`
-    //     : "http://localhost:8080/api/contratos";
+    try {
+      const payload = this.mapUIToRequest();
+      const isUpdate = !!this.contratoId();
+      const method   = isUpdate ? "PUT" : "POST";
+      const url      = isUpdate
+        ? `http://localhost:8080/api/contratos/${this.contratoId()}`
+        : "http://localhost:8080/api/contratos";
 
-    //   const res = await fetch(url, {
-    //     method,
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify(payload)
-    //   });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-    //   if (!res.ok) {
-    //     const errBody = await res.text();
-    //     throw new Error(`HTTP ${res.status}: ${errBody}`);
-    //   }
+      if (!res.ok) {
+        const errBody = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errBody}`);
+      }
 
-    //   const saved: ContratoResponsePayload = await res.json();
+      const saved: ContratoResponsePayload = await res.json();
 
-    //   // Si era nuevo, actualizar el ID para que los siguientes guardados sean PUT
-    //   if (!isUpdate) {
-    //     this.contratoId(saved.idContrato);
-    //     this.uiModo("EDICION");
-    //   }
+      // Si era nuevo, actualizar el ID para que los siguientes guardados sean PUT
+      if (!isUpdate) {
+        this.contratoId(saved.idContrato);
+        this.uiModo("EDICION");
+      }
 
-    //   // Recargar el contrato para sincronizar IDs de bienes y claves generados por el backend
-    //   await this.loadContrato(saved.idContrato);
+      // Recargar el contrato para sincronizar IDs de bienes y claves generados por el backend
+      await this.loadContrato(saved.idContrato);
 
-    //   console.log("Contrato guardado:", saved.idContrato);
-    // } catch (err: any) {
-    //   console.error("Error al guardar:", err);
-    //   this.uiError(err.message || "Error desconocido al guardar.");
-    // } finally {
-    //   this.uiGuardando(false);
-    // }
+      console.log("Contrato guardado:", saved.idContrato);
+    } catch (err: any) {
+      console.error("Error al guardar:", err);
+      this.uiError(err.message || "Error desconocido al guardar.");
+    } finally {
+      this.uiGuardando(false);
+    }
   };
 
   public cmdEnviarAlmacen = async (): Promise<void> => {
@@ -728,19 +729,14 @@ class NuevoContratoViewModel {
    */
   private mapResponseToUI(data: ContratoResponsePayload): void {
 
-    console.log("=== DIAGNÓSTICO CONTRATO ===");
-
-    console.log("1. Datos básicos:");
     // Datos básicos
     this.frmNumeroContrato(data.numeroContrato);
     this.frmAdquisicion(data.adquisicion);
     this.frmFechaTentativaLlegada(this.toDateOnly(data.fechaTentativaLlegada));
 
-    console.log("2. Estatus:");
-    // Estatus en español
-    this.uiEstatusContrato(this.mapEstatusToLabel(data.estatus));
+    // Etiqueta de estatus traducida para la UI
+    this.uiEstatusContrato(mapEstatusToLabel(data.estatus));
 
-    console.log("3. Montos:");
     // Montos
     this.frmMontoSinImpuestos(data.montoSinImpuestos);
     this.frmImpuestos(data.impuestos);
@@ -748,7 +744,6 @@ class NuevoContratoViewModel {
 
     // Proveedor
     if (data.proveedor) {
-        console.log("4. Proveedor:");
       this.frmProveedorRazonSocial(data.proveedor?.razonSocial || "");
       this.frmProveedorDomicilioFiscal(data.proveedor?.domicilioFiscal || "");
       this.frmProveedorRepresentante(data.proveedor?.representante || "");
@@ -757,7 +752,6 @@ class NuevoContratoViewModel {
 
     // Comprador — seleccionar en dropdown y actualizar campos informativos
     if (data.comprador) {
-        console.log("5. Comprador:");
       this.frmCompradorId(data.comprador.id);
       this.uiCompradorNombre(data.comprador?.nombre || "");
       this.uiCompradorDependencia(data.comprador?.dependencia || "");
@@ -766,7 +760,6 @@ class NuevoContratoViewModel {
 
     // Administrador del contrato
     if (data.administradorContrato) {
-        console.log("6. Administrador del contrato:");
       this.frmAdministradorId(data.administradorContrato.id);
       this.uiAdministradorNombre(data.administradorContrato?.nombre || "");
       this.uiAdministradorDependencia(data.administradorContrato?.dependencia || "");
@@ -774,11 +767,9 @@ class NuevoContratoViewModel {
     }
 
     // Beneficiarios
-    console.log("7. Beneficiarios:");
     this.frmBeneficiariosTexto(data.beneficiarios || "");
 
     // Claves presupuestales
-    console.log("8. Claves presupuestales:");
     this.listClaves(
       data.clavesPresupuestales.map((c, i) => ({
         idLocal:           i + 1,
@@ -789,7 +780,6 @@ class NuevoContratoViewModel {
     );
     this.seqClave = data.clavesPresupuestales?.length + 1;
 
-    console.log("9. Bienes:");
     // Bienes — incluyen idContratoBien para que el PUT pueda hacer upsert
     this.listBienes(
       data.bienes.map((b, i) => ({
@@ -807,24 +797,23 @@ class NuevoContratoViewModel {
     );
     this.seqBien = data.bienes.length + 1;
 
-    console.log("=== FIN DIAGNÓSTICO ===");
   }
 
-  /**
-   * Convierte el enum del backend a etiqueta en español para la UI.
-   */
-  private mapEstatusToLabel(estatus: string): string {
-    const etiquetas: Record<string, string> = {
-      CAPTURA:               "En captura",
-      POR_RECIBIR:           "Pendiente de recibir",
-      EN_ALMACEN:            "En almacén",
-      LISTO_PARA_ENTREGAR:   "Listo para entregar",
-      ENTREGA_PARCIAL:       "Entrega parcial",
-      ENTREGADO:             "Entregado",
-      CERRADO:               "Cerrado"
-    };
-    return etiquetas[estatus] || estatus;
-  }
+  // /**
+  //  * Convierte el enum del backend a etiqueta en español para la UI.
+  //  */
+  // private mapEstatusToLabel(estatus: string): string {
+  //   const etiquetas: Record<string, string> = {
+  //     CAPTURA:               "En captura",
+  //     POR_RECIBIR:           "Pendiente de recibir",
+  //     EN_ALMACEN:            "En almacén",
+  //     LISTO_PARA_ENTREGAR:   "Listo para entregar",
+  //     ENTREGA_PARCIAL:       "Entrega parcial",
+  //     ENTREGADO:             "Entregado",
+  //     CERRADO:               "Cerrado"
+  //   };
+  //   return etiquetas[estatus] || estatus;
+  // }
 
     // Convierte "2026-06-15T09:00:00" → "2026-06-15" para el input-date-text
     private toDateOnly(isoDateTime: string | null): string {

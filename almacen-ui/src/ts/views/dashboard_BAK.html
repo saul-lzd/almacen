@@ -1,0 +1,85 @@
+<!--
+ Copyright (c) 2014, 2026, Oracle and/or its affiliates.
+ Licensed under The Universal Permissive License (UPL), Version 1.0
+ as shown at https://oss.oracle.com/licenses/upl/
+ -->
+<div class="oj-hybrid-padding">
+    <h4>Sistema de Gestion de Almacen</h4>
+    <h4 class="oj-web-applayout-header-title">Administra contratos, productos y entregas</h4>
+
+    <div class="oj-flex-bar oj-sm-align-items-center">
+        <div class="oj-flex-bar-end">
+            <oj-c-button label="Nuevo Contrato" on-oj-action="[[cmdGoToCreateContrato]]">
+                <span slot="startIcon" class="oj-ux-ico-plus"></span>
+            </oj-c-button>
+        </div>
+    </div>
+
+    <div class="oj-panel oj-sm-margin-8x-top">
+        <oj-c-list-view id="contractsList" aria-label="Lista de contratos" data="[[dpContratos]]"
+            gridlines.item="visible">
+
+            <template slot="itemTemplate" data-oj-as="item">
+                <div class="contrato-item oj-flex-bar oj-sm-padding-4x-vertical">
+                    <div class="oj-flex-bar-start oj-sm-margin-8x-horizontal oj-sm-align-items-center">
+                        <oj-c-avatar icon-class="oj-ux-ico-data-document" aria-label="Contrato Icon"
+                            title="Contrato Icon" background="blue" shape="circle" size="sm"></oj-c-avatar>
+                    </div>
+                    <div class="oj-flex-bar-middle">
+                        <div class="oj-flex oj-sm-flex-direction-column">
+                            <div class="oj-flex-item oj-typography-subheading-sm oj-sm-padding-2x-bottom">
+                                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                            </div>
+                            <div class="oj-flex-item oj-flex oj-sm-align-items-center">
+                                <span class="oj-ux-ico-package"> </span>
+                                <div class="oj-sm-margin-2x-horizontal">
+                                    <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+                                </div>
+                            </div>
+                            <div class="oj-flex-item oj-flex oj-sm-align-items-center">
+                                <span class="oj-ux-ico-truck"> </span>
+                                <div class="oj-sm-margin-2x-horizontal">
+                                    <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="oj-flex oj-sm-4 oj-sm-align-items-center">
+                        <div class="oj-badge oj-badge-warning oj-badge-subtle" :class="[[getStatusBadgeClass(item.data.estatus)]]">
+                            <oj-bind-text value="[[item.data.estatus]]"></oj-bind-text>
+                        </div>
+                        
+                    </div>
+                    <div class="oj-flex-bar-end oj-sm-margin-4x-horizontal">
+                        <oj-c-button label="Beneficiarios" chroming="outlined"
+                            on-oj-action="[[verBeneficiarios]]">
+                        </oj-c-button>
+                        <oj-c-button label="Continuar Editando" chroming="outlined"
+                            on-oj-action="[[cmdEditarContrato]]">
+                        </oj-c-button>
+                    </div>
+                </div>
+
+            </template>
+
+        </oj-c-list-view>
+
+    </div>
+
+    <!-- <oj-c-dialog opened="{{isDialogOpened}}" id="modalDialog1" dialog-title="Nuevo Contrato" min-width="65vw"
+        height="90vh">
+
+            <div slot="body">
+                <oj-c-tab-bar data="[[data]]" selection="{{selectedItem}}" edge="top" layout="stretch" display="stacked">
+                </oj-c-tab-bar>
+            </div>
+            <div slot="footer">
+                <oj-c-button id="cancelButton" on-oj-action="[[closeDialog]]" label="Cancelar">
+                    <span slot="startIcon" class="oj-ux-ico-close"></span>
+                </oj-c-button>
+                <oj-c-button id="okButton" on-oj-action="[[closeDialog]]" label="Guardar">
+                    <span slot="startIcon" class="oj-ux-ico-save"></span>
+                </oj-c-button>
+            </div>
+    </oj-c-dialog> -->
+</div>

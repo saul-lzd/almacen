@@ -1,149 +1,290 @@
 /**
- * @license
- * Copyright (c) 2014, 2026, Oracle and/or its affiliates.
- * Licensed under The Universal Permissive License (UPL), Version 1.0
- * as shown at https://oss.oracle.com/licenses/upl/
- * @ignore
+ * ViewModel: Dashboard — Tablero Kanban de Contratos
+ *
+ * Convencion de nombres igual que contrato.ts:
+ * - list*: arrays de datos
+ * - dp*:   DataProvider para componentes JET
+ * - ui*:   estado visual
+ * - cmd*:  acciones desde UI
+ * - load*: carga desde API
+ * - map*:  transformaciones
  */
+
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
-import ArrayDataProvider = require("ojs/ojarraydataprovider");
+import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 
 import "oj-c/list-view";
 import "oj-c/button";
-import 'oj-c/dialog';
+import "oj-c/dialog";
 import "oj-c/avatar";
 
+// ================================================================
+// TIPOS
+// ================================================================
 
-type ContratoListaItem = {
-  idContrato: number;
-  numeroContrato: string;
-  adquisicion: string;
-  proveedor: string;
-  estatus: string;
+type EstatusContrato =
+    | "CAPTURA"
+    | "POR_RECIBIR"
+    | "EN_ALMACEN"
+    | "LISTO_PARA_ENTREGAR"
+    | "ENTREGA_PARCIAL"
+    | "ENTREGADO"
+    | "CERRADO";
+
+type ContratoKanbanItem = {
+    idContrato: number;
+    numeroContrato: string;
+    adquisicion: string;
+    estatus: EstatusContrato;
+    estatusLabel: string;
+    estatusBadge: string;
+    proveedor: string;
+    montoTotal: number | null;
+    fechaTentativaLlegada: string | null;
+    beneficiarios: string;
+    totalBienes: number;
 };
 
+// Columnas del Kanban para el administrador
+const COLUMNAS_ADMIN: { key: EstatusContrato; label: string }[] = [
+    { key: "CAPTURA",             label: "En captura" },
+    { key: "POR_RECIBIR",         label: "Por recibir" },
+    { key: "EN_ALMACEN",          label: "En almacén" },
+    { key: "LISTO_PARA_ENTREGAR", label: "Listo p/ entregar" },
+    { key: "CERRADO",             label: "Cerrado" }
+];
+
+// ================================================================
+// VIEWMODEL
+// ================================================================
+
 class DashboardViewModel {
-  // ================================================================
-  // ROUTER / UI STATE
-  // ================================================================
-  private router;
-  //public isDialogOpened = ko.observable(false);
 
-  // ================================================================
-  // CONTRATO - TABLE
-  // ================================================================
+    private router: any;
 
-  public listContratos = ko.observableArray<ContratoListaItem>([]);
-  public dpContratos = new ArrayDataProvider(this.listContratos, {
-      keyAttributes: "idContrato",
+    // ----------------------------------------------------------------
+    // ESTADO DE CARGA
+    // ----------------------------------------------------------------
+    public uiCargando = ko.observable<boolean>(false);
+    public uiError    = ko.observable<string>("");
+
+    // ----------------------------------------------------------------
+    // DATOS COMPLETOS
+    // ----------------------------------------------------------------
+    private todosLosContratos = ko.observableArray<ContratoKanbanItem>([]);
+
+    // ----------------------------------------------------------------
+    // BÚSQUEDA Y FILTROS
+    // ----------------------------------------------------------------
+    public uiBusqueda      = ko.observable<string>("");
+    public uiFiltroActivo  = ko.observable<string>("todos");
+
+    // ----------------------------------------------------------------
+    // COLUMNAS KANBAN — computed por estatus
+    // ----------------------------------------------------------------
+    public columnas = COLUMNAS_ADMIN;
+
+    // Contratos filtrados según búsqueda activa
+    private contratosFiltrados = ko.pureComputed(() => {
+        const query  = this.uiBusqueda().trim().toLowerCase();
+        const filtro = this.uiFiltroActivo();
+        const todos  = this.todosLosContratos();
+
+        if (!query) return todos;
+
+        return todos.filter(c => {
+            switch (filtro) {
+                case "numero":
+                    return c.numeroContrato.toLowerCase().includes(query);
+                case "adquisicion":
+                    return c.adquisicion.toLowerCase().includes(query);
+                case "beneficiario":
+                    return c.beneficiarios.toLowerCase().includes(query);
+                default: // "todos"
+                    return (
+                        c.numeroContrato.toLowerCase().includes(query) ||
+                        c.adquisicion.toLowerCase().includes(query) ||
+                        c.beneficiarios.toLowerCase().includes(query)
+                    );
+            }
+        });
     });
 
-  public getStatusBadgeClass(status: string): string {
-
-    let badgeClass = "oj-badge oj-badge-subtle ";
-
-    switch (status) {
-
-      case "CAPTURA":
-        badgeClass += "oj-badge-success";
-        break;
-
-      case "POR_RECIBIR":
-        badgeClass += "oj-badge-warning";
-        break;
-
-      case "EN_ALMACEN":
-        badgeClass += "oj-badge-danger";
-        break;
-
-      case "CERRADO":
-        badgeClass += "oj-badge-info";
-        break;
-
-      default:
-        badgeClass += "oj-badge-neutral";
-        break;
+    // Agrupa los contratos filtrados por estatus para cada columna
+    public contratosEnColumna(estatus: EstatusContrato): ko.PureComputed<ContratoKanbanItem[]> {
+        return ko.pureComputed(() =>
+            this.contratosFiltrados().filter(c => c.estatus === estatus)
+        );
     }
 
-    return badgeClass;
-  }
-
-
-  // ================================================================
-  // CONSTRUCTOR / LIFECYCLE
-  // ================================================================
-  constructor(params: any) {
-    this.router = params.router;
-    this.loadContratos();
-  }
-
-  connected(): void {
-    AccUtils.announce("Lista de contratos cargada.");
-    //document.title = "Viajes";
-    // implement further logic if needed
-  }
-
-  /**
-   * Optional ViewModel method invoked after the View is disconnected from the DOM.
-   */
-  disconnected(): void {
-    // implement if needed
-  }
-
-  /**
-   * Optional ViewModel method invoked after transition to the new View is complete.
-   * That includes any possible animation between the old and the new View.
-   */
-  transitionCompleted(): void {
-    // implement if needed
-  }
-
-  // ================================================================
-  // LOAD - API / BACKEND
-  // ================================================================
-  private async loadContratos(): Promise<void> {
-    const response = await fetch("http://localhost:8080/api/contratos");
-    
-    if (!response.ok) {
-      throw new Error("Error al obtener el listado de contratos");
+    // Cuenta contratos por columna para el badge
+    public countEnColumna(estatus: EstatusContrato): ko.PureComputed<number> {
+        return ko.pureComputed(() =>
+            this.contratosFiltrados().filter(c => c.estatus === estatus).length
+        );
     }
-    
-    const data = await response.json();
-    const contratosArray = Array.isArray(data) ? data : [data];
 
-    const items: ContratoListaItem[] = contratosArray.map((contrato: any) => ({
-      idContrato: contrato.idContrato,
-      numeroContrato: contrato.numeroContrato,
-      adquisicion: contrato.adquisicion,
-      proveedor: contrato.proveedor?.razonSocial ?? "Pendiente de asignar",
-      estatus: contrato.estatus,
-    }));
+    // Resultado de búsqueda
+    public calcResultadoBusqueda = ko.pureComputed(() => {
+        const query = this.uiBusqueda().trim();
+        if (!query) return "";
+        const count = this.contratosFiltrados().length;
+        return count === 0
+            ? `Sin resultados para "${query}"`
+            : `${count} contrato${count > 1 ? "s" : ""} encontrado${count > 1 ? "s" : ""} para "${query}"`;
+    });
 
-    this.listContratos(items);
-  }
+    public calcTotalContratos = ko.pureComputed(() =>
+        this.todosLosContratos().length
+    );
 
-  public verBeneficiarios = (event: Event, context: any): void => {
-    const contrato = context.item.data as ContratoListaItem;
+    public calcTotalFiltrados = ko.pureComputed(() =>
+        this.contratosFiltrados().length
+    );
 
-    console.log("Ver beneficiarios del contrato:", contrato.idContrato);
+    // ----------------------------------------------------------------
+    // DIALOG BENEFICIARIOS
+    // ----------------------------------------------------------------
+    public uiBeneficiariosDialogOpen  = ko.observable<boolean>(false);
+    public uiBeneficiariosDialogTitle = ko.observable<string>("");
+    public uiListaBeneficiarios       = ko.observableArray<string>([]);
 
-    // Aquí podrías abrir un dialog, navegar a otra vista,
-    // o consumir /api/contratos/{id}/beneficiarios
-  };
+    // ----------------------------------------------------------------
+    // CONSTRUCTOR / LIFECYCLE
+    // ----------------------------------------------------------------
+    constructor(params: any) {
+        this.router = params?.router;
+    }
 
-  // ================================================================
-  // COMMANDS - NAVEGACION
-  // ================================================================
-  public cmdGoToCreateContrato = () => {
-    this.router?.go( { path: 'contrato' });
-  }
+    connected(): void {
+        AccUtils.announce("Tablero de contratos cargado.");
+        document.title = "Tablero — Gestión de Almacén";
+        void this.loadContratos();
+    }
 
-  public cmdEditarContrato = (event: Event, context: any): void => {
-     const idContrato = context.item.data.idContrato;
-     console.log("Editar contrato >>", idContrato);
-      this.router?.go({ path: 'contrato', params: { id: idContrato } });
-  }
+    disconnected(): void {}
+    transitionCompleted(): void {}
+
+    // ================================================================
+    // LOAD
+    // ================================================================
+    private async loadContratos(): Promise<void> {
+        this.uiCargando(true);
+        this.uiError("");
+
+        try {
+            const res = await fetch("http://localhost:8080/api/contratos");
+            if (!res.ok) throw new Error("Error al obtener contratos");
+
+            const data: any[] = await res.json();
+            this.todosLosContratos(data.map(c => this.mapToKanbanItem(c)));
+        } catch (err: any) {
+            console.error("Error al cargar contratos:", err);
+            this.uiError("No se pudo cargar el tablero. Intenta de nuevo.");
+        } finally {
+            this.uiCargando(false);
+        }
+    }
+
+    // ================================================================
+    // MAPPERS
+    // ================================================================
+    private mapToKanbanItem(c: any): ContratoKanbanItem {
+        return {
+            idContrato:            c.idContrato,
+            numeroContrato:        c.numeroContrato,
+            adquisicion:           c.adquisicion,
+            estatus:               c.estatus as EstatusContrato,
+            estatusLabel:          mapEstatusToLabel(c.estatus),
+            estatusBadge:          mapEstatusToBadge(c.estatus),
+            proveedor:             c.proveedor?.razonSocial || "Pendiente de asignar",
+            montoTotal:            c.montoTotal ?? null,
+            fechaTentativaLlegada: c.fechaTentativaLlegada
+                ? c.fechaTentativaLlegada.split("T")[0]
+                : null,
+            beneficiarios: c.beneficiarios || "",
+            totalBienes:   c.bienes?.length ?? 0
+        };
+    }
+
+    // ================================================================
+    // COMMANDS — BÚSQUEDA
+    // ================================================================
+    public cmdSetFiltro = (filtro: string): void => {
+        this.uiFiltroActivo(filtro);
+    };
+
+    public cmdLimpiarBusqueda = (): void => {
+        this.uiBusqueda("");
+        this.uiFiltroActivo("todos");
+    };
+
+    // ================================================================
+    // COMMANDS — NAVEGACIÓN
+    // ================================================================
+    public cmdNuevoContrato = (): void => {
+        this.router?.go({ path: "contrato" });
+    };
+
+    public cmdEditarContrato = (event: Event, context: any): void => {
+        const id = context.item?.data?.idContrato ?? context?.idContrato;
+        if (id) this.router?.go({ path: "contrato", params: { id } });
+    };
+
+    // Recibe el contrato directamente (para llamadas desde botones en cards)
+    public cmdIrAContrato = (contrato: ContratoKanbanItem): void => {
+        this.router?.go({ path: "contrato", params: { id: contrato.idContrato } });
+    };
+
+    // ================================================================
+    // COMMANDS — DIALOG BENEFICIARIOS
+    // ================================================================
+    public cmdVerBeneficiarios = (contrato: ContratoKanbanItem): void => {
+        const nombres = contrato.beneficiarios
+            ? contrato.beneficiarios.split(",").map(n => n.trim()).filter(n => n)
+            : [];
+
+        this.uiListaBeneficiarios(nombres);
+        this.uiBeneficiariosDialogTitle(contrato.numeroContrato);
+        this.uiBeneficiariosDialogOpen(true);
+    };
+
+    public cmdCerrarBeneficiariosDialog = (): void => {
+        this.uiBeneficiariosDialogOpen(false);
+    };
+
+    // ================================================================
+    // HELPERS — UI
+    // ================================================================
+
+    // Determina si el contrato puede editarse según su estatus
+    public puedeEditar(estatus: EstatusContrato): boolean {
+        return estatus === "CAPTURA";
+    }
+
+    // Formatea el monto total para mostrar en la card
+    public formatMonto(monto: number | null): string {
+        if (monto === null || monto === undefined) return "";
+        return monto.toLocaleString("es-MX", {
+            style: "currency",
+            currency: "MXN",
+            minimumFractionDigits: 2
+        });
+    }
+
+    // Formatea la fecha de llegada
+    public formatFecha(fecha: string | null): string {
+        if (!fecha) return "";
+        const [year, month, day] = fecha.split("-");
+        const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+        return `${day} ${meses[parseInt(month) - 1]} ${year}`;
+    }
+
+    // Recargar tablero
+    public cmdRecargar = (): void => {
+        void this.loadContratos();
+    };
 }
 
 export = DashboardViewModel;
