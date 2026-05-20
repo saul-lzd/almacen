@@ -18,6 +18,7 @@ public class ContratoBienDto {
     private Short partida;
     private String descripcionTecnica;
     private Integer idUnidadMedida;
+    private String unidadMedida;
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;

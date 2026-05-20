@@ -86,6 +86,7 @@ public class ContratoMapper {
                 .partida(entity.getPartida())
                 .descripcionTecnica(entity.getDescripcionTecnica())
                 .idUnidadMedida(entity.getUnidadMedida().getIdUnidadMedida())
+                .unidadMedida(entity.getUnidadMedida().getNombre())
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
                 .subtotal(entity.getSubtotal())
