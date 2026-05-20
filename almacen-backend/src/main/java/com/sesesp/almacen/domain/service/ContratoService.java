@@ -1,8 +1,10 @@
 package com.sesesp.almacen.domain.service;
 
+import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
+import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,6 +32,7 @@ public class ContratoService {
     private final BeneficiarioService beneficiarioService;
     private final ClavePresupuestalService clavePresupuestalService;
     private final ContratoBienService contratoBienService;
+    private final ContratoValidacionService contratoValidacionService;
 
 
     // ─────────────────────────────────────────────────────────
@@ -68,7 +71,7 @@ public class ContratoService {
                 .montoSinImpuestos(request.getMontoSinImpuestos())
                 .impuestos(request.getImpuestos())
                 .montoTotal(request.getMontoTotal())
-                .estatus(ContratoEntity.EstatusContrato.CAPTURA)
+                .estatus(EstatusContrato.CAPTURA)
                 .build();
 
         // 2. Asignar proveedor
@@ -124,6 +127,15 @@ public class ContratoService {
 
         // 1. Buscar el contrato existente y forzar carga de relaciones
         ContratoEntity contrato = findContratoOrThrow(idContrato);
+
+        // Bloquear edición si el contrato ya fue enviado al almacén
+        if (contrato.getEstatus() != ContratoEntity.EstatusContrato.CAPTURA) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato no puede editarse porque su estatus es: "
+                            + contrato.getEstatus().name()
+            ));
+        }
+
         Hibernate.initialize(contrato.getBienes());
         Hibernate.initialize(contrato.getBeneficiarios());
         Hibernate.initialize(contrato.getClavesPresupuestales());
@@ -160,6 +172,52 @@ public class ContratoService {
 
         logger.info("Contrato actualizado: {}", idContrato);
         return contratoMapper.toResponse(contrato);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PATCH — Enviar contrato a Almacen
+    // ─────────────────────────────────────────────────────────────
+
+
+    /**
+     * Envía el contrato al almacén.
+     *
+     * Validaciones:
+     *   - El contrato debe estar en estatus CAPTURA
+     *   - Todos los campos obligatorios deben estar completos
+     *
+     * Efecto:
+     *   - Estatus cambia a POR_RECIBIR
+     *   - El contrato queda bloqueado para edición
+     */
+    @Transactional
+    public void enviarAlmacen(Integer idContrato) {
+        logger.info("Enviando contrato al almacén. ID: {}", idContrato);
+
+        ContratoEntity contrato = findContratoOrThrow(idContrato);
+
+        // Verificar que el contrato esté en estatus correcto para esta transición
+        if (contrato.getEstatus() != ContratoEntity.EstatusContrato.CAPTURA) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato no puede enviarse al almacén porque su estatus es: "
+                            + contrato.getEstatus().name()
+                            + ". Solo se pueden enviar contratos en estatus CAPTURA."
+            ));
+        }
+
+        // Forzar carga de listas lazy antes de validar
+        Hibernate.initialize(contrato.getBeneficiarios());
+        Hibernate.initialize(contrato.getClavesPresupuestales());
+        Hibernate.initialize(contrato.getBienes());
+
+        // Validar que todos los campos estén completos
+        contratoValidacionService.validarParaEnviarAlmacen(contrato);
+
+        // Cambiar estatus
+        contrato.setEstatus(ContratoEntity.EstatusContrato.POR_RECIBIR);
+        contratoRepository.save(contrato);
+
+        logger.info("Contrato ID: {} enviado al almacén. Estatus: POR_RECIBIR", idContrato);
     }
 
 
