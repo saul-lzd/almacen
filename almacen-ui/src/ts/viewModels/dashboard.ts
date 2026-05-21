@@ -78,8 +78,9 @@ class DashboardViewModel {
     // ----------------------------------------------------------------
     // BÚSQUEDA Y FILTROS
     // ----------------------------------------------------------------
-    public uiBusqueda      = ko.observable<string>("");
-    public uiFiltroActivo  = ko.observable<string>("todos");
+    public uiBusqueda       = ko.observable<string>("");
+    public uiBusquedaRaw    = ko.observable<string>("");
+    public uiFiltroActivo   = ko.observable<string>("todos");
 
     // ----------------------------------------------------------------
     // COLUMNAS KANBAN — computed por estatus
@@ -88,7 +89,7 @@ class DashboardViewModel {
 
     // Contratos filtrados según búsqueda activa
     private contratosFiltrados = ko.pureComputed(() => {
-        const query  = this.uiBusqueda().trim().toLowerCase();
+        const query  = this.uiBusquedaRaw().trim().toLowerCase();
         const filtro = this.uiFiltroActivo();
         const todos  = this.todosLosContratos();
 
@@ -106,7 +107,8 @@ class DashboardViewModel {
                     return (
                         c.numeroContrato.toLowerCase().includes(query) ||
                         c.adquisicion.toLowerCase().includes(query) ||
-                        c.beneficiarios.toLowerCase().includes(query)
+                        c.beneficiarios.toLowerCase().includes(query) ||
+                        c.proveedor.toLowerCase().includes(query)
                     );
             }
         });
@@ -128,7 +130,9 @@ class DashboardViewModel {
 
     // Resultado de búsqueda
     public calcResultadoBusqueda = ko.pureComputed(() => {
-        const query = this.uiBusqueda().trim();
+        if (!this.uiBusquedaRaw()) return;
+
+        const query = this.uiBusquedaRaw().trim();
         if (!query) return "";
         const count = this.contratosFiltrados().length;
         return count === 0
@@ -216,10 +220,6 @@ class DashboardViewModel {
         this.uiFiltroActivo(filtro);
     };
 
-    public cmdLimpiarBusqueda = (): void => {
-        this.uiBusqueda("");
-        this.uiFiltroActivo("todos");
-    };
 
     // ================================================================
     // COMMANDS — NAVEGACIÓN

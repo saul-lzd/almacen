@@ -11,8 +11,7 @@
         label="Nuevo Contrato"
         chroming="callToAction"
         size="sm"
-        on-oj-action="[[cmdNuevoContrato]]"
-      >
+        on-oj-action="[[cmdNuevoContrato]]" >
         <span slot="startIcon" class="oj-ux-ico-plus"></span>
       </oj-c-button>
 
@@ -20,24 +19,25 @@
         label="Actualizar"
         chroming="outlined"
         size="sm"
-        on-oj-action="[[cmdActualizar]]"
-      >
+        on-oj-action="[[cmdActualizar]]" >
         <span slot="startIcon" class="oj-ux-ico-refresh"></span>
       </oj-c-button>
     </div>
   </div>
 
   <!-- BÚSQUEDA -->
-  <oj-c-form-layout label-edge="top">
-    <oj-c-input-text
-      placeholder="Buscar por número, adquisición o beneficiario..."
-      clear-icon="conditional" >
-      <div slot="start" class="oj-ux-ico-search"></div>
-    </oj-c-input-text>
-  </oj-c-form-layout>
+      <oj-c-form-layout full-width="true" style="width: 37rem">
+        <oj-c-input-text id="input-query"
+          label-hint="Buscar por número de contrato, adquisición o beneficiario ..."
+          label-edge="inside"
+          clear-icon="conditional"
+          raw-value={{uiBusquedaRaw}}> 
+          <div slot="start" class="oj-ux-ico-search"></div>
+        </oj-c-input-text>    
+      </oj-c-form-layout>
 
-<!-- CHIPS DE FILTRO -->
-  <div class="filter-chips">
+  <!-- CHIPS DE FILTRO -->
+  <!-- <div class="filter-chips">
     <oj-c-button
       class="filter-chip"
       :class="[[{active: uiFiltroActivo() === 'todos' }]]"
@@ -70,15 +70,26 @@
       chroming="borderless"
       label="Por beneficiario">
     </oj-c-button>
-  </div>
+  </div> -->
 
   <!-- RESULTADO DE BÚSQUEDA -->
   <div class="search-result">
     <oj-bind-text value="[[calcResultadoBusqueda]]"></oj-bind-text>
   </div>
 
+  <div class="oj-flex-bar">
+    <div class="oj-flex-bar-end oj-text-color-secondary oj-typography-body-md oj-sm-margin-4x-bottom">
+      <oj-bind-if test="[[uiBusqueda()]]">
+        <oj-bind-text value="[[calcTotalFiltrados() + ' de ' + calcTotalContratos() + ' contratos']]"></oj-bind-text>
+      </oj-bind-if>
+      <oj-bind-if test="[[!uiBusqueda()]]">
+        <oj-bind-text value="[[calcTotalContratos() + ' contratos en total']]"></oj-bind-text>
+      </oj-bind-if>
+    </div>
+  </div>
+
   <!-- TABLERO KANBAN -->
-  <div class="kanban-board oj-sm-margin-8x-top">
+  <div class="kanban-board">
     
     <!-- ── COLUMNA: EN CAPTURA ── -->
     <div class="kanban-column estatus-captura"> 
@@ -105,7 +116,7 @@
               </div>
               <div class="kanban-card-meta">
                 <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-organization" style="font-size:12px"></span>
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
                   <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
                 </div>
               </div>
@@ -156,7 +167,7 @@
               </div>
               <div class="kanban-card-meta">
                 <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-organization" style="font-size:12px"></span>
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
                   <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
                 </div>
                 <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
@@ -222,7 +233,7 @@
               </div>
               <div class="kanban-card-meta">
                 <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-organization" style="font-size:12px"></span>
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
                   <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
                 </div>
               </div>
@@ -274,7 +285,7 @@
               </div>
               <div class="kanban-card-meta">
                 <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-organization" style="font-size:12px"></span>
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
                   <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
                 </div>
               </div>
@@ -329,7 +340,7 @@
               </div>
               <div class="kanban-card-meta">
                 <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-organization" style="font-size:12px"></span>
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
                   <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
                 </div>
               </div>
