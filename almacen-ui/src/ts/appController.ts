@@ -53,7 +53,6 @@ class RootViewModel {
       { path: "", redirect: "dashboard" },
       { path: "dashboard", detail: { label: "Inicio", iconClass: "oj-ux-ico-home" } },
       { path: "contrato", detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } }
-      
     ];
     // router setup
     const router = new CoreRouter(navData, {

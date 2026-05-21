@@ -1,10 +1,40 @@
 /*
     Document   : override
-    Created on : March 15th, 2026
+    Created on : April 2026
     Author     : Saul DLD
     Description:
-        This is the file for custom styles for Oaxaca Rosa App
+        This is the file for custom styles for Almacen SESESP
 */
+
+:root {
+  /* CAPTURA */
+  --estatus-contrato-captura-color-primary: #78596B;
+  --estatus-contrato-captura-color-secondary: #F2EAEF;
+
+  /* POR RECIBIR */
+  --estatus-contrato-por-recibir-color-primary: #C29438;
+  --estatus-contrato-por-recibir-color-secondary: #FAF4E6;
+
+  /* EN ALMACEN */
+  --estatus-contrato-en-almacen-color-primary: #82715F;
+  --estatus-contrato-en-almacen-color-secondary: #F9EFE5;
+
+  /* LISTO PARA ENTREGAR */
+  --estatus-contrato-listo-para-entregar-color-primary: #497A63;
+  --estatus-contrato-listo-para-entregar-color-secondary: #EBF2EE;
+
+  /* ENTREGA PARCIAL */
+  --estatus-contrato-entrega-parcial-color-primary: #A85232;
+  --estatus-contrato-entrega-parcial-color-secondary: #E3F0E7;
+
+  /* ENTREGADO */
+  --estatus-contrato-entregado-color-primary: #1A635B;
+  --estatus-contrato-entregado-color-secondary: #E2EFEF;
+
+  /* CERRADO */
+  --estatus-contrato-cerrado-color-primary: #4A4A4A;
+  --estatus-contrato-cerrado-color-secondary: #F0F0F0;
+}
 
 .send-off-screen {
   position: absolute;
@@ -37,3 +67,231 @@
       transform:translate(-25%, -25%) scale(0.5)
   }
 }
+
+/* ── Chips de filtro ── */
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+.filter-chip {
+    /* font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--oj-core-border-color-default);
+    /* background: var(--oj-core-bg-color-primary); */
+    /* color: var(--oj-core-text-color-secondary); */
+    cursor: pointer;
+
+    /* --oj-button-borderless-chrome-bg-color-active: var(--oj-core-bg-color-primary); */
+    /* --oj-button-borderless-chrome-border-color-active: transparent; */
+    /* --oj-button-borderless-chrome-text-color-active: var(--oj-core-text-color-secondary); */
+  }
+
+.filter-chip.active {
+    background: #EEEDFE;
+  }
+
+   /* ── Layout Kanban ── */
+
+   /* ── Colores por estatus: ribbon (color primario) ── */
+.estatus-captura-ribbon            { background: var(--estatus-contrato-captura-color-primary); }
+.estatus-por-recibir-ribbon        { background: var(--estatus-contrato-por-recibir-color-primary); }
+.estatus-en-almacen-ribbon         { background: var(--estatus-contrato-en-almacen-color-primary); }
+.estatus-listo-para-entregar-ribbon { background: var(--estatus-contrato-listo-para-entregar-color-primary); }
+.estatus-entregado-ribbon          { background: var(--estatus-contrato-entregado-color-primary); }
+
+/* ── Colores por estatus: fondo de columna (color secundario) ── */
+.estatus-captura            { background: var(--estatus-contrato-captura-color-secondary); }
+.estatus-por-recibir        { background: var(--estatus-contrato-por-recibir-color-secondary); }
+.estatus-en-almacen         { background: var(--estatus-contrato-en-almacen-color-secondary);  }
+.estatus-listo-para-entregar { background: var(--estatus-contrato-listo-para-entregar-color-secondary);  }
+.estatus-entregado          { background: var(--estatus-contrato-entregado-color-secondary);}
+
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    align-items: start;
+    overflow-x: auto;
+    border-radius: 8px;
+  }
+
+  /* En tablet: 3 columnas */
+  @media (max-width: 1024px) {
+    .kanban-board { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* En móvil: 1 columna */
+  @media (max-width: 640px) {
+    .kanban-board { grid-template-columns: 1fr; }
+  }
+
+  /* ── Columna ── */
+  .kanban-column {
+    overflow: hidden;
+    border-radius: 8px;
+  }
+
+  .kanban-column-ribbon {
+    height: 7px;
+    /* border-top-left-radius: 8px;
+    border-top-right-radius: 8px; */
+    /* background: #4F6367; */
+  }
+  .kanban-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    /* padding: 0.5rem; */
+    padding: var(--oj-core-spacing-2x) !important;
+  }
+
+   .kanban-col-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    /* color: var(--oj-core-text-color-secondary); */
+    
+  }
+
+  .kanban-col-count {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--oj-core-bg-color-secondary);
+    border: 1px solid var(--oj-core-border-color-subtle);
+    color: var(--oj-core-text-color-secondary);
+  }
+
+   .kanban-col-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+    padding: 8px;
+  }
+
+
+    /* ── Card ── */
+  .kanban-card {
+    background: white;
+    border: 1px solid var(--oj-core-border-color-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: default;
+    transition: border-color 0.15s;
+  }
+
+  .kanban-card:hover {
+    border-color: var(--oj-core-border-color-default);
+  }
+
+  .kanban-card.cerrado {
+    opacity: 0.65;
+  }
+
+  .kanban-card-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--oj-core-text-color-primary);
+    margin-bottom: 6px;
+  }
+
+  .kanban-card-adq {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .kanban-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 8px;
+  }
+
+  .kanban-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--oj-core-text-color-secondary);
+  }
+
+  .kanban-card-monto {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--oj-core-text-color-primary);
+    margin-bottom: 8px;
+  }
+
+  .kanban-card-footer {
+    display: flex;
+    gap: 4px;
+    /* padding-top: 8px;
+    border-top: 1px solid var(--oj-core-border-color-subtle);
+    flex-wrap: wrap; */
+  }
+
+  .fecha-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #FAEEDA;
+    color: #633806;
+    border: 1px solid #FAC775;
+  }
+
+  /* ── Columna vacía ── */
+  .kanban-col-empty {
+    font-size: 12px;
+    color: var(--oj-core-text-color-disabled) !important;
+    padding: 16px 12px;
+    text-align: center;
+    /* border: 1px dashed gray !important; */
+    border: 2px dashed var(--oj-core-neutral-secondary-1) !important;
+    /* background: #E6E6E6; */
+    border-radius: 8px;
+  }
+
+   /* ── Resultado búsqueda ── */
+  .search-result {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
+    margin-bottom: 12px;
+    min-height: 18px;
+  }
+
+  /* ── Dialog beneficiarios ── */
+  .beneficiario-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--oj-core-border-color-subtle);
+    font-size: 13px;
+    color: var(--oj-core-text-color-primary);
+  }
+
+  .beneficiario-item:last-child {
+    border-bottom: none;
+  }
+
+  .no-beneficiarios {
+    font-size: 13px;
+    color: var(--oj-core-text-color-secondary);
+    font-style: italic;
+    padding: 12px 0;
+  }

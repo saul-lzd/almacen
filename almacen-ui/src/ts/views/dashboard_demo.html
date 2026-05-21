@@ -3,73 +3,319 @@
   Vista del administrador: ciclo completo del contrato en 5 columnas.
 -->
 
-<div class="oj-hybrid-padding">
-  <!-- TOOLBAR -->
-  <div class="dashboard-toolbar oj-flex-bar oj-sm-align-items-center">
-    <div class="oj-flex-bar-end" style="gap: 12px">
-      <oj-c-button
-        label="Nuevo Contrato"
-        chroming="callToAction"
-        size="sm"
-        on-oj-action="[[cmdNuevoContrato]]"
-      >
-        <span slot="startIcon" class="oj-ux-ico-plus"></span>
-      </oj-c-button>
+<style>
+  /* ── Layout Kanban ── */
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    align-items: start;
+    overflow-x: auto;
+  }
 
+  /* En tablet: 3 columnas */
+  @media (max-width: 1024px) {
+    .kanban-board { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* En móvil: 1 columna */
+  @media (max-width: 640px) {
+    .kanban-board { grid-template-columns: 1fr; }
+  }
+
+  /* ── Columna ── */
+  .kanban-col-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .kanban-col-title {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--oj-core-text-color-secondary);
+  }
+
+  .kanban-col-count {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--oj-core-bg-color-secondary);
+    border: 1px solid var(--oj-core-border-color-subtle);
+    color: var(--oj-core-text-color-secondary);
+  }
+
+  .kanban-col-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+  }
+
+  /* ── Card ── */
+  .kanban-card {
+    background: var(--oj-core-bg-color-primary);
+    border: 1px solid var(--oj-core-border-color-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: default;
+    transition: border-color 0.15s;
+  }
+
+  .kanban-card:hover {
+    border-color: var(--oj-core-border-color-default);
+  }
+
+  .kanban-card.cerrado {
+    opacity: 0.65;
+  }
+
+  .kanban-card-num {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--oj-core-text-color-primary);
+    margin-bottom: 6px;
+  }
+
+  .kanban-card-adq {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
+    line-height: 1.4;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .kanban-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 8px;
+  }
+
+  .kanban-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--oj-core-text-color-secondary);
+  }
+
+  .kanban-card-monto {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--oj-core-text-color-primary);
+    margin-bottom: 8px;
+  }
+
+  .kanban-card-footer {
+    display: flex;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--oj-core-border-color-subtle);
+    flex-wrap: wrap;
+  }
+
+  .fecha-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: #FAEEDA;
+    color: #633806;
+    border: 1px solid #FAC775;
+  }
+
+  /* ── Columna vacía ── */
+  .kanban-col-empty {
+    font-size: 12px;
+    color: var(--oj-core-text-color-disabled) !important;
+    padding: 16px 12px;
+    text-align: center;
+    border: 1px dashed var(--oj-core-border-color-subtle) !important;
+    border-radius: 8px;
+  }
+
+  /* ── Toolbar de búsqueda ── */
+  .dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .search-wrap .oj-ux-ico-search {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 15px;
+    color: var(--oj-core-text-color-secondary);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 7px 10px 7px 32px;
+    font-size: 13px;
+    border: 1px solid var(--oj-core-border-color-default);
+    border-radius: 6px;
+    background: var(--oj-core-bg-color-primary);
+    color: var(--oj-core-text-color-primary);
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .search-input:focus {
+    border-color: var(--oj-core-color-brand);
+  }
+
+  /* ── Chips de filtro ── */
+  .filter-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .filter-chip {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--oj-core-border-color-default);
+    background: var(--oj-core-bg-color-primary);
+    color: var(--oj-core-text-color-secondary);
+    cursor: pointer;
+  }
+
+  .filter-chip.active {
+    background: #EEEDFE;
+    color: #3C3489;
+    border-color: #AFA9EC;
+    font-weight: 500;
+  }
+
+  /* ── Resultado búsqueda ── */
+  .search-result {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
+    margin-bottom: 12px;
+    min-height: 18px;
+  }
+
+  /* ── Dialog beneficiarios ── */
+  .beneficiario-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--oj-core-border-color-subtle);
+    font-size: 13px;
+    color: var(--oj-core-text-color-primary);
+  }
+
+  .beneficiario-item:last-child {
+    border-bottom: none;
+  }
+
+  .no-beneficiarios {
+    font-size: 13px;
+    color: var(--oj-core-text-color-secondary);
+    font-style: italic;
+    padding: 12px 0;
+  }
+</style>
+
+<div class="oj-hybrid-padding">
+
+  <!-- TOOLBAR -->
+  <div class="dashboard-toolbar">
+    <div style="flex:1">
+      <h4 class="oj-typography-subheading-sm" style="margin:0">
+        Sistema de Gestión de Almacén
+      </h4>
+    </div>
+    <oj-c-button
+      label="Nuevo Contrato"
+      chroming="callToAction"
+      on-oj-action="[[cmdNuevoContrato]]">
+      <span slot="startIcon" class="oj-ux-ico-plus"></span>
+    </oj-c-button>
+    <oj-c-button
+      label="Recargar"
+      chroming="outlined"
+      on-oj-action="[[cmdRecargar]]">
+      <span slot="startIcon" class="oj-ux-ico-refresh"></span>
+    </oj-c-button>
+  </div>
+
+  
+
+  <!-- BÚSQUEDA -->
+  <div class="dashboard-toolbar">
+    <div class="search-wrap">
+      <span class="oj-ux-ico-search"></span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Buscar por número, adquisición o beneficiario..."
+        data-bind="value: uiBusqueda, valueUpdate: 'input'">
+    </div>
+    <oj-bind-if test="[[uiBusqueda()]]">
       <oj-c-button
-        label="Actualizar"
-        chroming="outlined"
-        size="sm"
-        on-oj-action="[[cmdActualizar]]"
-      >
-        <span slot="startIcon" class="oj-ux-ico-refresh"></span>
+        label="Limpiar"
+        chroming="ghost"
+        on-oj-action="[[cmdLimpiarBusqueda]]">
       </oj-c-button>
+    </oj-bind-if>
+
+     <div class="oj-text-color-secondary oj-typography-body-sm oj-sm-margin-2x-bottom">
+      <oj-bind-if test="[[uiBusqueda()]]">
+        <oj-bind-text value="[[calcTotalFiltrados() + ' de ' + calcTotalContratos() + ' contratos']]"></oj-bind-text>
+      </oj-bind-if>
+      <oj-bind-if test="[[!uiBusqueda()]]">
+        <oj-bind-text value="[[calcTotalContratos() + ' contratos en total']]"></oj-bind-text>
+      </oj-bind-if>
     </div>
   </div>
 
-  <!-- BÚSQUEDA -->
-  <oj-c-form-layout label-edge="top">
-    <oj-c-input-text
-      placeholder="Buscar por número, adquisición o beneficiario..."
-      clear-icon="conditional" >
-      <div slot="start" class="oj-ux-ico-search"></div>
-    </oj-c-input-text>
-  </oj-c-form-layout>
-
-<!-- CHIPS DE FILTRO -->
+  <!-- CHIPS DE FILTRO -->
   <div class="filter-chips">
-    <oj-c-button
+    <button
       class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'todos' }]]"
-      on-oj-action="[[() => cmdSetFiltro('todos')]]"
-      size="sm"
-      chroming="borderless"
-      label="Todos los campos">
-    </oj-c-button>
-    <oj-c-button
-      class="filter-chip" 
-      :class="[[{active: uiFiltroActivo() === 'numero' }]]"
-      on-oj-action="[[() => cmdSetFiltro('numero')]]" 
-      size="sm"
-      chroming="borderless"
-      label="Por número de contrato">
-    </oj-c-button>
-    <oj-c-button
+      data-bind="css: { active: uiFiltroActivo() === 'todos' }, click: () => cmdSetFiltro('todos')">
+      Todos los campos
+    </button>
+    <button
       class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'adquisicion' }]]"
-      on-oj-action="[[() => cmdSetFiltro('adquisicion')]]"
-      size="sm"
-      chroming="borderless"
-      label="Por adquisición">
-    </oj-c-button>
-    <oj-c-button
+      data-bind="css: { active: uiFiltroActivo() === 'numero' }, click: () => cmdSetFiltro('numero')">
+      Por número
+    </button>
+    <button
       class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'beneficiario' }]]"
-      on-oj-action="[[() => cmdSetFiltro('beneficiario')]]"
-      size="sm"
-      chroming="borderless"
-      label="Por beneficiario">
-    </oj-c-button>
+      data-bind="css: { active: uiFiltroActivo() === 'adquisicion' }, click: () => cmdSetFiltro('adquisicion')">
+      Por adquisición
+    </button>
+    <button
+      class="filter-chip"
+      data-bind="css: { active: uiFiltroActivo() === 'beneficiario' }, click: () => cmdSetFiltro('beneficiario')">
+      Por beneficiario
+    </button>
   </div>
 
   <!-- RESULTADO DE BÚSQUEDA -->
@@ -77,19 +323,24 @@
     <oj-bind-text value="[[calcResultadoBusqueda]]"></oj-bind-text>
   </div>
 
+  <!-- ERROR -->
+  <oj-bind-if test="[[uiError()]]">
+    <div class="oj-messagebanner-section-error oj-sm-margin-4x-bottom oj-sm-padding-4x">
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
   <!-- TABLERO KANBAN -->
-  <div class="kanban-board oj-sm-margin-8x-top">
-    
+  <div class="kanban-board">
+
     <!-- ── COLUMNA: EN CAPTURA ── -->
-    <div class="kanban-column estatus-captura"> 
-      <div class="kanban-column-ribbon estatus-captura-ribbon"></div>
-      <div class="kanban-col-header" >
-        <span class="kanban-col-title">En Captura</span>
+    <div>
+      <div class="kanban-col-header">
+        <span class="kanban-col-title">En captura</span>
         <span class="kanban-col-count">
           <oj-bind-text value="[[countEnColumna('CAPTURA')]]"></oj-bind-text>
         </span>
       </div>
-
       <div class="kanban-col-body">
         <oj-bind-if test="[[contratosEnColumna('CAPTURA')().length === 0]]">
           <div class="kanban-col-empty">Sin contratos en esta etapa</div>
@@ -112,35 +363,30 @@
               <div class="kanban-card-footer">
                 <oj-c-button
                   label="Editar"
-                  chroming="ghost"
-                  size="sm"
+                  chroming="outlined"
                   on-oj-action="[[() => cmdIrAContrato(item.data)]]">
+                  <span slot="startIcon" class="oj-ux-ico-edit"></span>
                 </oj-c-button>
                 <oj-c-button
                   label="Beneficiarios"
                   chroming="ghost"
-                  size="sm"
                   on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                  <span slot="startIcon" class="oj-ux-ico-people-group-body"></span>
                 </oj-c-button>
               </div>
             </div>
           </template>
         </oj-bind-for-each>
       </div>
-    
     </div>
-  
+
     <!-- ── COLUMNA: POR RECIBIR ── -->
-    <div class="kanban-column estatus-por-recibir"> 
-      <div class="kanban-column-ribbon estatus-por-recibir-ribbon"></div>
+    <div>
       <div class="kanban-col-header">
-        <span class="kanban-col-title">Por Recibir</span>
+        <span class="kanban-col-title">Por recibir</span>
         <span class="kanban-col-count">
           <oj-bind-text value="[[countEnColumna('POR_RECIBIR')]]"></oj-bind-text>
         </span>
       </div>
-
       <div class="kanban-col-body">
         <oj-bind-if test="[[contratosEnColumna('POR_RECIBIR')().length === 0]]">
           <div class="kanban-col-empty">Sin contratos en esta etapa</div>
@@ -180,14 +426,12 @@
               <div class="kanban-card-footer">
                 <oj-c-button
                   label="Ver detalle"
-                  chroming="ghost"
-                  size="sm"
+                  chroming="outlined"
                   on-oj-action="[[() => cmdIrAContrato(item.data)]]">
                 </oj-c-button>
                 <oj-c-button
                   label="Beneficiarios"
                   chroming="ghost"
-                  size="sm"
                   on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
                 </oj-c-button>
               </div>
@@ -196,17 +440,15 @@
         </oj-bind-for-each>
       </div>
     </div>
-  
+
     <!-- ── COLUMNA: EN ALMACÉN ── -->
-    <div class="kanban-column estatus-en-almacen"> 
-      <div class="kanban-column-ribbon estatus-en-almacen-ribbon"></div>
+    <div>
       <div class="kanban-col-header">
-        <span class="kanban-col-title">En Almacén</span>
+        <span class="kanban-col-title">En almacén</span>
         <span class="kanban-col-count">
           <oj-bind-text value="[[countEnColumna('EN_ALMACEN')]]"></oj-bind-text>
         </span>
       </div>
-
       <div class="kanban-col-body">
         <oj-bind-if test="[[contratosEnColumna('EN_ALMACEN')().length === 0]]">
           <div class="kanban-col-empty">Sin contratos en esta etapa</div>
@@ -250,15 +492,13 @@
     </div>
 
     <!-- ── COLUMNA: LISTO PARA ENTREGAR ── -->
-    <div class="kanban-column estatus-listo-para-entregar"> 
-      <div class="kanban-column-ribbon estatus-listo-para-entregar-ribbon"></div>
+    <div>
       <div class="kanban-col-header">
-        <span class="kanban-col-title">Listo para Entregar</span>
+        <span class="kanban-col-title">Listo p/ entregar</span>
         <span class="kanban-col-count">
           <oj-bind-text value="[[countEnColumna('LISTO_PARA_ENTREGAR')]]"></oj-bind-text>
         </span>
       </div>
-
       <div class="kanban-col-body">
         <oj-bind-if test="[[contratosEnColumna('LISTO_PARA_ENTREGAR')().length === 0]]">
           <div class="kanban-col-empty">Sin contratos en esta etapa</div>
@@ -286,14 +526,12 @@
               <div class="kanban-card-footer">
                 <oj-c-button
                   label="Ver detalle"
-                  chroming="solid"
-                  size="sm"
+                  chroming="outlined"
                   on-oj-action="[[() => cmdIrAContrato(item.data)]]">
                 </oj-c-button>
                 <oj-c-button
                   label="Beneficiarios"
-                  chroming="solid"
-                  size="sm"
+                  chroming="ghost"
                   on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
                 </oj-c-button>
               </div>
@@ -301,19 +539,16 @@
           </template>
         </oj-bind-for-each>
       </div>
-
     </div>
 
-    <!-- ── COLUMNA: ENTREGADOS ── -->
-    <div class="kanban-column estatus-entregado"> 
-      <div class="kanban-column-ribbon estatus-entregado-ribbon"></div>
+    <!-- ── COLUMNA: CERRADO ── -->
+    <div>
       <div class="kanban-col-header">
-        <span class="kanban-col-title">Entregados</span>
+        <span class="kanban-col-title">Cerrado</span>
         <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('ENTREGADOS')]]"></oj-bind-text>
+          <oj-bind-text value="[[countEnColumna('CERRADO')]]"></oj-bind-text>
         </span>
       </div>
-
       <div class="kanban-col-body">
         <oj-bind-if test="[[contratosEnColumna('CERRADO')().length === 0]]">
           <div class="kanban-col-empty">Sin contratos cerrados</div>
@@ -341,14 +576,12 @@
               <div class="kanban-card-footer">
                 <oj-c-button
                   label="Ver detalle"
-                  chroming="solid"
-                  size="sm"
+                  chroming="ghost"
                   on-oj-action="[[() => cmdIrAContrato(item.data)]]">
                 </oj-c-button>
                 <oj-c-button
                   label="Beneficiarios"
-                  chroming="solid"
-                  size="sm"
+                  chroming="ghost"
                   on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
                 </oj-c-button>
               </div>
@@ -357,11 +590,11 @@
         </oj-bind-for-each>
       </div>
     </div>
-    </div>
 
-  </div> <!-- end of tablero Kanban -->
+  </div>
+  <!-- /kanban-board -->
 
-<!-- ═══════════════════════════════════════════
+  <!-- ═══════════════════════════════════════════
        DIALOG — Beneficiarios del contrato
   ════════════════════════════════════════════ -->
   <oj-c-dialog
@@ -370,7 +603,7 @@
     cancel-behavior="icon">
 
     <div slot="header">
-      <span class="oj-typography-subheading-xs">Beneficiarios: </span>
+      <span class="oj-typography-subheading-xs">Beneficiarios — </span>
       <span class="oj-typography-subheading-xs oj-text-color-secondary">
         <oj-bind-text value="[[uiBeneficiariosDialogTitle]]"></oj-bind-text>
       </span>
@@ -404,5 +637,4 @@
 
   </oj-c-dialog>
 
-</div> <!-- end of file -->
-
+</div>

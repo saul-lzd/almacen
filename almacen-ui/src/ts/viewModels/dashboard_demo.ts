@@ -14,11 +14,10 @@ import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 
-import "oj-c/form-layout";
-import "oj-c/input-text";
-import "oj-c/buttonset-multiple";
+import "oj-c/list-view";
 import "oj-c/button";
 import "oj-c/dialog";
+import "oj-c/avatar";
 
 // ================================================================
 // TIPOS
@@ -283,7 +282,7 @@ class DashboardViewModel {
     }
 
     // Recargar tablero
-    public cmdActualizar = (): void => {
+    public cmdRecargar = (): void => {
         void this.loadContratos();
     };
 }
