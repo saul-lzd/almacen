@@ -32,3 +32,7 @@ export function mapEstatusToLabel(estatus: string): string {
 export function mapEstatusToBadge(estatus: string): string {
     return ESTATUS_BADGE[estatus] || "oj-badge-neutral";
 }
+
+export function removeAccents(str: string): string {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};

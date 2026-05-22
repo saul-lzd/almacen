@@ -130,12 +130,14 @@
         <span slot="startIcon" class="oj-ux-ico-save"></span>
       </oj-c-button>
 
-      <oj-c-button
-        chroming="callToAction"
-        label="Enviar a Almacén"
-        on-oj-action="[[cmdEnviarAlmacen]]">
-        <span slot="startIcon" class="oj-ux-ico-send"></span>
-      </oj-c-button>
+      <oj-bind-if test="[[uiEstatusContrato() == 'En captura']]">
+        <oj-c-button
+          chroming="callToAction"
+          label="Enviar a Almacén"
+          on-oj-action="[[cmdEnviarAlmacen]]">
+          <span slot="startIcon" class="oj-ux-ico-send"></span>
+        </oj-c-button>
+      </oj-bind-if>
     </div>
 
   </div>
@@ -395,9 +397,10 @@
                           $<oj-bind-text value="[[item.data.montoAsignado.toLocaleString('es-MX')]]"></oj-bind-text>
                         </div>
                         <div slot="action">
-                          <oj-c-button
+                          <oj-c-button class="oj-text-color-danger"
                             label="Eliminar Clave"
-                            chroming="borderless"
+                            chroming="danger"
+                            size="sm"
                             on-oj-action="[[() => cmdEliminarClave(item.data)]]">
                           </oj-c-button>
                         </div>
@@ -434,7 +437,11 @@
 
       <!-- ── 6. BIENES (ADQUISICIÓN) ── -->
       <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom">
-        <oj-c-collapsible id="collapsible-bienes" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+        <oj-c-collapsible 
+        id="collapsible-bienes" 
+        expanded="true"
+        icon-position="end" 
+        class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
           <h6 slot="header">Adquisición</h6>
           <hr>
           <div class="oj-sm-padding-6x-vertical">
@@ -443,10 +450,17 @@
               <div class="oj-flex-bar-start">
                 <h2 class="oj-typography-subheading-xs">Agregar bienes</h2>
               </div>
-              <div class="oj-flex-bar-end">
+              <div class="oj-flex-bar-end" style="gap: 8px;">
+                <oj-bind-if test="[[calcHayBienEnEdicion]]">
+                  <oj-c-button
+                    chroming="ghost"
+                    label="Cancelar Edición"
+                    on-oj-action="[[cmdCancelarEditarBien]]">
+                  </oj-c-button>
+                </oj-bind-if>
                 <oj-c-button
                   chroming="solid"
-                  label="Agregar Bien"
+                  label="[[calcLabelBtnBien]]"
                   on-oj-action="[[cmdAgregarBien]]">
                   <span slot="startIcon" class="oj-ux-ico-plus-square"></span>
                 </oj-c-button>
@@ -502,8 +516,8 @@
                 Descripción Técnica (Características Mínimas)
               </label>
               <quill-editor
-                  value="{{frmBienDescripcionHtml}}"
                   placeholder="Describe las Descripción Técnica del bien..."
+                  value="{{frmBienDescripcionHtml}}"
                   on-value-changed="[[onQuillChanged]]">
               </quill-editor>
             </div>
@@ -530,9 +544,8 @@
                         <strong>
                           <oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text>
                         </strong>
-                        —
-                        <oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text>
-                        unidades
+                        
+                        <oj-bind-text value="[[' (' + item.data.cantidad + ')']]"></oj-bind-text>
                       </div>
 
                       <div slot="secondary">
@@ -542,13 +555,20 @@
 
                       <div slot="action" class="oj-flex oj-sm-align-items-center">
                         <oj-c-button
+                          label="Editar"
+                          chroming="borderless"
+                          disabled="[[calcHayBienEnEdicion]]"
+                          on-oj-action="[[() => cmdEditarBien(item.data)]]">
+                        </oj-c-button>
+                        <oj-c-button
                           label="Ver descripción"
                           chroming="borderless"
                           on-oj-action="[[() => cmdVerDescripcionBien(item.data)]]">
                         </oj-c-button>
                         <oj-c-button
                           label="Eliminar"
-                          chroming="borderless"
+                          chroming="danger"
+                          size="sm"
                           on-oj-action="[[() => cmdEliminarBien(item.data)]]">
                         </oj-c-button>
                       </div>
@@ -572,15 +592,21 @@
   <oj-c-dialog
     opened="{{uiBienDescripcionDialogOpen}}"
     id="descripcion-bien-dialog"
-    dialog-title="Descripción técnica del bien"
+    dialog-title="Descripción Técnica"
     min-width="60vw"
     cancel-behavior="icon">
     <div slot="body">
+
+      <quill-editor
+        readonly="true"
+        placeholder="Este bien no tiene descripción técnica."
+        value="[[uiDescripcionBienSeleccionada]]">
+      </quill-editor>
       <!--
         No se usa oj-bind-text porque la descripción es HTML de Quill.
         El innerHTML se asigna desde el script al abrir el dialog.
       -->
-      <div id="descripcion-bien-render" class="descripcion-bien-render"></div>
+      <!-- <div id="descripcion-bien-render" class="descripcion-bien-render"></div> -->
     </div>
   </oj-c-dialog>
 

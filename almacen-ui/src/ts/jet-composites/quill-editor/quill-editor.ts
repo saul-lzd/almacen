@@ -9,6 +9,7 @@ class QuillEditorViewModel {
     private context: any;
     private initialized: boolean = false;
     private debounceTimer: any = null;
+    private pendingValue: string | null = null;  // valor recibido antes de que Quill esté listo
 
     constructor(context: any) {
         this.context = context;
@@ -21,27 +22,35 @@ class QuillEditorViewModel {
 
     disconnected(): void {
         this.quillInstance = null;
+        this.initialized = false; // permite reinicializar si Oracle JET reconecta la instancia
     }
 
-    // Oracle JET llama este método cuando una propiedad cambia desde el padre
+    // Oracle JET invoca este método cuando el padre actualiza una propiedad
     propertyChanged(context: { property: string; value: any }): void {
-        if (context.property === "value" && this.quillInstance) {
-            const currentHTML = this.quillInstance.getSemanticHTML();
-            // Solo actualizar si el valor externo es diferente al contenido actual
-            // para evitar loop infinito (editor cambia → padre actualiza → editor cambia...)
-            if (context.value !== currentHTML) {
-                if (!context.value || context.value === "") {
-                    this.quillInstance.setContents([]);
-                } else {
-                    this.quillInstance.clipboard.dangerouslyPasteHTML(context.value);
-                }
-            }
+        if (context.property !== "value") return;
+
+        if (this.quillInstance) {
+            this.applyValue(context.value);
+        } else {
+            // Quill aún no está listo — guardar para aplicar al finalizar initQuill
+            this.pendingValue = context.value ?? "";
+        }
+    }
+
+    // Aplica un valor HTML al editor sin disparar text-change (fuente 'silent')
+    private applyValue(value: string): void {
+        const currentHTML = this.quillInstance.getSemanticHTML();
+        if (value === currentHTML) return;
+
+        if (!value || value === "") {
+            this.quillInstance.setContents([], "silent");
+        } else {
+            const delta = this.quillInstance.clipboard.convert({ html: value });
+            this.quillInstance.setContents(delta, "silent");
         }
     }
 
     private initQuill(): void {
-
-        // Si ya se inicializó, no hacer nada
         if (this.initialized) return;
 
         const editorEl = document.getElementById(this.editorId);
@@ -56,14 +65,20 @@ class QuillEditorViewModel {
             return;
         }
 
-        // Marcar como inicializado ANTES de crear la instancia
+        // Limpiar cualquier estructura de Quill previa antes de reinicializar:
+        // Quill inserta el toolbar como sibling anterior al contenedor — lo removemos
+        const parent = editorEl.parentElement;
+        if (parent) {
+            parent.querySelectorAll(".ql-toolbar").forEach(el => el.remove());
+        }
+        editorEl.innerHTML = "";
+        editorEl.className = "";
+
         this.initialized = true;
 
-        // En CCA las propiedades son valores planos — NO funciones/observables
         const props = this.context.properties;
-        const isReadonly = props.readonly === true;
-        //const placeholder = props.placeholder || "Escribe aquí...";
-        //const initialValue = props.value || "";
+        // !!props.readonly cubre tanto boolean true como string "true" (HTML attribute coercion)
+        const isReadonly = !!props.readonly;
 
         this.quillInstance = new Quill(`#${this.editorId}`, {
             theme: "snow",
@@ -79,18 +94,22 @@ class QuillEditorViewModel {
             }
         });
 
-         // Cargar valor inicial antes del listener
-        if (props.value) {
-            this.quillInstance.clipboard.dangerouslyPasteHTML(props.value);
+        // Aplicar valor pendiente (llegó antes de que Quill estuviera listo) o el inicial
+        const initialValue = this.pendingValue !== null ? this.pendingValue : props.value;
+        this.pendingValue = null;
+        if (initialValue) {
+            const delta = this.quillInstance.clipboard.convert({ html: initialValue });
+            this.quillInstance.setContents(delta, "silent");
         }
 
         const quill = this.quillInstance;
-        // Notificar al padre cuando cambia el contenido
-        quill.on("text-change", () => {
+        quill.on("text-change", (_delta: any, _old: any, source: string) => {
+            // Ignorar cambios programáticos ('silent', 'api') — solo reaccionar al usuario
+            if (source !== "user") return;
+
             clearTimeout(this.debounceTimer);
             this.debounceTimer = setTimeout(() => {
                 const html = quill.getSemanticHTML();
-                // Disparar evento custom para que el padre actualice su observable
                 this.context.properties.value = html;
                 this.context.element.dispatchEvent(
                     new CustomEvent("valueChanged", {
@@ -98,14 +117,8 @@ class QuillEditorViewModel {
                         detail: { value: html }
                     })
                 );
-            }, 300); // Debounce de 300ms para evitar actualizaciones excesivas
+            }, 300);
         });
-    }
-
-    public reset(): void {
-        if (this.quillInstance) {
-            this.quillInstance.setContents([]);
-        }
     }
 }
 

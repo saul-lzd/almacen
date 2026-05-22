@@ -5,7 +5,8 @@
   "properties": {
     "value": {
       "type": "string",
-      "description": "Contenido HTML del editor"
+      "description": "Contenido HTML del editor",
+      "writeback": true
     },
     "placeholder": {
       "type": "string",
@@ -21,11 +22,6 @@
     "valueChanged": {
       "description": "Se dispara cuando el contenido del editor cambia",
       "bubbles": true
-    }
-  },
-  "methods": {
-    "reset": {
-      "description": "Limpia el contenido del editor"
     }
   }
 }

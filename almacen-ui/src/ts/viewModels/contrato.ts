@@ -287,7 +287,7 @@ class NuevoContratoViewModel {
 
   public frmBienLote           = ko.observable<number>(1);
   public frmBienPartida        = ko.observable<number>(1);
-  public frmBienIdUnidadMedida = ko.observable<number | null>(null);
+  public frmBienIdUnidadMedida = ko.observable<number | string | null>(null);
   public frmBienCantidad       = ko.observable<number>(1);
   public frmBienPrecioUnitario = ko.observable<number>(0);
 
@@ -305,11 +305,17 @@ class NuevoContratoViewModel {
   });
 
   public catUnidadesMedida   = ko.observableArray<CatalogoOption>([]);
-  public dpCatUnidadesMedida = new ArrayDataProvider(this.catUnidadesMedida, {
+  public dpCatUnidadesMedida = new ArrayDataProvider<string, CatalogoOption>(this.catUnidadesMedida, {
     keyAttributes: "value"
   });
 
   private seqBien = 1;
+
+  public uiBienEnEdicion       = ko.observable<BienContratoItem | null>(null);
+  public calcHayBienEnEdicion  = ko.pureComputed(() => this.uiBienEnEdicion() !== null);
+  public calcLabelBtnBien      = ko.pureComputed(() =>
+    this.uiBienEnEdicion() ? "Guardar Cambios" : "Agregar Bien"
+  );
 
   public calcHayBienes = ko.pureComputed(() =>
     this.listBienes().length > 0
@@ -538,29 +544,22 @@ class NuevoContratoViewModel {
       return;
     }
 
+    const enEdicion = this.uiBienEnEdicion();
+
     this.listBienes.push({
-      idLocal:           this.seqBien++,
-      idContratoBien:    null,          // null = nuevo, el backend genera el ID
-      lote:              Number(this.frmBienLote()),
-      partida:           Number(this.frmBienPartida()),
+      idLocal:            enEdicion ? enEdicion.idLocal : this.seqBien++,
+      idContratoBien:     enEdicion ? enEdicion.idContratoBien : null,
+      lote:               Number(this.frmBienLote()),
+      partida:            Number(this.frmBienPartida()),
       descripcionTecnica: this.frmBienDescripcionHtml(),
-      idUnidadMedida:    idUnidad,
-      unidadMedida:      unidad.label,  // nombre para mostrar en el listado
-      cantidad:          Number(this.frmBienCantidad()),
-      precioUnitario:    Number(this.frmBienPrecioUnitario()),
-      subtotal:          Number(this.calcBienSubtotal())
+      idUnidadMedida:     Number(idUnidad),
+      unidadMedida:       unidad.label,
+      cantidad:           Number(this.frmBienCantidad()),
+      precioUnitario:     Number(this.frmBienPrecioUnitario()),
+      subtotal:           Number(this.calcBienSubtotal())
     });
 
-    console.log("Bien agregado:", {
-      lote: this.frmBienLote(),
-      partida: this.frmBienPartida(),
-      descripcionTecnica: this.frmBienDescripcionHtml(),
-      idUnidadMedida: this.frmBienIdUnidadMedida(),
-      cantidad: this.frmBienCantidad(),
-      precioUnitario: this.frmBienPrecioUnitario(),
-      subtotal: this.calcBienSubtotal()
-    });
-
+    this.uiBienEnEdicion(null);
     this.clearFrmBien();
   };
 
@@ -578,6 +577,27 @@ class NuevoContratoViewModel {
     this.uiBienDescripcionDialogOpen(true);
   };
 
+  public cmdEditarBien = (bien: BienContratoItem): void => {
+    this.uiBienEnEdicion(bien);
+    this.listBienes.remove(bien);
+
+    this.frmBienLote(bien.lote);
+    this.frmBienPartida(bien.partida);
+    this.frmBienIdUnidadMedida(String(bien.idUnidadMedida));
+    this.frmBienDescripcionHtml(bien.descripcionTecnica);
+    this.frmBienCantidad(bien.cantidad);
+    this.frmBienPrecioUnitario(bien.precioUnitario);
+  };
+
+  public cmdCancelarEditarBien = (): void => {
+    const enEdicion = this.uiBienEnEdicion();
+    if (enEdicion) {
+      this.listBienes.push(enEdicion);
+    }
+    this.uiBienEnEdicion(null);
+    this.clearFrmBien();
+  };
+
   public cmdCerrarDescripcionDialog = (): void => {
     this.uiBienDescripcionDialogOpen(false);
   };
@@ -589,8 +609,6 @@ class NuevoContratoViewModel {
     this.frmBienDescripcionHtml("");
     this.frmBienCantidad(1);
     this.frmBienPrecioUnitario(0);
-    // El reset del editor Quill se maneja en el HTML con un evento custom
-    document.dispatchEvent(new CustomEvent("quill:reset"));
   }
 
   // ================================================================
