@@ -108,9 +108,9 @@
     </div>
 
     <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
-      <span class="oj-typography-body-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Proveedor</span>
+      <span class="oj-typography-body-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Adquisicion</span>
       <span class="oj-typography-subheading-xs">
-        <oj-bind-text value="[[calcProveedorHeader]]"></oj-bind-text>
+        <oj-bind-text value="[[calcAdquisicionHeader]]"></oj-bind-text>
       </span>
     </div>
 
@@ -164,16 +164,15 @@
               </oj-c-input-text>
 
               <oj-c-input-text
-                label-hint="Adquisición"
-                value="{{frmAdquisicion}}"
-                placeholder="Descripción breve de lo que se compra"
-                required="true">
+                  label-hint="Adquisición"
+                  value="{{frmAdquisicion}}"
+                  placeholder="Descripción breve de lo que se compra"
+                  required="true">
               </oj-c-input-text>
 
               <oj-c-input-date-picker 
-                label-hint="Fecha Tentativa de Llegada (mm/dd/aaaa)"
-                value="{{frmFechaTentativaLlegada}}"
-                converter="[[converterFecha]]">
+                label-hint="Fecha Tentativa de Llegada (dia/mes/año)"
+                value="{{frmFechaTentativaLlegada}}"">
                 </oj-c-input-date-picker>
 
             </oj-c-form-layout>
@@ -394,11 +393,11 @@
                           <oj-bind-text value="[[item.data.clave]]"></oj-bind-text>
                         </div>
                         <div slot="secondary">
-                          $<oj-bind-text value="[[item.data.montoAsignado.toLocaleString('es-MX')]]"></oj-bind-text>
+                          <oj-bind-text value="[['$ ' + item.data.montoAsignado.toLocaleString('es-MX')]]"></oj-bind-text>
                         </div>
                         <div slot="action">
                           <oj-c-button class="oj-text-color-danger"
-                            label="Eliminar Clave"
+                            label="Quitar"
                             chroming="danger"
                             size="sm"
                             on-oj-action="[[() => cmdEliminarClave(item.data)]]">
@@ -431,6 +430,17 @@
                 class="oj-form-control-full-width">
               </oj-c-text-area>
             </oj-c-form-layout>
+            <oj-bind-if test="[[calcBeneficiariosChips().length > 0]]">
+              <div class="oj-flex oj-sm-flex-wrap-wrap oj-sm-margin-2x-top" style="gap: 6px;">
+                <oj-bind-for-each data="[[calcBeneficiariosChips]]">
+                  <template>
+                    <span class="oj-badge oj-badge-subtle" style="font-size: 0.85rem; padding: 4px 10px; border-radius: 16px;">
+                      <oj-bind-text value="[[$current.data]]"></oj-bind-text>
+                    </span>
+                  </template>
+                </oj-bind-for-each>
+              </div>
+            </oj-bind-if>
           </div>
         </oj-c-collapsible>
       </div>
@@ -468,7 +478,7 @@
             </div>
 
             <!-- Campos del bien -->
-            <oj-c-form-layout max-columns="6" direction="row" label-edge="top" user-assistance-density="compact">
+            <oj-c-form-layout columns="6" direction="row" label-edge="top" user-assistance-density="compact">
               <oj-c-input-number
                 label-hint="Lote"
                 value="{{frmBienLote}}"
@@ -525,7 +535,25 @@
             <!-- Listado de bienes agregados -->
             <oj-bind-if test="[[calcHayBienes()]]">
               <div class="oj-sm-padding-6x-top">
-                <h2 class="oj-typography-subheading-xs oj-sm-margin-4x-bottom">Listado de Bienes</h2>
+                <div class="oj-flex oj-sm-margin-4x-bottom" style="gap: 12px;">
+                  <h2 class="oj-typography-subheading-xs">Listado de Bienes</h2>
+                  <span class="oj-badge oj-badge-subtle">
+                    <oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text>
+                    Total
+                  </span>
+                  <oj-bind-if test="[[calcBienesNuevos() > 0]]">
+                    <span class="oj-badge oj-badge-subtle oj-badge-success">
+                      <oj-bind-text value="[[calcBienesNuevos]]"></oj-bind-text>
+                      Nuevos
+                    </span>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[calcBienesExistentes() > 0]]">
+                    <span class="oj-badge oj-badge-subtle oj-badge-info">
+                      <oj-bind-text value="[[calcBienesExistentes]]"></oj-bind-text>
+                      Guardados
+                    </span>
+                  </oj-bind-if>
+                </div>
 
                 <oj-c-list-view
                   aria-label="Listado de Bienes"
@@ -549,8 +577,8 @@
                       </div>
 
                       <div slot="secondary">
-                        Precio unitario: $<oj-bind-text value="[[item.data.precioUnitario.toLocaleString('es-MX')]]"></oj-bind-text>
-                        · Subtotal: $<oj-bind-text value="[[item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
+                        <oj-bind-text value="[['Precio unitario: $ ' +item.data.precioUnitario.toLocaleString('es-MX')]]"></oj-bind-text>
+                        <oj-bind-text value="[['· Subtotal: $ ' +item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
                       </div>
 
                       <div slot="action" class="oj-flex oj-sm-align-items-center">
@@ -566,7 +594,7 @@
                           on-oj-action="[[() => cmdVerDescripcionBien(item.data)]]">
                         </oj-c-button>
                         <oj-c-button
-                          label="Eliminar"
+                          label="Quitar"
                           chroming="danger"
                           size="sm"
                           on-oj-action="[[() => cmdEliminarBien(item.data)]]">

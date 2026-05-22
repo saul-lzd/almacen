@@ -34,6 +34,9 @@ import "oj-c/input-text";
 import "oj-c/input-number";
 import "oj-c/input-date-text";
 import 'oj-c/input-date-picker';
+import 'ojs/ojformlayout';
+import "ojs/ojdatetimepicker";
+import "ojs/ojinputtext";
 
 // ================================================================
 // TIPOS
@@ -192,6 +195,10 @@ class NuevoContratoViewModel {
     this.frmNumeroContrato() || "Pendiente"
   );
 
+  public calcAdquisicionHeader = ko.pureComputed(() =>
+    this.frmAdquisicion() || "Pendiente"
+  );
+
   public calcProveedorHeader = ko.pureComputed(() =>
     this.frmProveedorRazonSocial() || "Pendiente"
   );
@@ -319,6 +326,17 @@ class NuevoContratoViewModel {
 
   public calcHayBienes = ko.pureComputed(() =>
     this.listBienes().length > 0
+  );
+
+  public calcTotalBienes    = ko.pureComputed(() => this.listBienes().length);
+  public calcBienesNuevos   = ko.pureComputed(() => this.listBienes().filter(b => b.idContratoBien === null).length);
+  public calcBienesExistentes = ko.pureComputed(() => this.listBienes().filter(b => b.idContratoBien !== null).length);
+
+  public calcBeneficiariosChips = ko.pureComputed(() =>
+    this.frmBeneficiariosTexto()
+      .split(",")
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
   );
 
   // Descripción seleccionada para mostrar en el dialog (HTML renderizado)
@@ -863,11 +881,11 @@ class NuevoContratoViewModel {
         return fecha.toISOString().split("T")[0];
     }
 
-    // Converter para mostrar dd/MM/yyyy al usuario
-    // El valor interno sigue siendo YYYY-MM-DD (ISO)
-    public converterFecha = new IntlDateTimeConverter({
-        pattern: "dd/MM/yyyy"
-    });
+    // // Converter para mostrar dd/MM/yyyy al usuario
+    // // El valor interno sigue siendo YYYY-MM-DD (ISO)
+    // public converterFecha = new IntlDateTimeConverter({
+    //     pattern: "dd/MM/yyyy"
+    // });
 
 }
 
