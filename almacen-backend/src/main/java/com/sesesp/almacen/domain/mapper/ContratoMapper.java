@@ -31,6 +31,7 @@ public class ContratoMapper {
                .numeroContrato(entity.getNumeroContrato())
                .adquisicion(entity.getAdquisicion())
                .estatus(entity.getEstatus().name())
+               .fechaTentativaLlegada(entity.getFechaTentativaLlegada())
 
                // detalles de pago
                .montoSinImpuestos(entity.getMontoSinImpuestos())
