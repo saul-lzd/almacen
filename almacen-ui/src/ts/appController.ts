@@ -49,25 +49,41 @@ class RootViewModel {
       this.smScreen = ResponsiveKnockoutUtils.createMediaQueryObservable(smQuery);
     }
 
-    const navData = [
+    // Todas las rutas registradas en el router (incluyendo sub-rutas sin nav)
+    const allRoutes = [
       { path: "", redirect: "dashboard" },
-      { path: "dashboard", detail: { label: "Inicio", iconClass: "oj-ux-ico-home" } },
-      { path: "contrato", detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } }
+      { path: "dashboard",          detail: { label: "Inicio",    iconClass: "oj-ux-ico-home" } },
+      { path: "contrato",           detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } },
+      { path: "almacen",            detail: { label: "Almacén",   iconClass: "oj-ux-ico-warehouse" } },
+      // Sub-rutas: registradas en el router pero no aparecen en el nav
+      { path: "recepcion",          detail: { label: "Recepción",      iconClass: "oj-ux-ico-package" } },
+      { path: "procesamiento",      detail: { label: "Procesamiento",  iconClass: "oj-ux-ico-process" } },
+      // Rutas de desarrollo (temporales)
+      { path: "dashboard_demo", detail: { label: "Dashboard Demo", iconClass: "oj-ux-ico-data-document" } },
+      { path: "dashboard_OG",   detail: { label: "Dashboard OG",   iconClass: "oj-ux-ico-data-document" } },
+      { path: "contrato_BAK",   detail: { label: "Contratos BAK",  iconClass: "oj-ux-ico-data-document" } },
+      { path: "contrato_old",   detail: { label: "Contratos OLD",  iconClass: "oj-ux-ico-data-document" } },
     ];
+
+    // Rutas visibles en el tab bar (excluye sub-rutas y rutas de desarrollo)
+    const navItems = allRoutes.filter(r =>
+      r.path !== "" && r.path !== "recepcion" && r.path !== "procesamiento" &&
+      !r.path.endsWith("_demo") && !r.path.endsWith("_OG") &&
+      !r.path.endsWith("_BAK") && !r.path.endsWith("_old")
+    );
+
     // router setup
-    const router = new CoreRouter(navData, {
+    const router = new CoreRouter(allRoutes, {
       urlAdapter: new UrlParamAdapter()
     });
-    router.sync();https://static.oracle.com/cdn/fnd/gallery/2607.0.1/images/preview/index.html#
+    router.sync();
 
     // module config
     this.moduleAdapter = new ModuleRouterAdapter(router);
 
     this.selection = new KnockoutRouterAdapter(router);
 
-    // Setup the navDataProvider with the routes, excluding the first redirected
-    // route.
-    this.navDataProvider = new ArrayDataProvider(navData.slice(1), {keyAttributes: "path"});
+    this.navDataProvider = new ArrayDataProvider(navItems, {keyAttributes: "path"});
 
     // header
 

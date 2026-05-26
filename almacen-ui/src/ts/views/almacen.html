@@ -1,0 +1,235 @@
+<!--
+  View: Almacén — Lista de contratos pendientes
+  Vista del almacenista: contratos en POR_RECIBIR, EN_ALMACEN y LISTO_PARA_ENTREGAR.
+-->
+
+<div class="oj-hybrid-padding">
+
+  <!-- TOOLBAR -->
+  <div class="oj-flex-bar oj-sm-align-items-center" style="margin-bottom: 20px">
+    <div class="oj-flex-bar-start">
+      <h2 class="oj-typography-heading-sm" style="margin: 0">Almacén</h2>
+    </div>
+    <div class="oj-flex-bar-end">
+      <oj-c-button
+        label="Actualizar"
+        chroming="outlined"
+        size="sm"
+        on-oj-action="[[cmdActualizar]]">
+        <span slot="startIcon" class="oj-ux-ico-refresh"></span>
+      </oj-c-button>
+    </div>
+  </div>
+
+  <!-- TARJETAS DE RESUMEN -->
+  <div class="almacen-stats">
+    <div class="almacen-stat-card" on-click="[[() => cmdSetTab('POR_RECIBIR')]]">
+      <div class="almacen-stat-ribbon estatus-por-recibir-ribbon"></div>
+      <div class="almacen-stat-body">
+        <div class="almacen-stat-count">
+          <oj-bind-text value="[[countPorEstatus('POR_RECIBIR')]]"></oj-bind-text>
+        </div>
+        <div class="almacen-stat-label">Por Recibir</div>
+      </div>
+    </div>
+    <div class="almacen-stat-card" on-click="[[() => cmdSetTab('EN_ALMACEN')]]">
+      <div class="almacen-stat-ribbon estatus-en-almacen-ribbon"></div>
+      <div class="almacen-stat-body">
+        <div class="almacen-stat-count">
+          <oj-bind-text value="[[countPorEstatus('EN_ALMACEN')]]"></oj-bind-text>
+        </div>
+        <div class="almacen-stat-label">En Almacén</div>
+      </div>
+    </div>
+    <div class="almacen-stat-card" on-click="[[() => cmdSetTab('LISTO_PARA_ENTREGAR')]]">
+      <div class="almacen-stat-ribbon estatus-listo-para-entregar-ribbon"></div>
+      <div class="almacen-stat-body">
+        <div class="almacen-stat-count">
+          <oj-bind-text value="[[countPorEstatus('LISTO_PARA_ENTREGAR')]]"></oj-bind-text>
+        </div>
+        <div class="almacen-stat-label">Listo p/ Entregar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS DE FILTRO -->
+  <div class="almacen-tabs">
+    <div class="almacen-tab" :class="[[{'almacen-tab--active': isTabActive('todos')()}]]"
+      on-click="[[() => cmdSetTab('todos')]]">
+      Todos
+      <span class="almacen-tab-count">
+        <oj-bind-text value="[[calcTotalContratos]]"></oj-bind-text>
+      </span>
+    </div>
+    <div class="almacen-tab" :class="[[{'almacen-tab--active': isTabActive('POR_RECIBIR')()}]]"
+      on-click="[[() => cmdSetTab('POR_RECIBIR')]]">
+      Por Recibir
+      <span class="almacen-tab-count almacen-tab-count--por-recibir">
+        <oj-bind-text value="[[countPorEstatus('POR_RECIBIR')]]"></oj-bind-text>
+      </span>
+    </div>
+    <div class="almacen-tab" :class="[[{'almacen-tab--active': isTabActive('EN_ALMACEN')()}]]"
+      on-click="[[() => cmdSetTab('EN_ALMACEN')]]">
+      En Almacén
+      <span class="almacen-tab-count almacen-tab-count--en-almacen">
+        <oj-bind-text value="[[countPorEstatus('EN_ALMACEN')]]"></oj-bind-text>
+      </span>
+    </div>
+    <div class="almacen-tab" :class="[[{'almacen-tab--active': isTabActive('LISTO_PARA_ENTREGAR')()}]]"
+      on-click="[[() => cmdSetTab('LISTO_PARA_ENTREGAR')]]">
+      Listo p/ Entregar
+      <span class="almacen-tab-count almacen-tab-count--listo">
+        <oj-bind-text value="[[countPorEstatus('LISTO_PARA_ENTREGAR')]]"></oj-bind-text>
+      </span>
+    </div>
+  </div>
+
+  <!-- BÚSQUEDA -->
+  <oj-c-form-layout full-width="true" style="width: 37rem; margin-bottom: 16px">
+    <oj-c-input-text
+      label-hint="Buscar por contrato, proveedor o adquisición..."
+      label-edge="inside"
+      clear-icon="conditional"
+      value="{{uiBusqueda}}">
+      <div slot="start" class="oj-ux-ico-search"></div>
+    </oj-c-input-text>
+  </oj-c-form-layout>
+
+  <!-- CARGANDO -->
+  <oj-bind-if test="[[uiCargando]]">
+    <div class="almacen-estado-vacio">Cargando contratos...</div>
+  </oj-bind-if>
+
+  <!-- ERROR -->
+  <oj-bind-if test="[[uiError()]]">
+    <div class="almacen-banner-error">
+      <span class="oj-ux-ico-warning-s"></span>
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
+  <!-- LISTA VACÍA -->
+  <oj-bind-if test="[[!uiCargando() && !uiError() && contratosFiltrados().length === 0]]">
+    <div class="almacen-estado-vacio">
+      <span class="oj-ux-ico-package" style="font-size: 36px; display: block; margin-bottom: 8px; color: var(--oj-core-text-color-disabled)"></span>
+      Sin contratos en esta etapa
+    </div>
+  </oj-bind-if>
+
+  <!-- GRID DE CONTRATOS -->
+  <oj-bind-if test="[[!uiCargando() && contratosFiltrados().length > 0]]">
+    <div class="almacen-grid">
+      <oj-bind-for-each data="[[contratosFiltrados()]]">
+        <template data-oj-as="item">
+          <div class="almacen-card">
+
+            <!-- Ribbon de color por estatus -->
+            <div class="almacen-card-ribbon" :class="[[{
+              'estatus-por-recibir-ribbon':         item.data.estatus === 'POR_RECIBIR' || item.data.estatus === 'RECEPCION_PARCIAL',
+              'estatus-en-almacen-ribbon':           item.data.estatus === 'EN_ALMACEN',
+              'estatus-listo-para-entregar-ribbon':  item.data.estatus === 'LISTO_PARA_ENTREGAR',
+              'estatus-entregado-ribbon':            item.data.estatus === 'ENTREGA_PARCIAL'
+            }]]"></div>
+
+            <div class="almacen-card-body">
+
+              <!-- Número + badge de estatus -->
+              <div class="almacen-card-header-row">
+                <span class="almacen-card-num">
+                  <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                </span>
+                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                  <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <!-- Adquisición -->
+              <div class="almacen-card-adq">
+                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+              </div>
+
+              <!-- Meta: proveedor, fecha, bienes -->
+              <div class="almacen-card-meta">
+                <div class="almacen-card-meta-row">
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
+                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+                </div>
+                <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
+                  <div class="almacen-card-meta-row">
+                    <span class="fecha-chip">
+                      <span class="oj-ux-ico-calendar" style="font-size:11px"></span>
+                      <oj-bind-text value="[[formatFecha(item.data.fechaTentativaLlegada)]]"></oj-bind-text>
+                    </span>
+                  </div>
+                </oj-bind-if>
+                <div class="almacen-card-meta-row">
+                  <span class="oj-ux-ico-package" style="font-size:12px"></span>
+                  <oj-bind-text value="[[item.data.totalBienes + ' bienes en contrato']]"></oj-bind-text>
+                </div>
+              </div>
+
+              <!-- Monto -->
+              <oj-bind-if test="[[item.data.montoTotal]]">
+                <div class="almacen-card-monto">
+                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
+                </div>
+              </oj-bind-if>
+
+              <!-- Acción según estatus -->
+              <div class="almacen-card-footer">
+                <!-- POR_RECIBIR: solo recibir -->
+                <oj-bind-if test="[[item.data.estatus === 'POR_RECIBIR']]">
+                  <oj-c-button
+                    label="Recibir proveedor"
+                    chroming="callToAction"
+                    size="sm"
+                    on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-truck"></span>
+                  </oj-c-button>
+                </oj-bind-if>
+                <!-- RECEPCION_PARCIAL: recibir pendientes + procesar bienes -->
+                <oj-bind-if test="[[item.data.estatus === 'RECEPCION_PARCIAL']]">
+                  <oj-c-button
+                    label="Recibir pendientes"
+                    chroming="outlined"
+                    size="sm"
+                    on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-truck"></span>
+                  </oj-c-button>
+                  <oj-c-button
+                    label="Procesar bienes"
+                    chroming="callToAction"
+                    size="sm"
+                    on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-capture"></span>
+                  </oj-c-button>
+                </oj-bind-if>
+                <!-- EN_ALMACEN: solo procesar -->
+                <oj-bind-if test="[[item.data.estatus === 'EN_ALMACEN']]">
+                  <oj-c-button
+                    label="Procesar bienes"
+                    chroming="callToAction"
+                    size="sm"
+                    on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-capture"></span>
+                  </oj-c-button>
+                </oj-bind-if>
+                <!-- Demás estatus: ver detalle -->
+                <oj-bind-if test="[[item.data.estatus !== 'POR_RECIBIR' && item.data.estatus !== 'RECEPCION_PARCIAL' && item.data.estatus !== 'EN_ALMACEN']]">
+                  <oj-c-button
+                    label="Ver detalle"
+                    chroming="outlined"
+                    size="sm"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
+              </div>
+
+            </div>
+          </div>
+        </template>
+      </oj-bind-for-each>
+    </div>
+  </oj-bind-if>
+
+</div>
