@@ -1,0 +1,284 @@
+package com.sesesp.almacen.domain.service;
+
+import com.sesesp.almacen.common.exception.ContratoValidacionException;
+import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
+import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto.BienRecepcionDto;
+import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
+import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
+import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
+import com.sesesp.almacen.domain.entity.ContratoBienEntity;
+import com.sesesp.almacen.domain.entity.ContratoEntity;
+import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenBienEntity;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
+import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
+import com.sesesp.almacen.domain.repository.ContratoBienRepository;
+import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenBienRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class RecepcionAlmacenService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RecepcionAlmacenService.class);
+
+    private final ContratoRepository contratoRepository;
+    private final ContratoBienRepository contratoBienRepository;
+    private final RecepcionAlmacenRepository recepcionAlmacenRepository;
+    private final RecepcionAlmacenBienRepository recepcionAlmacenBienRepository;
+    private final AlmacenBienRepository almacenBienRepository;
+
+    /**
+     * Registra la recepción de bienes cuando llega el proveedor.
+     *
+     * Validaciones:
+     *   - El contrato debe estar en estatus POR_RECIBIR
+     *   - El nombre del transportista es obligatorio
+     *   - Todos los bienes recibidos deben pertenecer al contrato
+     *   - La cantidad recibida no puede superar la cantidad del contrato
+     *
+     * Efecto:
+     *   - Crea el registro RecepcionAlmacen con su folio
+     *   - Crea el detalle por bien (RecepcionAlmacenBien)
+     *   - Si todas las cantidades son completas → EN_ALMACEN
+     *   - Si alguna cantidad es menor a la esperada → RECEPCION_PARCIAL
+     */
+    @Transactional
+    public void recibirBienes(Integer idContrato, RecepcionAlmacenRequestDto request) {
+        logger.info("Registrando recepción para contrato ID: {}", idContrato);
+
+        // 1. Cargar y validar el contrato
+        ContratoEntity contrato = contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
+
+        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR
+                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato no puede recibirse porque su estatus es: "
+                            + contrato.getEstatus().name()
+                            + ". Solo se pueden recibir contratos en estatus POR_RECIBIR o RECEPCION_PARCIAL."
+            ));
+        }
+
+        // Totales ya recibidos en recepciones anteriores (vacío para POR_RECIBIR)
+        Map<Integer, BigDecimal> yaRecibidoPorBien = buildTotalesRecibidos(idContrato);
+
+        // 2. Validar el payload del request
+        validarRequest(request);
+
+        // 3. Cargar los bienes del contrato indicados en el request
+        Map<Integer, BigDecimal> cantidadesPorBien = request.getBienes().stream()
+                .collect(Collectors.toMap(
+                        BienRecepcionDto::getIdContratoBien,
+                        BienRecepcionDto::getCantidadRecibida
+                ));
+
+        List<ContratoBienEntity> bienesEncontrados =
+                contratoBienRepository.findAllById(cantidadesPorBien.keySet());
+
+        // 4. Validar pertenencia al contrato y que las cantidades no excedan lo esperado
+        List<String> errores = new ArrayList<>();
+
+        for (ContratoBienEntity bien : bienesEncontrados) {
+            if (!bien.getContrato().getIdContrato().equals(idContrato)) {
+                errores.add("El bien ID " + bien.getIdContratoBien()
+                        + " no pertenece a este contrato.");
+            }
+            BigDecimal recibida = cantidadesPorBien.get(bien.getIdContratoBien());
+            BigDecimal esperada = BigDecimal.valueOf(bien.getCantidad());
+            BigDecimal yaRecibida = yaRecibidoPorBien.getOrDefault(bien.getIdContratoBien(), BigDecimal.ZERO);
+            BigDecimal pendiente = esperada.subtract(yaRecibida).max(BigDecimal.ZERO);
+            if (recibida.compareTo(pendiente) > 0) {
+                errores.add("El bien L" + bien.getLote() + "/P" + bien.getPartida()
+                        + " tiene cantidad recibida (" + recibida
+                        + ") mayor a la pendiente (" + pendiente + ").");
+            }
+        }
+
+        if (bienesEncontrados.size() < cantidadesPorBien.size()) {
+            errores.add("Uno o más bienes indicados no existen.");
+        }
+
+        if (!errores.isEmpty()) {
+            throw new ContratoValidacionException(errores);
+        }
+
+        // 5. Construir la entidad de recepción
+        RecepcionAlmacenEntity recepcion = RecepcionAlmacenEntity.builder()
+                .contrato(contrato)
+                .folioEntradaAlmacen(generarFolio())
+                .fechaRecepcion(LocalDateTime.now())
+                .proveedor(contrato.getProveedor())
+                .nombreEntrega(request.getTransportista())
+                .observaciones(request.getObservaciones())
+                .nombreRecibe("Almacén SESESP")
+                .build();
+
+        // 6. Agregar el detalle por bien
+        for (ContratoBienEntity bien : bienesEncontrados) {
+            recepcion.getBienes().add(
+                    RecepcionAlmacenBienEntity.builder()
+                            .recepcionAlmacen(recepcion)
+                            .contratoBien(bien)
+                            .cantidadRecibida(cantidadesPorBien.get(bien.getIdContratoBien()))
+                            .cantidadRechazada(BigDecimal.ZERO)
+                            .build()
+            );
+        }
+
+        // Determinar si el contrato queda completamente recibido considerando TODOS los bienes
+        // y la suma acumulada de recepciones anteriores + la actual
+        Map<Integer, BigDecimal> totalesActualizados = new HashMap<>(yaRecibidoPorBien);
+        cantidadesPorBien.forEach((id, nueva) ->
+                totalesActualizados.merge(id, nueva, BigDecimal::add));
+
+        List<ContratoBienEntity> todosLosBienes =
+                contratoBienRepository.findByContratoIdContratoAndActivoTrue(idContrato);
+
+        boolean recepcionCompleta = todosLosBienes.stream().allMatch(b -> {
+            BigDecimal totalRecibido = totalesActualizados.getOrDefault(b.getIdContratoBien(), BigDecimal.ZERO);
+            return totalRecibido.compareTo(BigDecimal.valueOf(b.getCantidad())) >= 0;
+        });
+
+        // 7. Persistir la recepción (cascade guarda el detalle de bienes)
+        recepcionAlmacenRepository.save(recepcion);
+
+        // 7.1 Crear una AlmacenBienEntity por cada unidad física recibida
+        crearUnidadesAlmacen(contrato, recepcion);
+
+        // 8. Actualizar el estatus del contrato
+        EstatusContrato nuevoEstatus = recepcionCompleta
+                ? EstatusContrato.EN_ALMACEN
+                : EstatusContrato.RECEPCION_PARCIAL;
+
+        contrato.setEstatus(nuevoEstatus);
+        contratoRepository.save(contrato);
+
+        logger.info("Recepción registrada. Folio: {}. Contrato ID: {} → {}",
+                recepcion.getFolioEntradaAlmacen(), idContrato, nuevoEstatus);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET — recepción de un contrato
+    // ─────────────────────────────────────────────────────────────
+
+    public RecepcionAlmacenResponseDto findByContrato(Integer idContrato) {
+        List<RecepcionAlmacenEntity> recepciones =
+                recepcionAlmacenRepository.findByContratoIdContratoAndActivoTrue(idContrato);
+
+        if (recepciones.isEmpty()) {
+            throw new EntityNotFoundException(
+                    "No hay recepción registrada para el contrato: " + idContrato);
+        }
+
+        // La más reciente primero en caso de recepciones parciales futuras
+        RecepcionAlmacenEntity recepcion = recepciones.stream()
+                .max(java.util.Comparator.comparing(RecepcionAlmacenEntity::getFechaRecepcion))
+                .orElseThrow();
+
+        return new RecepcionAlmacenResponseDto(
+                recepcion.getFolioEntradaAlmacen(),
+                recepcion.getFechaRecepcion(),
+                recepcion.getNombreEntrega(),
+                recepcion.getObservaciones()
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Helpers privados
+    // ─────────────────────────────────────────────────────────────
+
+    private void validarRequest(RecepcionAlmacenRequestDto request) {
+        List<String> errores = new ArrayList<>();
+
+        if (request.getTransportista() == null || request.getTransportista().isBlank()) {
+            errores.add("El nombre del transportista es obligatorio.");
+        }
+        if (request.getBienes() == null || request.getBienes().isEmpty()) {
+            errores.add("Debe incluir al menos un bien en la recepción.");
+        } else {
+            for (BienRecepcionDto bien : request.getBienes()) {
+                if (bien.getCantidadRecibida() == null
+                        || bien.getCantidadRecibida().compareTo(BigDecimal.ZERO) < 0) {
+                    errores.add("La cantidad recibida del bien ID "
+                            + bien.getIdContratoBien() + " no es válida.");
+                }
+            }
+        }
+
+        if (!errores.isEmpty()) {
+            throw new ContratoValidacionException(errores);
+        }
+    }
+
+    /**
+     * Crea una AlmacenBienEntity por cada unidad física recibida.
+     * Se llama después de persistir la recepción, cuando los RecepcionAlmacenBien
+     * ya tienen ID asignado por la BD.
+     *
+     * Nota: cantidades fraccionarias se truncan a entero — los bienes medidos en
+     * unidades continuas (litros, metros) generan 0 registros individuales si
+     * cantidad < 1. El registro de RecepcionAlmacenBien preserva la cantidad exacta.
+     */
+    private void crearUnidadesAlmacen(ContratoEntity contrato, RecepcionAlmacenEntity recepcion) {
+        String anio = recepcion.getFechaRecepcion().format(DateTimeFormatter.ofPattern("yyyy"));
+        long baseSecuencial = almacenBienRepository.count();
+        int indiceGlobal = 0;
+
+        List<AlmacenBienEntity> unidades = new ArrayList<>();
+
+        for (RecepcionAlmacenBienEntity recepcionBien : recepcion.getBienes()) {
+            int cantidad = recepcionBien.getCantidadRecibida().intValue();
+            for (int i = 1; i <= cantidad; i++) {
+                String codigoInterno = String.format("AB-%s-%05d", anio, baseSecuencial + (++indiceGlobal));
+                unidades.add(AlmacenBienEntity.builder()
+                        .contrato(contrato)
+                        .contratoBien(recepcionBien.getContratoBien())
+                        .recepcionAlmacenBien(recepcionBien)
+                        .codigoInterno(codigoInterno)
+                        .estatus(EstatusBien.RECIBIDO)
+                        .fechaRecepcion(recepcion.getFechaRecepcion())
+                        .build());
+            }
+        }
+
+        if (!unidades.isEmpty()) {
+            almacenBienRepository.saveAll(unidades);
+            logger.info("Creadas {} unidades en almacén para contrato ID: {}",
+                    unidades.size(), contrato.getIdContrato());
+        }
+    }
+
+    /** Suma de cantidades recibidas por bien en todas las recepciones activas del contrato. */
+    private Map<Integer, BigDecimal> buildTotalesRecibidos(Integer idContrato) {
+        return recepcionAlmacenBienRepository.sumCantidadRecibidaByContrato(idContrato)
+                .stream()
+                .collect(Collectors.toMap(
+                        arr -> (Integer) arr[0],
+                        arr -> (BigDecimal) arr[1]
+                ));
+    }
+
+    /** Genera folio único: EA-{AÑO}-{secuencial 4 dígitos} */
+    private String generarFolio() {
+        String anio = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy"));
+        long secuencial = recepcionAlmacenRepository.count() + 1;
+        return String.format("EA-%s-%04d", anio, secuencial);
+    }
+}
