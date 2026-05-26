@@ -1,8 +1,13 @@
 package com.sesesp.almacen.domain.controller;
 
+import com.sesesp.almacen.domain.dto.AlmacenBienGrupoDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
+import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
+import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
+import com.sesesp.almacen.domain.service.AlmacenBienService;
 import com.sesesp.almacen.domain.service.ContratoService;
+import com.sesesp.almacen.domain.service.RecepcionAlmacenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +21,8 @@ import java.util.List;
 public class ContratoController {
 
     private final ContratoService contratoService;
+    private final RecepcionAlmacenService recepcionAlmacenService;
+    private final AlmacenBienService almacenBienService;
 
     @GetMapping
     public ResponseEntity<List<ContratoDto>> findAll() {
@@ -57,5 +64,38 @@ public class ContratoController {
         contratoService.enviarAlmacen(idContrato);
         return ResponseEntity
                 .ok().build();
+    }
+
+    /**
+     * Devuelve los datos de la recepción guardada para un contrato.
+     * Usado en la vista de solo lectura del almacén.
+     */
+    @GetMapping("/{idContrato}/recepcion")
+    public ResponseEntity<RecepcionAlmacenResponseDto> findRecepcion(
+            @PathVariable Integer idContrato) {
+        return ResponseEntity.ok(recepcionAlmacenService.findByContrato(idContrato));
+    }
+
+    /**
+     * Registra la recepción de bienes cuando llega el proveedor al almacén.
+     * Cambia el estatus de POR_RECIBIR a EN_ALMACEN (recepción completa)
+     * o RECEPCION_PARCIAL (si algún bien llegó con menos unidades de las esperadas).
+     */
+    @PostMapping("/{idContrato}/recepcion")
+    public ResponseEntity<?> registrarRecepcion(
+            @PathVariable Integer idContrato,
+            @RequestBody RecepcionAlmacenRequestDto request) {
+        recepcionAlmacenService.recibirBienes(idContrato, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Devuelve los bienes recibidos de un contrato agrupados por tipo (contrato_bien),
+     * con sus unidades físicas individuales y su estatus de procesamiento.
+     */
+    @GetMapping("/{idContrato}/almacen-bienes")
+    public ResponseEntity<List<AlmacenBienGrupoDto>> getAlmacenBienes(
+            @PathVariable Integer idContrato) {
+        return ResponseEntity.ok(almacenBienService.getBienesAgrupados(idContrato));
     }
 }

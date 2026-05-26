@@ -17,10 +17,14 @@ public class ContratoBienDto {
     private Short lote;
     private Short partida;
     private String descripcionTecnica;
+    private String descripcionCorta;
     private Integer idUnidadMedida;
     private String unidadMedida;
     private Integer cantidad;
     private BigDecimal precioUnitario;
     private BigDecimal subtotal;
+
+    /** Total acumulado recibido en todas las recepciones previas. Null si no aplica. */
+    private BigDecimal cantidadRecibidaTotal;
 
 }

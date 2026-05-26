@@ -19,7 +19,7 @@ import java.util.List;
  * a qué beneficiario va cada bien antes de que el almacén lo entregue.
  *
  * Ciclo de estatus:
- *   PENDIENTE_PROCESAR → PROCESADO → ASIGNADO_ENTREGA → ENTREGADO
+ *   RECIBIDO → PROCESADO → LISTO_PARA_ENTREGAR → ENTREGADO
  *
  * tabla almacen_bien
  */
@@ -83,14 +83,13 @@ public class AlmacenBienEntity extends AuditoriaEntity {
 
     /**
      * Estatus actual del bien dentro del almacén.
-     * PENDIENTE_PROCESAR: llegó pero aún no se capturan sus datos y fotos.
-     * PROCESADO:          datos y fotos capturados, listo para asignar.
-     * ASIGNADO_ENTREGA:   asignado a un beneficiario, pendiente de entregar.
-     * ENTREGADO:          entregado al beneficiario.
+     * RECIBIDO:             llegó físicamente, pendiente de captura de datos y fotos.
+     * PROCESADO:            datos y fotos capturados, listo para asignar.
+     * LISTO_PARA_ENTREGAR:  admin aprobó la entrega al beneficiario.
+     * ENTREGADO:            entregado al beneficiario.
      */
     @Column(name = "estatus", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    //private EstatusBien estatus = EstatusBien.PENDIENTE_PROCESAR;
     private EstatusBien estatus;
 
     @Column(name = "fecha_recepcion", nullable = false)
@@ -107,9 +106,9 @@ public class AlmacenBienEntity extends AuditoriaEntity {
     private List<EvidenciaBienEntity> evidencias = new ArrayList<>();
 
     public enum EstatusBien {
-        PENDIENTE_PROCESAR,
+        RECIBIDO,
         PROCESADO,
-        ASIGNADO_ENTREGA,
+        LISTO_PARA_ENTREGAR,
         ENTREGADO
     }
 }

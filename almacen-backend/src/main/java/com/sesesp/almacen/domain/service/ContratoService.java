@@ -7,6 +7,7 @@ import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenBienRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -15,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +29,7 @@ public class ContratoService {
 
     private final ContratoRepository contratoRepository;
     private final ContratoMapper contratoMapper;
+    private final RecepcionAlmacenBienRepository recepcionAlmacenBienRepository;
 
     // Servicios delegados — cada uno es responsable de su propia entidad
     private final ProveedorService proveedorService;
@@ -52,7 +57,20 @@ public class ContratoService {
     // ─────────────────────────────────────────────────────────
 
     public ContratoDto findContratoById(Integer idContrato) {
-        return contratoMapper.toResponse(findContratoOrThrow(idContrato));
+        ContratoEntity contrato = findContratoOrThrow(idContrato);
+        ContratoDto dto = contratoMapper.toResponse(contrato);
+
+        if (contrato.getEstatus() == EstatusContrato.RECEPCION_PARCIAL) {
+            Map<Integer, BigDecimal> totales = recepcionAlmacenBienRepository
+                    .sumCantidadRecibidaByContrato(idContrato)
+                    .stream()
+                    .collect(Collectors.toMap(arr -> (Integer) arr[0], arr -> (BigDecimal) arr[1]));
+            dto.getBienes().forEach(b ->
+                    b.setCantidadRecibidaTotal(totales.getOrDefault(b.getIdContratoBien(), BigDecimal.ZERO))
+            );
+        }
+
+        return dto;
     }
 
     // ─────────────────────────────────────────────────────────

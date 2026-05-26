@@ -7,6 +7,8 @@ import com.sesesp.almacen.domain.entity.UnidadMedidaEntity;
 import com.sesesp.almacen.domain.repository.UnidadMedidaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -88,11 +90,13 @@ public class ContratoBienService {
         BigDecimal subtotal = dto.getPrecioUnitario()
                 .multiply(BigDecimal.valueOf(dto.getCantidad()));
 
+        String sanitizarDescricion = Jsoup.clean(dto.getDescripcionTecnica(), Safelist.basic());
+
         return ContratoBienEntity.builder()
                 .contrato(contrato)
                 .lote(dto.getLote())
                 .partida(dto.getPartida())
-                .descripcionTecnica(dto.getDescripcionTecnica())
+                .descripcionTecnica(sanitizarDescricion)
                 .unidadMedida(unidad)
                 .cantidad(dto.getCantidad())
                 .precioUnitario(dto.getPrecioUnitario())
@@ -103,7 +107,7 @@ public class ContratoBienService {
     private void actualizarBien(ContratoBienEntity bien, ContratoBienDto dto) {
         bien.setLote(dto.getLote());
         bien.setPartida(dto.getPartida());
-        bien.setDescripcionTecnica(dto.getDescripcionTecnica());
+        bien.setDescripcionTecnica(Jsoup.clean(dto.getDescripcionTecnica(), Safelist.basic()));
         bien.setCantidad(dto.getCantidad());
         bien.setPrecioUnitario(dto.getPrecioUnitario());
         bien.setSubtotal(dto.getPrecioUnitario().multiply(BigDecimal.valueOf(dto.getCantidad())));

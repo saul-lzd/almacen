@@ -74,8 +74,9 @@ public class ContratoEntity extends AuditoriaEntity {
 
     /**
      * Estatus actual del contrato.
-     * Valores: CAPTURA → POR_RECIBIR → EN_ALMACEN → LISTO_PARA_ENTREGAR
-     *          → ENTREGA_PARCIAL → ENTREGADO → CERRADO
+     * Valores: CAPTURA → POR_RECIBIR → RECEPCION_PARCIAL* → EN_ALMACEN
+     *          → LISTO_PARA_ENTREGAR → ENTREGA_PARCIAL* → ENTREGADO → CERRADO
+     * (*) estados opcionales según si las entregas son parciales
      */
     @Column(name = "estatus", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
@@ -126,9 +127,10 @@ public class ContratoEntity extends AuditoriaEntity {
     public enum EstatusContrato {
         CAPTURA,
         POR_RECIBIR,
-        EN_ALMACEN,
-        LISTO_PARA_ENTREGAR,
-        ENTREGA_PARCIAL,
+        RECEPCION_PARCIAL,   // algunos bienes recibidos del proveedor, otros pendientes
+        EN_ALMACEN,          // todos los bienes físicamente en almacén
+        LISTO_PARA_ENTREGAR, // admin aprobó entrega a beneficiarios
+        ENTREGA_PARCIAL,     // algunos bienes entregados a beneficiarios, otros pendientes
         ENTREGADO,
         CERRADO
     }
