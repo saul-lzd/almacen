@@ -3,11 +3,13 @@ package com.sesesp.almacen.domain.controller;
 import com.sesesp.almacen.domain.dto.AlmacenBienGrupoDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
+import com.sesesp.almacen.domain.dto.EntregaRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
 import com.sesesp.almacen.domain.service.AlmacenBienService;
 import com.sesesp.almacen.domain.service.ContratoService;
 import com.sesesp.almacen.domain.service.RecepcionAlmacenService;
+import com.sesesp.almacen.domain.service.SalidaAlmacenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ public class ContratoController {
     private final ContratoService contratoService;
     private final RecepcionAlmacenService recepcionAlmacenService;
     private final AlmacenBienService almacenBienService;
+    private final SalidaAlmacenService salidaAlmacenService;
 
     @GetMapping
     public ResponseEntity<List<ContratoDto>> findAll() {
@@ -67,6 +70,16 @@ public class ContratoController {
     }
 
     /**
+     * Autoriza el contrato para entrega a beneficiarios.
+     * Valida que todos los bienes estén procesados y cambia el estatus a LISTO_PARA_ENTREGAR.
+     */
+    @PatchMapping("/{idContrato}/autorizar-entrega")
+    public ResponseEntity<?> autorizarEntrega(@PathVariable Integer idContrato) {
+        contratoService.autorizarEntrega(idContrato);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Devuelve los datos de la recepción guardada para un contrato.
      * Usado en la vista de solo lectura del almacén.
      */
@@ -97,5 +110,26 @@ public class ContratoController {
     public ResponseEntity<List<AlmacenBienGrupoDto>> getAlmacenBienes(
             @PathVariable Integer idContrato) {
         return ResponseEntity.ok(almacenBienService.getBienesAgrupados(idContrato));
+    }
+
+    /**
+     * Devuelve los bienes listos para entregar (LISTO_PARA_ENTREGAR) agrupados por tipo.
+     */
+    @GetMapping("/{idContrato}/bienes-entrega")
+    public ResponseEntity<List<AlmacenBienGrupoDto>> getBienesEntrega(
+            @PathVariable Integer idContrato) {
+        return ResponseEntity.ok(almacenBienService.getBienesListosParaEntregar(idContrato));
+    }
+
+    /**
+     * Registra la entrega de bienes a un beneficiario.
+     * Marca los bienes como ENTREGADO y actualiza el estatus del contrato.
+     */
+    @PostMapping("/{idContrato}/entrega")
+    public ResponseEntity<?> registrarEntrega(
+            @PathVariable Integer idContrato,
+            @RequestBody EntregaRequestDto request) {
+        salidaAlmacenService.registrarEntrega(idContrato, request);
+        return ResponseEntity.ok().build();
     }
 }

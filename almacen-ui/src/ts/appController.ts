@@ -58,6 +58,7 @@ class RootViewModel {
       // Sub-rutas: registradas en el router pero no aparecen en el nav
       { path: "recepcion",          detail: { label: "Recepción",      iconClass: "oj-ux-ico-package" } },
       { path: "procesamiento",      detail: { label: "Procesamiento",  iconClass: "oj-ux-ico-process" } },
+      { path: "entrega",            detail: { label: "Entrega",        iconClass: "oj-ux-ico-export" } },
       // Rutas de desarrollo (temporales)
       { path: "dashboard_demo", detail: { label: "Dashboard Demo", iconClass: "oj-ux-ico-data-document" } },
       { path: "dashboard_OG",   detail: { label: "Dashboard OG",   iconClass: "oj-ux-ico-data-document" } },
@@ -67,7 +68,7 @@ class RootViewModel {
 
     // Rutas visibles en el tab bar (excluye sub-rutas y rutas de desarrollo)
     const navItems = allRoutes.filter(r =>
-      r.path !== "" && r.path !== "recepcion" && r.path !== "procesamiento" &&
+      r.path !== "" && r.path !== "recepcion" && r.path !== "procesamiento" && r.path !== "entrega" &&
       !r.path.endsWith("_demo") && !r.path.endsWith("_OG") &&
       !r.path.endsWith("_BAK") && !r.path.endsWith("_old")
     );

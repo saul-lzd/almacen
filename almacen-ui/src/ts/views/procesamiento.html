@@ -1,7 +1,7 @@
 <!--
   View: Procesamiento de Bienes
-  Captura de datos (número de serie, marca, modelo) por unidad física recibida.
-  Soporta modo individual y por lote.
+  Flujo de estatus por unidad: RECIBIDO → EN_PROCESO (auto al guardar) → PROCESADO (explícito)
+  Re-editar PROCESADO regresa a EN_PROCESO hasta nueva confirmación.
 -->
 
 <div class="oj-hybrid-padding procesamiento-view">
@@ -25,7 +25,7 @@
   <oj-bind-if test="[[calcTodoCompleto()]]">
     <div class="recepcion-banner recepcion-banner--exito">
       <span class="oj-ux-ico-check-circle-s"></span>
-      Todos los bienes han sido procesados. El administrador será notificado para autorizar la entrega.
+      Todos los bienes han sido procesados. El administrador podrá autorizar la entrega.
     </div>
   </oj-bind-if>
 
@@ -45,7 +45,7 @@
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
     <!-- ═══════════════════════════════════════════════
-         BLOQUE 1: INFO DEL CONTRATO
+         INFO DEL CONTRATO
     ════════════════════════════════════════════════ -->
     <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
       <div class="recepcion-seccion-titulo">Información del Contrato</div>
@@ -86,18 +86,16 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════
-         BLOQUE 2: GRUPOS DE BIENES
+         GRUPOS DE BIENES
     ════════════════════════════════════════════════ -->
 
-    <!-- Sin bienes -->
     <oj-bind-if test="[[listaGrupos().length === 0]]">
-      <div class="recepcion-cargando">No hay bienes pendientes de procesar para este contrato.</div>
+      <div class="recepcion-cargando">No hay bienes para procesar en este contrato.</div>
     </oj-bind-if>
 
     <oj-bind-for-each data="[[listaGrupos()]]">
       <template data-oj-as="grupo">
         <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
-        <!-- <div class="recepcion-seccion"> -->
 
           <!-- Header del grupo -->
           <div class="recepcion-seccion-header">
@@ -110,7 +108,6 @@
                 <span class="oj-typography-body-md">
                   <oj-bind-text value="[[grupo.data.descripcion]]"></oj-bind-text>
                 </span>
-                <!-- <div class="procesamiento-grupo-desc" data-bind="html: grupo.data.descripcion"></div> -->
               </div>
               <div class="procesamiento-grupo-meta">
                 <span class="oj-text-color-secondary oj-typography-body-sm">
@@ -121,53 +118,42 @@
                 </span>
               </div>
             </div>
-            <!-- Acciones del grupo -->
-            <oj-bind-if test="[[!grupo.data.calcTodosProcesados()]]">
-              <div style="display:flex; align-items:center; gap:8px; flex-shrink:0">
-                <!-- Botón de acción: cambia según modo -->
-                <oj-bind-if test="[[!grupo.data.uiModoBloque()]]">
-                  <oj-c-button
-                    label="Guardar cambios"
-                    chroming="callToAction"
-                    size="sm"
-                    :disabled="[[grupo.data.uiGuardandoGrupo()]]"
-                    on-oj-action="[[() => cmdGuardarGrupo(grupo.data)]]">
-                    <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
-                  </oj-c-button>
-                </oj-bind-if>
-                <oj-bind-if test="[[grupo.data.uiModoBloque()]]">
-                  <oj-c-button
-                    label="Aplicar a todos"
-                    chroming="callToAction"
-                    size="sm"
-                    on-oj-action="[[() => cmdAplicarBloque(grupo.data)]]">
-                    <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
-                  </oj-c-button>
-                </oj-bind-if>
-                <!-- Toggle Individual / Por lote -->
-                <div class="procesamiento-toggle">
-                  <oj-c-button
-                    :label="[['Individual']]"
-                    :chroming="[[grupo.data.uiModoBloque() ? 'borderless' : 'solid']]"
-                    size="sm"
-                    on-oj-action="[[() => grupo.data.uiModoBloque(false)]]">
-                  </oj-c-button>
-                  <oj-c-button
-                    :label="[['Por lote']]"
-                    :chroming="[[grupo.data.uiModoBloque() ? 'solid' : 'borderless']]"
-                    size="sm"
-                    on-oj-action="[[() => grupo.data.uiModoBloque(true)]]">
-                  </oj-c-button>
-                </div>
+
+            <!-- Toggle Individual / Por lote + botón de acción en modo bloque -->
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0">
+              <oj-bind-if test="[[grupo.data.uiModoBloque() && !grupo.data.calcTodosProcesados()]]">
+                <oj-c-button
+                  label="Aplicar a todos"
+                  chroming="callToAction"
+                  size="sm"
+                  :disabled="[[grupo.data.uiGuardandoGrupo()]]"
+                  on-oj-action="[[() => cmdAplicarBloque(grupo.data)]]">
+                  <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
+                </oj-c-button>
+              </oj-bind-if>
+              <div class="procesamiento-toggle">
+                <oj-c-button
+                  label="Individual"
+                  :chroming="[[grupo.data.uiModoBloque() ? 'borderless' : 'solid']]"
+                  size="sm"
+                  on-oj-action="[[() => grupo.data.uiModoBloque(false)]]">
+                </oj-c-button>
+                <oj-c-button
+                  label="Por lote"
+                  :chroming="[[grupo.data.uiModoBloque() ? 'solid' : 'borderless']]"
+                  size="sm"
+                  on-oj-action="[[() => grupo.data.uiModoBloque(true)]]">
+                </oj-c-button>
               </div>
-            </oj-bind-if>
+            </div>
           </div>
 
           <!-- ── MODO INDIVIDUAL ── -->
           <oj-bind-if test="[[!grupo.data.uiModoBloque()]]">
-            <div class="procesamiento-tabla">
+            <div class="procesamiento-tabla"
+              :class="[[{'procesamiento-tabla--vehiculo': grupo.data.esVehiculo}]]">
 
-              <!-- Encabezado tabla -->
+              <!-- Encabezado -->
               <div class="procesamiento-tabla-header"
                 :class="[[{'procesamiento-tabla-header--vehiculo': grupo.data.esVehiculo}]]">
                 <div>Núm. Serie</div>
@@ -183,16 +169,20 @@
               <oj-bind-for-each data="[[grupo.data.unidades]]">
                 <template data-oj-as="unidad">
                   <div class="procesamiento-tabla-fila"
-                    :class="[[{'procesamiento-fila--procesado': unidad.data.uiProcesado(), 'procesamiento-tabla-fila--vehiculo': unidad.data.esVehiculo}]]">
+                    :class="[[{
+                      'procesamiento-fila--procesado':   unidad.data.uiEstatus() === 'PROCESADO' && !unidad.data.uiEditando(),
+                      'procesamiento-fila--en-proceso':  unidad.data.uiEstatus() === 'EN_PROCESO',
+                      'procesamiento-tabla-fila--vehiculo': unidad.data.esVehiculo
+                    }]]">
 
                     <!-- Núm. Serie -->
                     <div>
-                      <oj-bind-if test="[[!unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[unidad.data.uiEditable()]]">
                         <oj-c-input-text label-hint="Núm. Serie" label-edge="inside"
                           value="{{unidad.data.frmNumeroSerie}}">
                         </oj-c-input-text>
                       </oj-bind-if>
-                      <oj-bind-if test="[[unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[!unidad.data.uiEditable()]]">
                         <span class="oj-typography-body-sm">
                           <oj-bind-text value="[[unidad.data.frmNumeroSerie() || '—']]"></oj-bind-text>
                         </span>
@@ -202,12 +192,12 @@
                     <!-- Núm. Motor (solo vehículos) -->
                     <oj-bind-if test="[[unidad.data.esVehiculo]]">
                       <div>
-                        <oj-bind-if test="[[!unidad.data.uiProcesado()]]">
+                        <oj-bind-if test="[[unidad.data.uiEditable()]]">
                           <oj-c-input-text label-hint="Núm. Motor" label-edge="inside"
                             value="{{unidad.data.frmNumeroMotor}}">
                           </oj-c-input-text>
                         </oj-bind-if>
-                        <oj-bind-if test="[[unidad.data.uiProcesado()]]">
+                        <oj-bind-if test="[[!unidad.data.uiEditable()]]">
                           <span class="oj-typography-body-sm">
                             <oj-bind-text value="[[unidad.data.frmNumeroMotor() || '—']]"></oj-bind-text>
                           </span>
@@ -217,12 +207,12 @@
 
                     <!-- Marca -->
                     <div>
-                      <oj-bind-if test="[[!unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[unidad.data.uiEditable()]]">
                         <oj-c-input-text label-hint="Marca" label-edge="inside"
                           value="{{unidad.data.frmMarca}}">
                         </oj-c-input-text>
                       </oj-bind-if>
-                      <oj-bind-if test="[[unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[!unidad.data.uiEditable()]]">
                         <span class="oj-typography-body-sm">
                           <oj-bind-text value="[[unidad.data.frmMarca() || '—']]"></oj-bind-text>
                         </span>
@@ -231,23 +221,78 @@
 
                     <!-- Modelo -->
                     <div>
-                      <oj-bind-if test="[[!unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[unidad.data.uiEditable()]]">
                         <oj-c-input-text label-hint="Modelo" label-edge="inside"
                           value="{{unidad.data.frmModelo}}">
                         </oj-c-input-text>
                       </oj-bind-if>
-                      <oj-bind-if test="[[unidad.data.uiProcesado()]]">
+                      <oj-bind-if test="[[!unidad.data.uiEditable()]]">
                         <span class="oj-typography-body-sm">
                           <oj-bind-text value="[[unidad.data.frmModelo() || '—']]"></oj-bind-text>
                         </span>
                       </oj-bind-if>
                     </div>
 
-                    <!-- Estatus -->
-                    <div class="procesamiento-col-estatus">
-                      <oj-bind-if test="[[unidad.data.uiProcesado()]]">
-                        <span class="procesamiento-check">✓</span>
+                    <!-- Acciones -->
+                    <div class="procesamiento-col-acciones">
+
+                      <!-- RECIBIDO: solo guardar datos -->
+                      <oj-bind-if test="[[unidad.data.uiEstatus() === 'RECIBIDO']]">
+                        <oj-c-button
+                          label="Guardar"
+                          chroming="callToAction"
+                          size="sm"
+                          :disabled="[[unidad.data.uiGuardando()]]"
+                          on-oj-action="[[() => cmdGuardarDatos(unidad.data)]]">
+                        </oj-c-button>
                       </oj-bind-if>
+
+                      <!-- EN_PROCESO: guardar datos + marcar procesado -->
+                      <oj-bind-if test="[[unidad.data.uiEstatus() === 'EN_PROCESO']]">
+                        <div class="procesamiento-acciones-col">
+                          <oj-c-button
+                            label="Guardar"
+                            chroming="outlined"
+                            size="sm"
+                            :disabled="[[unidad.data.uiGuardando()]]"
+                            on-oj-action="[[() => cmdGuardarDatos(unidad.data)]]">
+                          </oj-c-button>
+                          <oj-c-button
+                            label="Marcar procesado"
+                            chroming="callToAction"
+                            size="sm"
+                            :disabled="[[unidad.data.uiGuardando()]]"
+                            on-oj-action="[[() => cmdProcesarUnidad(unidad.data)]]">
+                            <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
+                          </oj-c-button>
+                        </div>
+                      </oj-bind-if>
+
+                      <!-- PROCESADO editando: guardar datos (volverá a EN_PROCESO) -->
+                      <oj-bind-if test="[[unidad.data.uiEstatus() === 'PROCESADO' && unidad.data.uiEditando()]]">
+                        <oj-c-button
+                          label="Guardar"
+                          chroming="callToAction"
+                          size="sm"
+                          :disabled="[[unidad.data.uiGuardando()]]"
+                          on-oj-action="[[() => cmdGuardarDatos(unidad.data)]]">
+                        </oj-c-button>
+                      </oj-bind-if>
+
+                      <!-- PROCESADO (lectura): checkmark + botón editar -->
+                      <oj-bind-if test="[[unidad.data.uiEstatus() === 'PROCESADO' && !unidad.data.uiEditando()]]">
+                        <div class="procesamiento-acciones-procesado">
+                          <span class="procesamiento-check">✓ Procesado</span>
+                          <oj-c-button
+                            label="Editar"
+                            chroming="borderless"
+                            size="sm"
+                            on-oj-action="[[() => cmdEditarUnidad(unidad.data)]]">
+                            <span slot="startIcon" class="oj-ux-ico-edit"></span>
+                          </oj-c-button>
+                        </div>
+                      </oj-bind-if>
+
                     </div>
 
                   </div>
@@ -255,25 +300,35 @@
               </oj-bind-for-each>
 
             </div>
-
           </oj-bind-if>
 
           <!-- ── MODO POR LOTE ── -->
           <oj-bind-if test="[[grupo.data.uiModoBloque()]]">
-            <oj-c-form-layout label-edge="inside" columns="3" full-width="true" style="margin-top: 12px">
-              <oj-c-input-text
-                label-hint="Marca"
-                value="{{grupo.data.frmBulkMarca}}">
-              </oj-c-input-text>
-              <oj-c-input-text
-                label-hint="Modelo"
-                value="{{grupo.data.frmBulkModelo}}">
-              </oj-c-input-text>
-              <oj-c-input-text
-                label-hint="Descripción complementaria"
-                value="{{grupo.data.frmBulkDescripcion}}">
-              </oj-c-input-text>
-            </oj-c-form-layout>
+            <div style="margin-top: 12px">
+              <oj-bind-if test="[[grupo.data.calcTodosProcesados()]]">
+                <div class="recepcion-banner recepcion-banner--exito" style="margin-bottom:8px">
+                  <span class="oj-ux-ico-check-circle-s"></span>
+                  Todas las unidades de este grupo han sido procesadas.
+                </div>
+              </oj-bind-if>
+              <oj-c-form-layout label-edge="inside" columns="3" full-width="true">
+                <oj-c-input-text
+                  label-hint="Marca"
+                  :disabled="[[grupo.data.calcTodosProcesados()]]"
+                  value="{{grupo.data.frmBulkMarca}}">
+                </oj-c-input-text>
+                <oj-c-input-text
+                  label-hint="Modelo"
+                  :disabled="[[grupo.data.calcTodosProcesados()]]"
+                  value="{{grupo.data.frmBulkModelo}}">
+                </oj-c-input-text>
+                <oj-c-input-text
+                  label-hint="Descripción complementaria"
+                  :disabled="[[grupo.data.calcTodosProcesados()]]"
+                  value="{{grupo.data.frmBulkDescripcion}}">
+                </oj-c-input-text>
+              </oj-c-form-layout>
+            </div>
           </oj-bind-if>
 
         </div>

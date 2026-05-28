@@ -24,6 +24,7 @@ public class ContratoDto {
     private BigDecimal montoTotal;
 
     private String beneficiarios;
+    private List<BeneficiarioDto> listaBeneficiarios;
     private ProveedorContratoDto proveedor;
     private FuncionarioDto comprador;
     private FuncionarioDto administradorContrato;

@@ -3,9 +3,11 @@ package com.sesesp.almacen.domain.service;
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
+import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
+import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenBienRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,6 +32,7 @@ public class ContratoService {
     private final ContratoRepository contratoRepository;
     private final ContratoMapper contratoMapper;
     private final RecepcionAlmacenBienRepository recepcionAlmacenBienRepository;
+    private final AlmacenBienRepository almacenBienRepository;
 
     // Servicios delegados — cada uno es responsable de su propia entidad
     private final ProveedorService proveedorService;
@@ -238,6 +241,58 @@ public class ContratoService {
         logger.info("Contrato ID: {} enviado al almacén. Estatus: POR_RECIBIR", idContrato);
     }
 
+
+    // ─────────────────────────────────────────────────────────────
+    // PATCH — Autorizar entrega
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Autoriza el contrato para entrega a beneficiarios.
+     *
+     * Validaciones:
+     *   - El contrato debe estar en estatus EN_ALMACEN
+     *   - Todos los bienes recibidos deben estar en estatus PROCESADO (ninguno en RECIBIDO)
+     *
+     * Efecto:
+     *   - Estatus cambia a LISTO_PARA_ENTREGAR
+     */
+    @Transactional
+    public void autorizarEntrega(Integer idContrato) {
+        logger.info("Autorizando entrega del contrato ID: {}", idContrato);
+
+        ContratoEntity contrato = findContratoOrThrow(idContrato);
+
+        if (contrato.getEstatus() != EstatusContrato.EN_ALMACEN) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato no puede autorizarse porque su estatus es: "
+                            + contrato.getEstatus().name()
+                            + ". Solo contratos EN_ALMACEN pueden autorizarse para entrega."
+            ));
+        }
+
+        long sinProcesar = almacenBienRepository
+                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.RECIBIDO)
+                + almacenBienRepository
+                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.EN_PROCESO);
+
+        if (sinProcesar > 0) {
+            throw new ContratoValidacionException(List.of(
+                    "No se puede autorizar la entrega: quedan " + sinProcesar
+                            + (sinProcesar == 1 ? " bien sin procesar." : " bienes sin procesar.")
+            ));
+        }
+
+        // Marcar todos los bienes PROCESADO como LISTO_PARA_ENTREGAR
+        List<AlmacenBienEntity> bienes = almacenBienRepository
+                .findByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.PROCESADO);
+        bienes.forEach(b -> b.setEstatus(AlmacenBienEntity.EstatusBien.LISTO_PARA_ENTREGAR));
+        almacenBienRepository.saveAll(bienes);
+
+        contrato.setEstatus(EstatusContrato.LISTO_PARA_ENTREGAR);
+        contratoRepository.save(contrato);
+
+        logger.info("Contrato ID: {} autorizado para entrega. Estatus: LISTO_PARA_ENTREGAR", idContrato);
+    }
 
     // ─────────────────────────────────────────────────────────────
     // Helpers privados

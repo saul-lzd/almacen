@@ -88,6 +88,20 @@
     </div>
   </div>
 
+  <!-- BANNERS DE FEEDBACK -->
+  <oj-bind-if test="[[uiExito()]]">
+    <div class="recepcion-banner recepcion-banner--exito" style="margin-bottom: 12px">
+      <span class="oj-ux-ico-check-circle-s"></span>
+      <oj-bind-text value="[[uiExito]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+  <oj-bind-if test="[[uiError()]]">
+    <div class="recepcion-banner recepcion-banner--error" style="margin-bottom: 12px">
+      <span class="oj-ux-ico-warning-s"></span>
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
   <!-- TABLERO KANBAN -->
   <div class="kanban-board">
     
@@ -208,6 +222,64 @@
       </div>
     </div>
   
+    <!-- ── COLUMNA: RECEPCIÓN PARCIAL ── -->
+    <div class="kanban-column estatus-recepcion-parcial">
+      <div class="kanban-column-ribbon estatus-recepcion-parcial-ribbon"></div>
+      <div class="kanban-col-header">
+        <span class="kanban-col-title">Recepción Parcial</span>
+        <span class="kanban-col-count">
+          <oj-bind-text value="[[countEnColumna('RECEPCION_PARCIAL')]]"></oj-bind-text>
+        </span>
+      </div>
+
+      <div class="kanban-col-body">
+        <oj-bind-if test="[[contratosEnColumna('RECEPCION_PARCIAL')().length === 0]]">
+          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
+        </oj-bind-if>
+        <oj-bind-for-each data="[[contratosEnColumna('RECEPCION_PARCIAL')()]]">
+          <template data-oj-as="item">
+            <div class="kanban-card">
+              <div class="kanban-card-num">
+                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+              </div>
+              <div class="kanban-card-adq">
+                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+              </div>
+              <div class="kanban-card-meta">
+                <div class="kanban-card-meta-row">
+                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
+                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+                </div>
+                <div class="kanban-card-meta-row">
+                  <span class="oj-ux-ico-package" style="font-size:12px"></span>
+                  <oj-bind-text value="[[item.data.totalBienes + ' bienes']]"></oj-bind-text>
+                </div>
+              </div>
+              <oj-bind-if test="[[item.data.montoTotal]]">
+                <div class="kanban-card-monto">
+                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
+                </div>
+              </oj-bind-if>
+              <div class="kanban-card-footer">
+                <oj-c-button
+                  label="Ver detalle"
+                  chroming="ghost"
+                  size="sm"
+                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
+                </oj-c-button>
+                <oj-c-button
+                  label="Beneficiarios"
+                  chroming="ghost"
+                  size="sm"
+                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
+                </oj-c-button>
+              </div>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+
     <!-- ── COLUMNA: EN ALMACÉN ── -->
     <div class="kanban-column estatus-en-almacen"> 
       <div class="kanban-column-ribbon estatus-en-almacen-ribbon"></div>
@@ -244,14 +316,17 @@
               </oj-bind-if>
               <div class="kanban-card-footer">
                 <oj-c-button
-                  label="Ver detalle"
-                  chroming="outlined"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
+                  label="Autorizar entrega"
+                  chroming="callToAction"
+                  size="sm"
+                  on-oj-action="[[() => cmdAutorizarEntrega(item.data)]]">
+                  <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
                 </oj-c-button>
                 <oj-c-button
-                  label="Beneficiarios"
+                  label="Ver detalle"
                   chroming="ghost"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
+                  size="sm"
+                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
                 </oj-c-button>
               </div>
             </div>

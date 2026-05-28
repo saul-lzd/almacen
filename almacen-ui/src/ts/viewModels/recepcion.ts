@@ -155,8 +155,8 @@ class RecepcionViewModel {
             this.mapResponseToUI(data);
 
             const esEditable = data.estatus === "POR_RECIBIR" || data.estatus === "RECEPCION_PARCIAL";
+            this.uiModoLectura(!esEditable);
             if (!esEditable) {
-                this.uiModoLectura(true);
                 await this.loadRecepcion(id);
             }
         } catch (err: any) {

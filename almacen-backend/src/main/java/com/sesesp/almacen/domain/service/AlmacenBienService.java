@@ -4,6 +4,7 @@ import com.sesesp.almacen.common.SESESP_UTILS;
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.domain.dto.AlmacenBienDto;
 import com.sesesp.almacen.domain.dto.AlmacenBienGrupoDto;
+import com.sesesp.almacen.domain.dto.ActualizarDatosBienRequestDto;
 import com.sesesp.almacen.domain.dto.ProcesarBienRequestDto;
 import com.sesesp.almacen.domain.dto.ProcesarBloqueRequestDto;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
@@ -41,9 +42,20 @@ public class AlmacenBienService {
         contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
 
-        List<AlmacenBienEntity> bienes = almacenBienRepository.findByContratoWithFetch(
-                idContrato, List.of(EstatusBien.RECIBIDO, EstatusBien.PROCESADO));
+        return agrupar(almacenBienRepository.findByContratoWithFetch(
+                idContrato, List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO, EstatusBien.PROCESADO)));
+    }
 
+    @Transactional(readOnly = true)
+    public List<AlmacenBienGrupoDto> getBienesListosParaEntregar(Integer idContrato) {
+        contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
+
+        return agrupar(almacenBienRepository.findByContratoWithFetch(
+                idContrato, List.of(EstatusBien.LISTO_PARA_ENTREGAR)));
+    }
+
+    private List<AlmacenBienGrupoDto> agrupar(List<AlmacenBienEntity> bienes) {
         Map<Integer, List<AlmacenBienEntity>> porContratoBien = bienes.stream()
                 .collect(Collectors.groupingBy(ab -> ab.getContratoBien().getIdContratoBien()));
 
@@ -70,14 +82,50 @@ public class AlmacenBienService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Guarda los datos del bien (serie, marca, etc.) sin cambiar el estatus a PROCESADO.
+     * - RECIBIDO     → EN_PROCESO  (primera edición)
+     * - EN_PROCESO   → EN_PROCESO  (actualización de datos)
+     * - PROCESADO    → EN_PROCESO  (re-edición; requiere nueva confirmación explícita)
+     */
+    @Transactional
+    public void actualizarDatos(Integer id, ActualizarDatosBienRequestDto request) {
+        AlmacenBienEntity bien = almacenBienRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Bien no encontrado: " + id));
+
+        if (bien.getEstatus() == EstatusBien.LISTO_PARA_ENTREGAR
+                || bien.getEstatus() == EstatusBien.ENTREGADO) {
+            throw new ContratoValidacionException(List.of(
+                    "El bien " + bien.getCodigoInterno() + " no puede editarse en estatus " + bien.getEstatus() + "."));
+        }
+
+        Optional.ofNullable(request.getNumeroSerie()).ifPresent(bien::setNumeroSerie);
+        Optional.ofNullable(request.getNumeroMotor()).ifPresent(bien::setNumeroMotor);
+        Optional.ofNullable(request.getMarca()).ifPresent(bien::setMarca);
+        Optional.ofNullable(request.getModelo()).ifPresent(bien::setModelo);
+        Optional.ofNullable(request.getDescripcionComplementaria()).ifPresent(bien::setDescripcionComplementaria);
+
+        if (bien.getEstatus() != EstatusBien.EN_PROCESO) {
+            bien.setEstatus(EstatusBien.EN_PROCESO);
+        }
+
+        almacenBienRepository.save(bien);
+    }
+
+    /**
+     * Marca el bien como PROCESADO de forma explícita.
+     * Solo acepta bienes en estatus EN_PROCESO.
+     */
     @Transactional
     public void procesarBien(Integer id, ProcesarBienRequestDto request) {
         AlmacenBienEntity bien = almacenBienRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Bien no encontrado: " + id));
 
-        if (bien.getEstatus() != EstatusBien.RECIBIDO) {
+        if (bien.getEstatus() != EstatusBien.EN_PROCESO) {
             throw new ContratoValidacionException(List.of(
-                    "El bien " + bien.getCodigoInterno() + " ya fue procesado."));
+                    "El bien " + bien.getCodigoInterno()
+                            + " debe estar EN_PROCESO para poder marcarse como procesado (estatus actual: "
+                            + bien.getEstatus() + ")."));
         }
 
         Optional.ofNullable(request.getNumeroSerie()).ifPresent(bien::setNumeroSerie);
@@ -91,7 +139,9 @@ public class AlmacenBienService {
         almacenBienRepository.save(bien);
 
         long pendientes = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
-                bien.getContrato().getIdContrato(), EstatusBien.RECIBIDO);
+                bien.getContrato().getIdContrato(), EstatusBien.RECIBIDO)
+                + almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
+                bien.getContrato().getIdContrato(), EstatusBien.EN_PROCESO);
         if (pendientes == 0) {
             logger.info("Todos los bienes del contrato {} fueron procesados — notificar al admin.",
                     bien.getContrato().getIdContrato());
@@ -112,8 +162,8 @@ public class AlmacenBienService {
         }
 
         List<String> errores = bienes.stream()
-                .filter(b -> b.getEstatus() != EstatusBien.RECIBIDO)
-                .map(b -> "El bien " + b.getCodigoInterno() + " ya fue procesado.")
+                .filter(b -> b.getEstatus() != EstatusBien.EN_PROCESO)
+                .map(b -> "El bien " + b.getCodigoInterno() + " no está EN_PROCESO (estatus: " + b.getEstatus() + ").")
                 .collect(Collectors.toList());
         if (!errores.isEmpty()) throw new ContratoValidacionException(errores);
 

@@ -189,6 +189,10 @@ class AlmacenViewModel {
         this.router?.go({ path: "procesamiento", params: { id: contrato.idContrato } });
     };
 
+    public cmdEntregarBienes = (contrato: ContratoAlmacenItem): void => {
+        this.router?.go({ path: "entrega", params: { id: contrato.idContrato } });
+    };
+
     // ================================================================
     // HELPERS — UI
     // ================================================================

@@ -1,6 +1,7 @@
 package com.sesesp.almacen.domain.mapper;
 
 import com.sesesp.almacen.common.SESESP_UTILS;
+import com.sesesp.almacen.domain.dto.BeneficiarioDto;
 import com.sesesp.almacen.domain.dto.ContratoBienDto;
 import com.sesesp.almacen.domain.dto.ClavePresupuestalDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
@@ -48,6 +49,7 @@ public class ContratoMapper {
                // relaciones
                .clavesPresupuestales(convertClaves(entity.getClavesPresupuestales()))
                .beneficiarios(joinNames(entity.getBeneficiarios()))
+               .listaBeneficiarios(convertBeneficiarios(entity.getBeneficiarios()))
                .bienes(convertBienes(entity.getBienes()))
                .build();
     }
@@ -58,6 +60,16 @@ public class ContratoMapper {
                 .filter(cb -> Boolean.TRUE.equals(cb.getActivo()))
                 .map(cb -> cb.getBeneficiario().getNombre())
                 .collect(Collectors.joining(", "));
+    }
+
+    private List<BeneficiarioDto> convertBeneficiarios(List<ContratoBeneficiarioEntity> beneficiarios) {
+        return beneficiarios.stream()
+                .filter(cb -> Boolean.TRUE.equals(cb.getActivo()))
+                .map(cb -> BeneficiarioDto.builder()
+                        .idBeneficiario(cb.getBeneficiario().getIdBeneficiario())
+                        .nombre(cb.getBeneficiario().getNombre())
+                        .build())
+                .toList();
     }
 
     private List<ClavePresupuestalDto> convertClaves(List<ContratoClavePresupuestalEntity> clavesPresupuestales ) {

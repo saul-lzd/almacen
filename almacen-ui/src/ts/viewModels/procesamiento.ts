@@ -1,19 +1,3 @@
-/**
- * ViewModel: Procesamiento de Bienes
- *
- * Captura de datos individuales (número de serie, marca, modelo) para cada
- * unidad física recibida en almacén. Soporta dos modos:
- *   - Individual: un formulario por unidad (electrónicos, vehículos)
- *   - Por lote:   marca/modelo compartidos aplicados a todas las unidades del grupo
- *
- * Convención de nombres:
- * - frm*:  valores editables del formulario
- * - ui*:   estado visual
- * - calc*: computed/calculados
- * - cmd*:  acciones desde UI
- * - load*: carga desde API
- */
-
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
@@ -29,7 +13,6 @@ import "oj-c/button";
 type UnidadProcesamiento = {
     idAlmacenBien: number;
     codigoInterno: string;
-    estatus: string;
     folioRecepcion: string;
     fechaRecepcion: string | null;
     esVehiculo: boolean;
@@ -38,8 +21,10 @@ type UnidadProcesamiento = {
     frmMarca: ko.Observable<string>;
     frmModelo: ko.Observable<string>;
     frmDescripcion: ko.Observable<string>;
+    uiEstatus: ko.Observable<string>;
+    uiEditando: ko.Observable<boolean>;
+    uiEditable: ko.PureComputed<boolean>;
     uiGuardando: ko.Observable<boolean>;
-    uiProcesado: ko.Observable<boolean>;
 };
 
 type GrupoProcesamiento = {
@@ -79,34 +64,23 @@ class ProcesamientoViewModel {
     private router: any;
     private contratoId: number | null = null;
 
-    // ----------------------------------------------------------------
-    // ESTADO
-    // ----------------------------------------------------------------
     public uiCargando  = ko.observable<boolean>(false);
     public uiError     = ko.observable<string>("");
     public uiExito     = ko.observable<string>("");
 
-    // ----------------------------------------------------------------
-    // DATOS
-    // ----------------------------------------------------------------
     public contrato    = ko.observable<ContratoResumen | null>(null);
     public listaGrupos = ko.observableArray<GrupoProcesamiento>([]);
 
-    // ----------------------------------------------------------------
-    // COMPUTED GLOBALES
-    // ----------------------------------------------------------------
-    public calcTotalRecibidos = ko.pureComputed(() =>
+    // Cuenta RECIBIDO + EN_PROCESO (ambos son pendientes de procesamiento)
+    public calcTotalPendientes = ko.pureComputed(() =>
         this.listaGrupos().reduce((sum, g) =>
-            sum + g.unidades.filter(u => !u.uiProcesado()).length, 0)
+            sum + g.unidades.filter(u => u.uiEstatus() !== "PROCESADO").length, 0)
     );
 
     public calcTodoCompleto = ko.pureComputed(() =>
-        this.listaGrupos().length > 0 && this.calcTotalRecibidos() === 0
+        this.listaGrupos().length > 0 && this.calcTotalPendientes() === 0
     );
 
-    // ----------------------------------------------------------------
-    // CONSTRUCTOR / LIFECYCLE
-    // ----------------------------------------------------------------
     constructor(params: any) {
         this.router = params?.router;
         const idParam = params?.routerState?.params?.id;
@@ -148,36 +122,41 @@ class ProcesamientoViewModel {
             const dataGrupos: any[] = await resBienes.json();
 
             this.contrato({
-                idContrato:   dataContrato.idContrato,
+                idContrato:     dataContrato.idContrato,
                 numeroContrato: dataContrato.numeroContrato,
-                adquisicion:  dataContrato.adquisicion,
-                estatus:      dataContrato.estatus,
-                estatusLabel: mapEstatusToLabel(dataContrato.estatus),
-                proveedor:    dataContrato.proveedor?.razonSocial || "Sin proveedor asignado",
-                beneficiarios: dataContrato.beneficiarios || "",
+                adquisicion:    dataContrato.adquisicion,
+                estatus:        dataContrato.estatus,
+                estatusLabel:   mapEstatusToLabel(dataContrato.estatus),
+                proveedor:      dataContrato.proveedor?.razonSocial || "Sin proveedor asignado",
+                beneficiarios:  dataContrato.beneficiarios || "",
             });
 
             const grupos: GrupoProcesamiento[] = dataGrupos.map(g => {
                 const esVehiculo = (g.unidadMedida as string).toLowerCase().includes("veh");
 
-                const unidades: UnidadProcesamiento[] = g.unidades.map((u: any) => ({
-                    idAlmacenBien:  u.idAlmacenBien,
-                    codigoInterno:  u.codigoInterno,
-                    estatus:        u.estatus,
-                    folioRecepcion: u.folioRecepcion || "—",
-                    fechaRecepcion: u.fechaRecepcion ? u.fechaRecepcion.split("T")[0] : null,
-                    esVehiculo,
-                    frmNumeroSerie: ko.observable<string>(u.numeroSerie || ""),
-                    frmNumeroMotor: ko.observable<string>(u.numeroMotor || ""),
-                    frmMarca:       ko.observable<string>(u.marca || ""),
-                    frmModelo:      ko.observable<string>(u.modelo || ""),
-                    frmDescripcion: ko.observable<string>(u.descripcionComplementaria || ""),
-                    uiGuardando:    ko.observable<boolean>(false),
-                    uiProcesado:    ko.observable<boolean>(u.estatus === "PROCESADO"),
-                }));
+                const unidades: UnidadProcesamiento[] = g.unidades.map((u: any) => {
+                    const uiEstatus   = ko.observable<string>(u.estatus);
+                    const uiEditando  = ko.observable<boolean>(false);
+                    return {
+                        idAlmacenBien:  u.idAlmacenBien,
+                        codigoInterno:  u.codigoInterno,
+                        folioRecepcion: u.folioRecepcion || "—",
+                        fechaRecepcion: u.fechaRecepcion ? u.fechaRecepcion.split("T")[0] : null,
+                        esVehiculo,
+                        frmNumeroSerie: ko.observable<string>(u.numeroSerie || ""),
+                        frmNumeroMotor: ko.observable<string>(u.numeroMotor || ""),
+                        frmMarca:       ko.observable<string>(u.marca || ""),
+                        frmModelo:      ko.observable<string>(u.modelo || ""),
+                        frmDescripcion: ko.observable<string>(u.descripcionComplementaria || ""),
+                        uiEstatus,
+                        uiEditando,
+                        uiEditable: ko.pureComputed(() => uiEstatus() !== "PROCESADO" || uiEditando()),
+                        uiGuardando: ko.observable<boolean>(false),
+                    };
+                });
 
                 const calcProcesados = ko.pureComputed(() =>
-                    unidades.filter(u => u.uiProcesado()).length
+                    unidades.filter(u => u.uiEstatus() === "PROCESADO").length
                 );
 
                 return {
@@ -189,9 +168,9 @@ class ProcesamientoViewModel {
                     esVehiculo,
                     totalUnidades:  g.totalUnidades,
                     unidades,
-                    uiModoBloque:     ko.observable<boolean>(false),
-                    frmBulkMarca:     ko.observable<string>(""),
-                    frmBulkModelo:    ko.observable<string>(""),
+                    uiModoBloque:      ko.observable<boolean>(false),
+                    frmBulkMarca:      ko.observable<string>(""),
+                    frmBulkModelo:     ko.observable<string>(""),
                     frmBulkDescripcion: ko.observable<string>(""),
                     calcProcesados,
                     calcTodosProcesados: ko.pureComputed(() =>
@@ -217,81 +196,137 @@ class ProcesamientoViewModel {
         this.router?.go({ path: "almacen" });
     };
 
-    public cmdGuardarGrupo = async (grupo: GrupoProcesamiento): Promise<void> => {
-        const pendientes = grupo.unidades.filter(u => !u.uiProcesado());
+    // Guarda datos del bien sin marcarlo como procesado.
+    // RECIBIDO → EN_PROCESO automáticamente; EN_PROCESO permanece; PROCESADO → EN_PROCESO.
+    public cmdGuardarDatos = async (unidad: UnidadProcesamiento): Promise<void> => {
+        unidad.uiGuardando(true);
+        this.uiError("");
+
+        const payload: any = {};
+        if (unidad.frmNumeroSerie().trim())  payload.numeroSerie  = unidad.frmNumeroSerie().trim();
+        if (unidad.frmNumeroMotor().trim())  payload.numeroMotor  = unidad.frmNumeroMotor().trim();
+        if (unidad.frmMarca().trim())        payload.marca        = unidad.frmMarca().trim();
+        if (unidad.frmModelo().trim())       payload.modelo       = unidad.frmModelo().trim();
+        if (unidad.frmDescripcion().trim())  payload.descripcionComplementaria = unidad.frmDescripcion().trim();
+
+        try {
+            const res = await fetch(
+                `http://localhost:8080/api/almacen-bienes/${unidad.idAlmacenBien}/datos`,
+                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
+            );
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
+            }
+
+            unidad.uiEstatus("EN_PROCESO");
+            unidad.uiEditando(false);
+        } catch (err: any) {
+            console.error("Error al guardar datos:", err);
+            this.uiError(err.message || "No se pudieron guardar los datos.");
+        } finally {
+            unidad.uiGuardando(false);
+        }
+    };
+
+    // Marca el bien como PROCESADO de forma explícita.
+    // Solo válido cuando el bien está EN_PROCESO.
+    public cmdProcesarUnidad = async (unidad: UnidadProcesamiento): Promise<void> => {
+        unidad.uiGuardando(true);
+        this.uiError("");
+
+        const payload: any = {};
+        if (unidad.frmNumeroSerie().trim())  payload.numeroSerie  = unidad.frmNumeroSerie().trim();
+        if (unidad.frmNumeroMotor().trim())  payload.numeroMotor  = unidad.frmNumeroMotor().trim();
+        if (unidad.frmMarca().trim())        payload.marca        = unidad.frmMarca().trim();
+        if (unidad.frmModelo().trim())       payload.modelo       = unidad.frmModelo().trim();
+        if (unidad.frmDescripcion().trim())  payload.descripcionComplementaria = unidad.frmDescripcion().trim();
+
+        try {
+            const res = await fetch(
+                `http://localhost:8080/api/almacen-bienes/${unidad.idAlmacenBien}/procesar`,
+                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
+            );
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
+            }
+
+            unidad.uiEstatus("PROCESADO");
+            unidad.uiEditando(false);
+        } catch (err: any) {
+            console.error("Error al procesar unidad:", err);
+            this.uiError(err.message || "No se pudo procesar el bien.");
+        } finally {
+            unidad.uiGuardando(false);
+        }
+    };
+
+    // Activa el modo de edición en un bien ya PROCESADO.
+    public cmdEditarUnidad = (unidad: UnidadProcesamiento): void => {
+        unidad.uiEditando(true);
+    };
+
+    // Modo lote: guarda datos en todos los pendientes y luego los marca PROCESADO.
+    // Paso 1: PATCH /datos para cada RECIBIDO/EN_PROCESO → todos quedan EN_PROCESO.
+    // Paso 2: PATCH /procesar-bloque → todos quedan PROCESADO.
+    public cmdAplicarBloque = async (grupo: GrupoProcesamiento): Promise<void> => {
+        const pendientes = grupo.unidades.filter(u => u.uiEstatus() !== "PROCESADO");
         if (pendientes.length === 0) return;
 
         grupo.uiGuardandoGrupo(true);
         this.uiError("");
 
-        try {
-            await Promise.all(pendientes.map(async unidad => {
-                const payload: any = {};
-                if (unidad.frmNumeroSerie().trim())  payload.numeroSerie  = unidad.frmNumeroSerie().trim();
-                if (unidad.frmNumeroMotor().trim())  payload.numeroMotor  = unidad.frmNumeroMotor().trim();
-                if (unidad.frmMarca().trim())        payload.marca        = unidad.frmMarca().trim();
-                if (unidad.frmModelo().trim())       payload.modelo       = unidad.frmModelo().trim();
-                if (unidad.frmDescripcion().trim())  payload.descripcionComplementaria = unidad.frmDescripcion().trim();
+        const marca      = grupo.frmBulkMarca().trim();
+        const modelo     = grupo.frmBulkModelo().trim();
+        const descripcion = grupo.frmBulkDescripcion().trim();
 
+        const datosPayload: any = {};
+        if (marca)      datosPayload.marca = marca;
+        if (modelo)     datosPayload.modelo = modelo;
+        if (descripcion) datosPayload.descripcionComplementaria = descripcion;
+
+        try {
+            // Paso 1: persistir datos (RECIBIDO → EN_PROCESO)
+            await Promise.all(pendientes.map(async u => {
                 const res = await fetch(
-                    `http://localhost:8080/api/almacen-bienes/${unidad.idAlmacenBien}/procesar`,
-                    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
+                    `http://localhost:8080/api/almacen-bienes/${u.idAlmacenBien}/datos`,
+                    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datosPayload) }
                 );
-
                 if (!res.ok) {
-                    const errData = await res.json().catch(() => null);
-                    throw new Error(errData?.errores?.[0] ?? errData?.mensaje ?? `Error ${res.status}`);
+                    const err = await res.json().catch(() => null);
+                    throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
                 }
-
-                unidad.uiProcesado(true);
-                unidad.estatus = "PROCESADO";
+                u.uiEstatus("EN_PROCESO");
+                if (marca)      u.frmMarca(marca);
+                if (modelo)     u.frmModelo(modelo);
+                if (descripcion) u.frmDescripcion(descripcion);
             }));
-        } catch (err: any) {
-            console.error("Error al guardar grupo:", err);
-            this.uiError(err.message || "No se pudieron guardar los cambios.");
-        } finally {
-            grupo.uiGuardandoGrupo(false);
-        }
-    };
 
-    public cmdAplicarBloque = async (grupo: GrupoProcesamiento): Promise<void> => {
-        const pendientes = grupo.unidades.filter(u => !u.uiProcesado());
-        if (pendientes.length === 0) return;
+            // Paso 2: marcar todos como PROCESADO en bloque
+            const bloquePayload: any = { ids: pendientes.map(u => u.idAlmacenBien) };
+            if (marca)      bloquePayload.marca = marca;
+            if (modelo)     bloquePayload.modelo = modelo;
+            if (descripcion) bloquePayload.descripcionComplementaria = descripcion;
 
-        this.uiError("");
-
-        const payload: any = {
-            ids: pendientes.map(u => u.idAlmacenBien),
-        };
-        if (grupo.frmBulkMarca().trim())       payload.marca        = grupo.frmBulkMarca().trim();
-        if (grupo.frmBulkModelo().trim())       payload.modelo       = grupo.frmBulkModelo().trim();
-        if (grupo.frmBulkDescripcion().trim())  payload.descripcionComplementaria = grupo.frmBulkDescripcion().trim();
-
-        try {
             const res = await fetch(
                 `http://localhost:8080/api/almacen-bienes/procesar-bloque`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }
+                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bloquePayload) }
             );
 
             if (!res.ok) {
-                const errData = await res.json().catch(() => null);
-                const msg = errData?.errores?.[0] ?? errData?.mensaje ?? `Error ${res.status}`;
-                throw new Error(msg);
+                const err = await res.json().catch(() => null);
+                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
             }
 
-            pendientes.forEach(u => {
-                u.uiProcesado(true);
-                u.frmMarca(grupo.frmBulkMarca());
-                u.frmModelo(grupo.frmBulkModelo());
-                u.frmDescripcion(grupo.frmBulkDescripcion());
-            });
+            pendientes.forEach(u => u.uiEstatus("PROCESADO"));
         } catch (err: any) {
             console.error("Error al procesar bloque:", err);
             this.uiError(err.message || "No se pudo procesar el bloque de bienes.");
+        } finally {
+            grupo.uiGuardandoGrupo(false);
         }
     };
 

@@ -107,6 +107,7 @@ public class AlmacenBienEntity extends AuditoriaEntity {
 
     public enum EstatusBien {
         RECIBIDO,
+        EN_PROCESO,
         PROCESADO,
         LISTO_PARA_ENTREGAR,
         ENTREGADO

@@ -214,8 +214,28 @@
                     <span slot="startIcon" class="oj-ux-ico-capture"></span>
                   </oj-c-button>
                 </oj-bind-if>
+                <!-- LISTO_PARA_ENTREGAR: entregar -->
+                <oj-bind-if test="[[item.data.estatus === 'LISTO_PARA_ENTREGAR']]">
+                  <oj-c-button
+                    label="Entregar bienes"
+                    chroming="callToAction"
+                    size="sm"
+                    on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-export"></span>
+                  </oj-c-button>
+                </oj-bind-if>
+                <!-- ENTREGA_PARCIAL: entregar pendientes -->
+                <oj-bind-if test="[[item.data.estatus === 'ENTREGA_PARCIAL']]">
+                  <oj-c-button
+                    label="Entregar pendientes"
+                    chroming="callToAction"
+                    size="sm"
+                    on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-export"></span>
+                  </oj-c-button>
+                </oj-bind-if>
                 <!-- Demás estatus: ver detalle -->
-                <oj-bind-if test="[[item.data.estatus !== 'POR_RECIBIR' && item.data.estatus !== 'RECEPCION_PARCIAL' && item.data.estatus !== 'EN_ALMACEN']]">
+                <oj-bind-if test="[[item.data.estatus !== 'POR_RECIBIR' && item.data.estatus !== 'RECEPCION_PARCIAL' && item.data.estatus !== 'EN_ALMACEN' && item.data.estatus !== 'LISTO_PARA_ENTREGAR' && item.data.estatus !== 'ENTREGA_PARCIAL']]">
                   <oj-c-button
                     label="Ver detalle"
                     chroming="outlined"

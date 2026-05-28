@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.controller;
 
+import com.sesesp.almacen.domain.dto.ActualizarDatosBienRequestDto;
 import com.sesesp.almacen.domain.dto.ProcesarBienRequestDto;
 import com.sesesp.almacen.domain.dto.ProcesarBloqueRequestDto;
 import com.sesesp.almacen.domain.service.AlmacenBienService;
@@ -13,6 +14,14 @@ import org.springframework.web.bind.annotation.*;
 public class AlmacenBienController {
 
     private final AlmacenBienService almacenBienService;
+
+    @PatchMapping("/{id}/datos")
+    public ResponseEntity<?> actualizarDatos(
+            @PathVariable Integer id,
+            @RequestBody ActualizarDatosBienRequestDto request) {
+        almacenBienService.actualizarDatos(id, request);
+        return ResponseEntity.ok().build();
+    }
 
     @PatchMapping("/{id}/procesar")
     public ResponseEntity<?> procesarBien(

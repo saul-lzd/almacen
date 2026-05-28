@@ -27,6 +27,7 @@ import "oj-c/dialog";
 type EstatusContrato =
     | "CAPTURA"
     | "POR_RECIBIR"
+    | "RECEPCION_PARCIAL"
     | "EN_ALMACEN"
     | "LISTO_PARA_ENTREGAR"
     | "ENTREGA_PARCIAL"
@@ -51,6 +52,7 @@ type ContratoKanbanItem = {
 const COLUMNAS_ADMIN: { key: EstatusContrato; label: string }[] = [
     { key: "CAPTURA",             label: "En captura" },
     { key: "POR_RECIBIR",         label: "Por recibir" },
+    { key: "RECEPCION_PARCIAL",   label: "Recepción parcial" },
     { key: "EN_ALMACEN",          label: "En almacén" },
     { key: "LISTO_PARA_ENTREGAR", label: "Listo p/ entregar" },
     { key: "CERRADO",             label: "Cerrado" }
@@ -69,6 +71,7 @@ class DashboardViewModel {
     // ----------------------------------------------------------------
     public uiCargando = ko.observable<boolean>(false);
     public uiError    = ko.observable<string>("");
+    public uiExito    = ko.observable<string>("");
 
     // ----------------------------------------------------------------
     // DATOS COMPLETOS
@@ -285,6 +288,31 @@ class DashboardViewModel {
     // Recargar tablero
     public cmdActualizar = (): void => {
         void this.loadContratos();
+    };
+
+    // ================================================================
+    // COMMANDS — AUTORIZAR ENTREGA
+    // ================================================================
+    public cmdAutorizarEntrega = async (contrato: ContratoKanbanItem): Promise<void> => {
+        this.uiError("");
+        this.uiExito("");
+
+        try {
+            const res = await fetch(
+                `http://localhost:8080/api/contratos/${contrato.idContrato}/autorizar-entrega`,
+                { method: "PATCH" }
+            );
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => null);
+                throw new Error(errData?.errores?.[0] ?? errData?.mensaje ?? `Error ${res.status}`);
+            }
+
+            this.uiExito(`Contrato ${contrato.numeroContrato} autorizado para entrega.`);
+            await this.loadContratos();
+        } catch (err: any) {
+            this.uiError(err.message || "No se pudo autorizar la entrega.");
+        }
     };
 }
 

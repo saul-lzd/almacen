@@ -15,6 +15,10 @@
   --estatus-contrato-por-recibir-color-primary: #C29438;
   --estatus-contrato-por-recibir-color-secondary: #FAF4E6;
 
+  /* RECEPCION PARCIAL */
+  --estatus-contrato-recepcion-parcial-color-primary: #B0712A;
+  --estatus-contrato-recepcion-parcial-color-secondary: #FAF0E2;
+
   /* EN ALMACEN */
   --estatus-contrato-en-almacen-color-primary: #82715F;
   --estatus-contrato-en-almacen-color-secondary: #F9EFE5;
@@ -97,22 +101,24 @@
    /* ── Layout Kanban ── */
 
    /* ── Colores por estatus: ribbon (color primario) ── */
-.estatus-captura-ribbon            { background: var(--estatus-contrato-captura-color-primary); }
-.estatus-por-recibir-ribbon        { background: var(--estatus-contrato-por-recibir-color-primary); }
-.estatus-en-almacen-ribbon         { background: var(--estatus-contrato-en-almacen-color-primary); }
+.estatus-captura-ribbon              { background: var(--estatus-contrato-captura-color-primary); }
+.estatus-por-recibir-ribbon          { background: var(--estatus-contrato-por-recibir-color-primary); }
+.estatus-recepcion-parcial-ribbon    { background: var(--estatus-contrato-recepcion-parcial-color-primary); }
+.estatus-en-almacen-ribbon           { background: var(--estatus-contrato-en-almacen-color-primary); }
 .estatus-listo-para-entregar-ribbon { background: var(--estatus-contrato-listo-para-entregar-color-primary); }
 .estatus-entregado-ribbon          { background: var(--estatus-contrato-entregado-color-primary); }
 
 /* ── Colores por estatus: fondo de columna (color secundario) ── */
-.estatus-captura            { background: var(--estatus-contrato-captura-color-secondary); }
-.estatus-por-recibir        { background: var(--estatus-contrato-por-recibir-color-secondary); }
-.estatus-en-almacen         { background: var(--estatus-contrato-en-almacen-color-secondary);  }
+.estatus-captura              { background: var(--estatus-contrato-captura-color-secondary); }
+.estatus-por-recibir          { background: var(--estatus-contrato-por-recibir-color-secondary); }
+.estatus-recepcion-parcial    { background: var(--estatus-contrato-recepcion-parcial-color-secondary); }
+.estatus-en-almacen           { background: var(--estatus-contrato-en-almacen-color-secondary);  }
 .estatus-listo-para-entregar { background: var(--estatus-contrato-listo-para-entregar-color-secondary);  }
 .estatus-entregado          { background: var(--estatus-contrato-entregado-color-secondary);}
 
   .kanban-board {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 12px;
     align-items: start;
     overflow-x: auto;
@@ -818,7 +824,7 @@
 
   .procesamiento-tabla-header {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 52px;
+    grid-template-columns: 1fr 1fr 1fr 196px;
     gap: 0 12px;
     padding: 8px 16px;
     background: var(--oj-core-bg-color-secondary);
@@ -830,12 +836,12 @@
   }
 
   .procesamiento-tabla-header--vehiculo {
-    grid-template-columns: 1fr 1fr 1fr 1fr 52px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 196px;
   }
 
   .procesamiento-tabla-fila {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 52px;
+    grid-template-columns: 1fr 1fr 1fr 196px;
     gap: 0 12px;
     padding: 10px 16px;
     border-bottom: 1px solid var(--oj-core-border-color-subtle);
@@ -844,13 +850,27 @@
   }
 
   .procesamiento-tabla-fila--vehiculo {
-    grid-template-columns: 1fr 1fr 1fr 1fr 52px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 196px;
   }
 
-  .procesamiento-col-estatus {
+  .procesamiento-col-acciones {
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: flex-end;
+  }
+
+  .procesamiento-acciones-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: stretch;
+  }
+
+  .procesamiento-acciones-procesado {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
   }
 
   .procesamiento-tabla-fila:last-child {
@@ -861,8 +881,63 @@
     background: #F9FFFB;
   }
 
+  .procesamiento-fila--en-proceso {
+    background: #FFFDF5;
+  }
+
   .procesamiento-check {
     font-size: 12px;
     font-weight: 600;
     color: #15803D;
+    white-space: nowrap;
+  }
+  /* ── ENTREGA ── */
+
+  .entrega-grupo {
+    border: 1px solid var(--oj-core-border-color-subtle);
+    border-radius: 6px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: opacity 0.15s;
+  }
+
+  .entrega-grupo--excluido {
+    opacity: 0.45;
+  }
+
+  .entrega-grupo-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--oj-core-bg-color-secondary);
+    border-bottom: 1px solid var(--oj-core-border-color-subtle);
+  }
+
+  .entrega-grupo--excluido .entrega-grupo-header {
+    border-bottom: none;
+  }
+
+  .entrega-grupo-info {
+    flex: 1;
+  }
+
+  .entrega-unidades {
+    padding: 8px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .entrega-unidad-fila {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--oj-core-divider-color);
+    font-size: 12px;
+  }
+
+  .entrega-unidad-fila:last-child {
+    border-bottom: none;
   }
