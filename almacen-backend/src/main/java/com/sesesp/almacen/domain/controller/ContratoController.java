@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.controller;
 
+import com.sesesp.almacen.domain.dto.ActualizarFechaTentativaRequestDto;
 import com.sesesp.almacen.domain.dto.AlmacenBienGrupoDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
@@ -70,8 +71,22 @@ public class ContratoController {
     }
 
     /**
-     * Autoriza el contrato para entrega a beneficiarios.
-     * Valida que todos los bienes estén procesados y cambia el estatus a LISTO_PARA_ENTREGAR.
+     * Actualiza la fecha tentativa de llegada del proveedor.
+     * Solo disponible cuando el contrato está en POR_RECIBIR.
+     * Una vez que llega el primer lote (RECEPCION_PARCIAL en adelante) queda bloqueado.
+     */
+    @PatchMapping("/{idContrato}/fecha-tentativa")
+    public ResponseEntity<?> actualizarFechaTentativa(
+            @PathVariable Integer idContrato,
+            @RequestBody ActualizarFechaTentativaRequestDto request) {
+        contratoService.actualizarFechaTentativa(idContrato, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Autoriza la entrega de los bienes PROCESADO del contrato.
+     * Acepta contratos en EN_ALMACEN o RECEPCION_PARCIAL.
+     * Los bienes pasan a LISTO_PARA_ENTREGAR; el contrato solo avanza de estatus si venía de EN_ALMACEN.
      */
     @PatchMapping("/{idContrato}/autorizar-entrega")
     public ResponseEntity<?> autorizarEntrega(@PathVariable Integer idContrato) {

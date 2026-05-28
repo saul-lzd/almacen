@@ -1,62 +1,38 @@
-/**
- * ViewModel: Dashboard — Tablero Kanban de Contratos
- *
- * Convencion de nombres igual que contrato.ts:
- * - list*: arrays de datos
- * - dp*:   DataProvider para componentes JET
- * - ui*:   estado visual
- * - cmd*:  acciones desde UI
- * - load*: carga desde API
- * - map*:  transformaciones
- */
-
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
-import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
-
-import "oj-c/form-layout";
-import "oj-c/input-text";
-import "oj-c/buttonset-multiple";
+import ArrayDataProvider = require("ojs/ojarraydataprovider");
+import { mapEstatusToLabel, mapEstatusToBadge, removeAccents } from "../utils/contratoUtils";
+import 'ojs/ojtoolbar';
 import "oj-c/button";
-import "oj-c/dialog";
+import "oj-c/input-text";
+import "oj-c/form-layout";
+import "oj-c/menu-button";
+import "oj-c/buttonset-single";
 
 // ================================================================
 // TIPOS
 // ================================================================
 
-type EstatusContrato =
-    | "CAPTURA"
-    | "POR_RECIBIR"
-    | "RECEPCION_PARCIAL"
-    | "EN_ALMACEN"
-    | "LISTO_PARA_ENTREGAR"
-    | "ENTREGA_PARCIAL"
-    | "ENTREGADO"
-    | "CERRADO";
+type ResumenBienes = {
+    totalContratados: number;
+    totalRecibidos: number;
+    enProceso: number;
+    procesados: number;
+    listos: number;
+    entregados: number;
+};
 
-type ContratoKanbanItem = {
+type ContratoItem = {
     idContrato: number;
     numeroContrato: string;
     adquisicion: string;
-    estatus: EstatusContrato;
+    estatus: string;
     estatusLabel: string;
     estatusBadge: string;
-    proveedor: string;
-    montoTotal: number | null;
-    fechaTentativaLlegada: string | null;
     beneficiarios: string;
-    totalBienes: number;
+    montoTotal: string;
+    resumenBienes: ResumenBienes;
 };
-
-// Columnas del Kanban para el administrador
-const COLUMNAS_ADMIN: { key: EstatusContrato; label: string }[] = [
-    { key: "CAPTURA",             label: "En captura" },
-    { key: "POR_RECIBIR",         label: "Por recibir" },
-    { key: "RECEPCION_PARCIAL",   label: "Recepción parcial" },
-    { key: "EN_ALMACEN",          label: "En almacén" },
-    { key: "LISTO_PARA_ENTREGAR", label: "Listo p/ entregar" },
-    { key: "CERRADO",             label: "Cerrado" }
-];
 
 // ================================================================
 // VIEWMODEL
@@ -66,108 +42,71 @@ class DashboardViewModel {
 
     private router: any;
 
-    // ----------------------------------------------------------------
-    // ESTADO DE CARGA
-    // ----------------------------------------------------------------
-    public uiCargando = ko.observable<boolean>(false);
-    public uiError    = ko.observable<string>("");
-    public uiExito    = ko.observable<string>("");
+    public uiCargando  = ko.observable<boolean>(false);
+    public uiError     = ko.observable<string>("");
+    public uiVista     = ko.observable<"lista" | "grid">(
+        (localStorage.getItem("almacen.dashboard.vista") as "lista" | "grid") ?? "lista"
+    );
 
-    // ----------------------------------------------------------------
-    // DATOS COMPLETOS
-    // ----------------------------------------------------------------
-    private todosLosContratos = ko.observableArray<ContratoKanbanItem>([]);
+    public frmBuscar   = ko.observable<string>("");
+    public frmEstatus  = ko.observable<string | null>(null);
 
-    // ----------------------------------------------------------------
-    // BÚSQUEDA Y FILTROS
-    // ----------------------------------------------------------------
-    public uiBusqueda       = ko.observable<string>("");
-    public uiBusquedaRaw    = ko.observable<string>("");
-    public uiFiltroActivo   = ko.observable<string>("todos");
+    private contratos  = ko.observableArray<ContratoItem>([]);
 
-    // ----------------------------------------------------------------
-    // COLUMNAS KANBAN — computed por estatus
-    // ----------------------------------------------------------------
-    public columnas = COLUMNAS_ADMIN;
-
-    // Contratos filtrados según búsqueda activa
-    private contratosFiltrados = ko.pureComputed(() => {
-        const query  = this.uiBusquedaRaw().trim().toLowerCase();
-        const filtro = this.uiFiltroActivo();
-        const todos  = this.todosLosContratos();
-
-        if (!query) return todos;
-
-        return todos.filter(c => {
-            switch (filtro) {
-                case "numero":
-                    return c.numeroContrato.toLowerCase().includes(query);
-                case "adquisicion":
-                    return c.adquisicion.toLowerCase().includes(query);
-                case "beneficiario":
-                    return c.beneficiarios.toLowerCase().includes(query);
-                default: // "todos"
-                    return (
-                        c.numeroContrato.toLowerCase().includes(query) ||
-                        c.adquisicion.toLowerCase().includes(query) ||
-                        c.beneficiarios.toLowerCase().includes(query) ||
-                        c.proveedor.toLowerCase().includes(query)
-                    );
-            }
+    // Filtrado reactivo por búsqueda y estatus
+    public calcFiltrados = ko.pureComputed<ContratoItem[]>(() => {
+        const buscar  = removeAccents(this.frmBuscar().trim().toLowerCase());
+        const estatus = this.frmEstatus();
+        return this.contratos().filter(c => {
+            const matchEstatus = !estatus || c.estatus === estatus;
+            const matchBuscar  = !buscar
+                || removeAccents(c.numeroContrato.toLowerCase()).includes(buscar)
+                || removeAccents(c.adquisicion.toLowerCase()).includes(buscar)
+                || removeAccents(c.beneficiarios.toLowerCase()).includes(buscar);
+            return matchEstatus && matchBuscar;
         });
     });
 
-    // Agrupa los contratos filtrados por estatus para cada columna
-    public contratosEnColumna(estatus: EstatusContrato): ko.PureComputed<ContratoKanbanItem[]> {
-        return ko.pureComputed(() =>
-            this.contratosFiltrados().filter(c => c.estatus === estatus)
-        );
-    }
+    public calcHayResultados = ko.pureComputed(() => this.calcFiltrados().length > 0);
 
-    // Cuenta contratos por columna para el badge
-    public countEnColumna(estatus: EstatusContrato): ko.PureComputed<number> {
-        return ko.pureComputed(() =>
-            this.contratosFiltrados().filter(c => c.estatus === estatus).length
-        );
-    }
+    // ----------------------------------------------------------------
+    // Filtro de estatus — split menu button
+    // ----------------------------------------------------------------
+    public readonly itemsEstatus = [
+        { key: "",                      label: "Todos" },
+        { key: "CAPTURA",               label: "En captura" },
+        { key: "POR_RECIBIR",           label: "Por recibir" },
+        { key: "RECEPCION_PARCIAL",     label: "Recepción parcial" },
+        { key: "EN_ALMACEN",            label: "En almacén" },
+        { key: "LISTO_PARA_ENTREGAR",   label: "Listo para entregar" },
+        { key: "ENTREGA_PARCIAL",       label: "Entrega parcial" },
+        { key: "ENTREGADO",             label: "Entregado" },
+    ];
 
-    // Resultado de búsqueda
-    public calcResultadoBusqueda = ko.pureComputed(() => {
-        if (!this.uiBusquedaRaw()) return;
-
-        const query = this.uiBusquedaRaw().trim();
-        if (!query) return "";
-        const count = this.contratosFiltrados().length;
-        return count === 0
-            ? `Sin resultados para "${query}"`
-            : `${count} contrato${count > 1 ? "s" : ""} encontrado${count > 1 ? "s" : ""} para "${query}"`;
+    public calcLabelFiltroEstatus = ko.pureComputed(() => {
+        const estatus = this.frmEstatus();
+        if (!estatus) return "Todos";
+        return this.itemsEstatus.find(i => i.key === estatus)?.label ?? estatus;
     });
 
-    public calcTotalContratos = ko.pureComputed(() =>
-        this.todosLosContratos().length
-    );
+    public cmdFiltrarEstatus = (event: CustomEvent): void => {
+        const key = event.detail.key as string;
+        this.frmEstatus(key || null);
+    };
 
-    public calcTotalFiltrados = ko.pureComputed(() =>
-        this.contratosFiltrados().length
-    );
+    public readonly vistaOptions = [
+        { value: "lista", label: "Lista",      startIcon: { class: "oj-ux-ico-list-bulleted" } },
+        { value: "grid",  label: "Cuadrícula", startIcon: { class: "oj-ux-ico-grid-view-small" } },
+    ];
 
-    // ----------------------------------------------------------------
-    // DIALOG BENEFICIARIOS
-    // ----------------------------------------------------------------
-    public uiBeneficiariosDialogOpen  = ko.observable<boolean>(false);
-    public uiBeneficiariosDialogTitle = ko.observable<string>("");
-    public uiListaBeneficiarios       = ko.observableArray<string>([]);
-
-    // ----------------------------------------------------------------
-    // CONSTRUCTOR / LIFECYCLE
-    // ----------------------------------------------------------------
     constructor(params: any) {
         this.router = params?.router;
+        this.uiVista.subscribe(v => localStorage.setItem("almacen.dashboard.vista", v));
     }
 
     connected(): void {
-        AccUtils.announce("Tablero de contratos cargado.");
-        document.title = "Tablero — Gestión de Almacén";
+        AccUtils.announce("Gestión de almacén.");
+        document.title = "Inicio — Gestión de Almacén";
         void this.loadContratos();
     }
 
@@ -180,140 +119,60 @@ class DashboardViewModel {
     private async loadContratos(): Promise<void> {
         this.uiCargando(true);
         this.uiError("");
-
         try {
             const res = await fetch("http://localhost:8080/api/contratos");
-            if (!res.ok) throw new Error("Error al obtener contratos");
-
+            if (!res.ok) throw new Error(`Error ${res.status}`);
             const data: any[] = await res.json();
-            this.todosLosContratos(data.map(c => this.mapToKanbanItem(c)));
+
+            this.contratos(data.map(c => ({
+                idContrato:     c.idContrato,
+                numeroContrato: c.numeroContrato,
+                adquisicion:    c.adquisicion || "—",
+                estatus:        c.estatus,
+                estatusLabel:   mapEstatusToLabel(c.estatus),
+                estatusBadge:   mapEstatusToBadge(c.estatus),
+                beneficiarios:  c.beneficiarios || "—",
+                montoTotal:     this.formatMonto(c.montoTotal),
+                resumenBienes:  c.resumenBienes ?? {
+                    totalContratados: 0, totalRecibidos: 0,
+                    enProceso: 0, procesados: 0, listos: 0, entregados: 0,
+                },
+            })));
         } catch (err: any) {
             console.error("Error al cargar contratos:", err);
-            this.uiError("No se pudo cargar el tablero. Intenta de nuevo.");
+            this.uiError("No se pudo cargar el listado de contratos.");
         } finally {
             this.uiCargando(false);
         }
     }
 
     // ================================================================
-    // MAPPERS
+    // COMMANDS
     // ================================================================
-    private mapToKanbanItem(c: any): ContratoKanbanItem {
-        return {
-            idContrato:            c.idContrato,
-            numeroContrato:        c.numeroContrato,
-            adquisicion:           c.adquisicion,
-            estatus:               c.estatus as EstatusContrato,
-            estatusLabel:          mapEstatusToLabel(c.estatus),
-            estatusBadge:          mapEstatusToBadge(c.estatus),
-            proveedor:             c.proveedor?.razonSocial || "Pendiente de asignar",
-            montoTotal:            c.montoTotal ?? null,
-            fechaTentativaLlegada: c.fechaTentativaLlegada
-                ? c.fechaTentativaLlegada.split("T")[0]
-                : null,
-            beneficiarios: c.beneficiarios || "",
-            totalBienes:   c.bienes?.length ?? 0
-        };
-    }
-
-    // ================================================================
-    // COMMANDS — BÚSQUEDA
-    // ================================================================
-    public cmdSetFiltro = (filtro: string): void => {
-        this.uiFiltroActivo(filtro);
+    public cmdVerDetalle = (contrato: ContratoItem): void => {
+        this.router?.go({ path: "contrato-detalle", params: { id: contrato.idContrato } });
     };
 
-
-    // ================================================================
-    // COMMANDS — NAVEGACIÓN
-    // ================================================================
     public cmdNuevoContrato = (): void => {
         this.router?.go({ path: "contrato" });
     };
 
-    public cmdEditarContrato = (event: Event, context: any): void => {
-        const id = context.item?.data?.idContrato ?? context?.idContrato;
-        if (id) this.router?.go({ path: "contrato", params: { id } });
-    };
-
-    // Recibe el contrato directamente (para llamadas desde botones en cards)
-    public cmdIrAContrato = (contrato: ContratoKanbanItem): void => {
-        this.router?.go({ path: "contrato", params: { id: contrato.idContrato } });
+    public cmdSetVista = (vista: "lista" | "grid"): void => {
+        this.uiVista(vista);
     };
 
     // ================================================================
-    // COMMANDS — DIALOG BENEFICIARIOS
+    // HELPERS
     // ================================================================
-    public cmdVerBeneficiarios = (contrato: ContratoKanbanItem): void => {
-        const nombres = contrato.beneficiarios
-            ? contrato.beneficiarios.split(",").map(n => n.trim()).filter(n => n)
-            : [];
-
-        this.uiListaBeneficiarios(nombres);
-        this.uiBeneficiariosDialogTitle(contrato.numeroContrato);
-        this.uiBeneficiariosDialogOpen(true);
-    };
-
-    public cmdCerrarBeneficiariosDialog = (): void => {
-        this.uiBeneficiariosDialogOpen(false);
-    };
-
-    // ================================================================
-    // HELPERS — UI
-    // ================================================================
-
-    // Determina si el contrato puede editarse según su estatus
-    public puedeEditar(estatus: EstatusContrato): boolean {
-        return estatus === "CAPTURA";
+    private formatMonto(val: number | null | undefined): string {
+        if (val == null) return "—";
+        return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(val);
     }
 
-    // Formatea el monto total para mostrar en la card
-    public formatMonto(monto: number | null): string {
-        if (monto === null || monto === undefined) return "";
-        return monto.toLocaleString("es-MX", {
-            style: "currency",
-            currency: "MXN",
-            minimumFractionDigits: 2
-        });
+    public calcProgreso(r: ResumenBienes): number {
+        if (!r.totalContratados) return 0;
+        return Math.round((r.entregados / r.totalContratados) * 100);
     }
-
-    // Formatea la fecha de llegada
-    public formatFecha(fecha: string | null): string {
-        if (!fecha) return "";
-        const [year, month, day] = fecha.split("-");
-        const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-        return `${day} ${meses[parseInt(month) - 1]} ${year}`;
-    }
-
-    // Recargar tablero
-    public cmdActualizar = (): void => {
-        void this.loadContratos();
-    };
-
-    // ================================================================
-    // COMMANDS — AUTORIZAR ENTREGA
-    // ================================================================
-    public cmdAutorizarEntrega = async (contrato: ContratoKanbanItem): Promise<void> => {
-        this.uiError("");
-        this.uiExito("");
-
-        try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${contrato.idContrato}/autorizar-entrega`,
-                { method: "PATCH" }
-            );
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => null);
-                throw new Error(errData?.errores?.[0] ?? errData?.mensaje ?? `Error ${res.status}`);
-            }
-
-            this.uiExito(`Contrato ${contrato.numeroContrato} autorizado para entrega.`);
-            await this.loadContratos();
-        } catch (err: any) {
-            this.uiError(err.message || "No se pudo autorizar la entrega.");
-        }
-    };
 }
 
 export = DashboardViewModel;

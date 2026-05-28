@@ -79,7 +79,7 @@
   <!-- NAVEGACIÓN -->
   <oj-c-button
     chroming="ghost"
-    label="Ir a Inicio"
+    :label="[[calcLabelRegresar()]]"
     on-oj-action="[[cmdGoToInicio]]">
     <span slot="startIcon" class="oj-ux-ico-arrow-left-alt"></span>
   </oj-c-button>

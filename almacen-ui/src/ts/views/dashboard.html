@@ -1,494 +1,228 @@
-<!--
-  View: Dashboard — Tablero Kanban de Contratos
-  Vista del administrador: ciclo completo del contrato en 5 columnas.
--->
+<!-- View: Dashboard — Listado de Contratos -->
 
-<div class="oj-hybrid-padding">
-  <!-- TOOLBAR -->
-  <div class="dashboard-toolbar oj-flex-bar oj-sm-align-items-center">
-    <div class="oj-flex-bar-end" style="gap: 12px">
-      <oj-c-button
-        label="Nuevo Contrato"
-        chroming="callToAction"
-        size="sm"
-        on-oj-action="[[cmdNuevoContrato]]" >
-        <span slot="startIcon" class="oj-ux-ico-plus"></span>
-      </oj-c-button>
+<div class="oj-hybrid-padding dash-view">
 
-      <oj-c-button
-        label="Actualizar"
-        chroming="outlined"
-        size="sm"
-        on-oj-action="[[cmdActualizar]]" >
-        <span slot="startIcon" class="oj-ux-ico-refresh"></span>
-      </oj-c-button>
+  <!-- ═══ ENCABEZADO ═══════════════════════════════════════════ -->
+  <div class="dash-header">
+    <div>
+      <h1 class="oj-typography-heading-md dash-titulo">Gestión de Almacén</h1>
+      <p class="oj-text-color-secondary oj-typography-body-sm">Administra contratos, recepciones y entregas</p>
     </div>
+    <oj-c-button
+      label="+ Nuevo Contrato"
+      chroming="callToAction"
+      on-oj-action="[[cmdNuevoContrato]]">
+    </oj-c-button>
   </div>
 
-  <!-- BÚSQUEDA -->
-      <oj-c-form-layout full-width="true" style="width: 37rem">
-        <oj-c-input-text id="input-query"
-          label-hint="Buscar por número de contrato, adquisición o beneficiario ..."
-          label-edge="inside"
-          clear-icon="conditional"
-          raw-value={{uiBusquedaRaw}}> 
-          <div slot="start" class="oj-ux-ico-search"></div>
-        </oj-c-input-text>    
-      </oj-c-form-layout>
+  <!-- ═══ BARRA DE HERRAMIENTAS ════════════════════════════════ -->
+  <div class="dash-toolbar oj-sm-margin-4x-bottom">
+    <oj-c-form-layout   direction="row" max-columns="3"  >
+      <oj-c-input-text
+        id="input-buscar"
+        column-span="2"
+        label-hint="Buscar por número de contrato, adquisición o beneficiario..."
+        label-edge="inside"
+        clear-icon="conditional"
+        raw-value="{{frmBuscar}}">
+        <div slot="start" class="oj-ux-ico-search"></div>
+      </oj-c-input-text>
+      <oj-toolbar id="menuSet" chroming="borderless" class="oj-sm-margin-5x-bottom">
+        <oj-c-menu-button 
+          id="select-estatus" 
+          :label="[[calcLabelFiltroEstatus()]]" 
+          items="[[itemsEstatus]]"
+          on-oj-menu-action="[[cmdFiltrarEstatus]]">
+        </oj-c-menu-button>
+        <oj-c-buttonset-single 
+          display="icons" 
+          value="{{uiVista}}" 
+          items="[[vistaOptions]]">
+        </oj-c-buttonset-single>
+      </oj-toolbar>
+    </oj-c-form-layout>
 
-  <!-- CHIPS DE FILTRO -->
-  <!-- <div class="filter-chips">
-    <oj-c-button
-      class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'todos' }]]"
-      on-oj-action="[[() => cmdSetFiltro('todos')]]"
-      size="sm"
-      chroming="borderless"
-      label="Todos los campos">
-    </oj-c-button>
-    <oj-c-button
-      class="filter-chip" 
-      :class="[[{active: uiFiltroActivo() === 'numero' }]]"
-      on-oj-action="[[() => cmdSetFiltro('numero')]]" 
-      size="sm"
-      chroming="borderless"
-      label="Por número de contrato">
-    </oj-c-button>
-    <oj-c-button
-      class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'adquisicion' }]]"
-      on-oj-action="[[() => cmdSetFiltro('adquisicion')]]"
-      size="sm"
-      chroming="borderless"
-      label="Por adquisición">
-    </oj-c-button>
-    <oj-c-button
-      class="filter-chip"
-      :class="[[{active: uiFiltroActivo() === 'beneficiario' }]]"
-      on-oj-action="[[() => cmdSetFiltro('beneficiario')]]"
-      size="sm"
-      chroming="borderless"
-      label="Por beneficiario">
-    </oj-c-button>
-  </div> -->
 
-  <!-- RESULTADO DE BÚSQUEDA -->
-  <div class="search-result">
-    <oj-bind-text value="[[calcResultadoBusqueda]]"></oj-bind-text>
-  </div>
+</div>
 
-  <div class="oj-flex-bar">
-    <div class="oj-flex-bar-end oj-text-color-secondary oj-typography-body-md oj-sm-margin-4x-bottom">
-      <oj-bind-if test="[[uiBusqueda()]]">
-        <oj-bind-text value="[[calcTotalFiltrados() + ' de ' + calcTotalContratos() + ' contratos']]"></oj-bind-text>
-      </oj-bind-if>
-      <oj-bind-if test="[[!uiBusqueda()]]">
-        <oj-bind-text value="[[calcTotalContratos() + ' contratos en total']]"></oj-bind-text>
-      </oj-bind-if>
-    </div>
-  </div>
-
-  <!-- BANNERS DE FEEDBACK -->
-  <oj-bind-if test="[[uiExito()]]">
-    <div class="recepcion-banner recepcion-banner--exito" style="margin-bottom: 12px">
-      <span class="oj-ux-ico-check-circle-s"></span>
-      <oj-bind-text value="[[uiExito]]"></oj-bind-text>
-    </div>
-  </oj-bind-if>
+  <!-- ═══ BANNER ERROR ═════════════════════════════════════════ -->
   <oj-bind-if test="[[uiError()]]">
-    <div class="recepcion-banner recepcion-banner--error" style="margin-bottom: 12px">
+    <div class="recepcion-banner recepcion-banner--error">
       <span class="oj-ux-ico-warning-s"></span>
       <oj-bind-text value="[[uiError]]"></oj-bind-text>
     </div>
   </oj-bind-if>
 
-  <!-- TABLERO KANBAN -->
-  <div class="kanban-board">
-    
-    <!-- ── COLUMNA: EN CAPTURA ── -->
-    <div class="kanban-column estatus-captura"> 
-      <div class="kanban-column-ribbon estatus-captura-ribbon"></div>
-      <div class="kanban-col-header" >
-        <span class="kanban-col-title">En Captura</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('CAPTURA')]]"></oj-bind-text>
-        </span>
+  <!-- ═══ CARGANDO ══════════════════════════════════════════════ -->
+  <oj-bind-if test="[[uiCargando()]]">
+    <div class="recepcion-cargando">Cargando contratos...</div>
+  </oj-bind-if>
+
+  <oj-bind-if test="[[!uiCargando()]]">
+
+    <!-- Sin resultados -->
+    <oj-bind-if test="[[!calcHayResultados()]]">
+      <div class="dash-sin-resultados">
+        <span class="oj-ux-ico-no-data"></span>
+        <p>No se encontraron contratos con los filtros aplicados.</p>
       </div>
+    </oj-bind-if>
 
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('CAPTURA')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('CAPTURA')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-              </div>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Editar"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-                <oj-c-button
-                  label="Beneficiarios"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                  <span slot="startIcon" class="oj-ux-ico-people-group-body"></span>
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-    
-    </div>
-  
-    <!-- ── COLUMNA: POR RECIBIR ── -->
-    <div class="kanban-column estatus-por-recibir"> 
-      <div class="kanban-column-ribbon estatus-por-recibir-ribbon"></div>
-      <div class="kanban-col-header">
-        <span class="kanban-col-title">Por Recibir</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('POR_RECIBIR')]]"></oj-bind-text>
-        </span>
-      </div>
+    <!-- ═══ VISTA LISTA ══════════════════════════════════════════ -->
+    <oj-bind-if test="[[uiVista() === 'lista' && calcHayResultados()]]">
+      <div class="dash-lista-tabla">
 
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('POR_RECIBIR')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('POR_RECIBIR')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-                <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
-                  <div class="kanban-card-meta-row">
-                    <span class="fecha-chip">
-                      <span class="oj-ux-ico-calendar" style="font-size:11px"></span>
-                      <oj-bind-text value="[[formatFecha(item.data.fechaTentativaLlegada)]]"></oj-bind-text>
-                    </span>
-                  </div>
-                </oj-bind-if>
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-package" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.totalBienes + ' bienes esperados']]"></oj-bind-text>
-                </div>
-              </div>
-              <oj-bind-if test="[[item.data.montoTotal]]">
-                <div class="kanban-card-monto">
-                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
-                </div>
-              </oj-bind-if>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-                <oj-c-button
-                  label="Beneficiarios"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-    </div>
-  
-    <!-- ── COLUMNA: RECEPCIÓN PARCIAL ── -->
-    <div class="kanban-column estatus-recepcion-parcial">
-      <div class="kanban-column-ribbon estatus-recepcion-parcial-ribbon"></div>
-      <div class="kanban-col-header">
-        <span class="kanban-col-title">Recepción Parcial</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('RECEPCION_PARCIAL')]]"></oj-bind-text>
-        </span>
-      </div>
-
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('RECEPCION_PARCIAL')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('RECEPCION_PARCIAL')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-package" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.totalBienes + ' bienes']]"></oj-bind-text>
-                </div>
-              </div>
-              <oj-bind-if test="[[item.data.montoTotal]]">
-                <div class="kanban-card-monto">
-                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
-                </div>
-              </oj-bind-if>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-                <oj-c-button
-                  label="Beneficiarios"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-    </div>
-
-    <!-- ── COLUMNA: EN ALMACÉN ── -->
-    <div class="kanban-column estatus-en-almacen"> 
-      <div class="kanban-column-ribbon estatus-en-almacen-ribbon"></div>
-      <div class="kanban-col-header">
-        <span class="kanban-col-title">En Almacén</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('EN_ALMACEN')]]"></oj-bind-text>
-        </span>
-      </div>
-
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('EN_ALMACEN')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('EN_ALMACEN')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-              </div>
-              <oj-bind-if test="[[item.data.montoTotal]]">
-                <div class="kanban-card-monto">
-                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
-                </div>
-              </oj-bind-if>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Autorizar entrega"
-                  chroming="callToAction"
-                  size="sm"
-                  on-oj-action="[[() => cmdAutorizarEntrega(item.data)]]">
-                  <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
-                </oj-c-button>
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="ghost"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-    </div>
-
-    <!-- ── COLUMNA: LISTO PARA ENTREGAR ── -->
-    <div class="kanban-column estatus-listo-para-entregar"> 
-      <div class="kanban-column-ribbon estatus-listo-para-entregar-ribbon"></div>
-      <div class="kanban-col-header">
-        <span class="kanban-col-title">Listo para Entregar</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('LISTO_PARA_ENTREGAR')]]"></oj-bind-text>
-        </span>
-      </div>
-
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('LISTO_PARA_ENTREGAR')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos en esta etapa</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('LISTO_PARA_ENTREGAR')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-              </div>
-              <oj-bind-if test="[[item.data.montoTotal]]">
-                <div class="kanban-card-monto">
-                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
-                </div>
-              </oj-bind-if>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="solid"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-                <oj-c-button
-                  label="Beneficiarios"
-                  chroming="solid"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-
-    </div>
-
-    <!-- ── COLUMNA: ENTREGADOS ── -->
-    <div class="kanban-column estatus-entregado"> 
-      <div class="kanban-column-ribbon estatus-entregado-ribbon"></div>
-      <div class="kanban-col-header">
-        <span class="kanban-col-title">Entregados</span>
-        <span class="kanban-col-count">
-          <oj-bind-text value="[[countEnColumna('ENTREGADOS')]]"></oj-bind-text>
-        </span>
-      </div>
-
-      <div class="kanban-col-body">
-        <oj-bind-if test="[[contratosEnColumna('CERRADO')().length === 0]]">
-          <div class="kanban-col-empty">Sin contratos cerrados</div>
-        </oj-bind-if>
-        <oj-bind-for-each data="[[contratosEnColumna('CERRADO')()]]">
-          <template data-oj-as="item">
-            <div class="kanban-card cerrado">
-              <div class="kanban-card-num">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-adq">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-              <div class="kanban-card-meta">
-                <div class="kanban-card-meta-row">
-                  <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                  <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
-                </div>
-              </div>
-              <oj-bind-if test="[[item.data.montoTotal]]">
-                <div class="kanban-card-monto">
-                  <oj-bind-text value="[[formatMonto(item.data.montoTotal)]]"></oj-bind-text>
-                </div>
-              </oj-bind-if>
-              <div class="kanban-card-footer">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="solid"
-                  size="sm"
-                  on-oj-action="[[() => cmdIrAContrato(item.data)]]">
-                </oj-c-button>
-                <oj-c-button
-                  label="Beneficiarios"
-                  chroming="solid"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerBeneficiarios(item.data)]]">
-                </oj-c-button>
-              </div>
-            </div>
-          </template>
-        </oj-bind-for-each>
-      </div>
-    </div>
-    </div>
-
-  </div> <!-- end of tablero Kanban -->
-
-<!-- ═══════════════════════════════════════════
-       DIALOG — Beneficiarios del contrato
-  ════════════════════════════════════════════ -->
-  <oj-c-dialog
-    opened="{{uiBeneficiariosDialogOpen}}"
-    id="beneficiarios-dialog"
-    cancel-behavior="icon">
-
-    <div slot="header">
-      <span class="oj-typography-subheading-xs">Beneficiarios: </span>
-      <span class="oj-typography-subheading-xs oj-text-color-secondary">
-        <oj-bind-text value="[[uiBeneficiariosDialogTitle]]"></oj-bind-text>
-      </span>
-    </div>
-
-    <div slot="body" style="min-width: 320px; padding: 4px 0;">
-      <oj-bind-if test="[[uiListaBeneficiarios().length === 0]]">
-        <div class="no-beneficiarios">
-          Este contrato no tiene beneficiarios asignados aún.
+        <!-- Encabezado -->
+        <div class="dash-lista-header">
+          <div>Contrato</div>
+          <div>Adquisición</div>
+          <div>Bienes</div>
+          <div>Estatus</div>
+          <div></div>
         </div>
-      </oj-bind-if>
-      <oj-bind-if test="[[uiListaBeneficiarios().length > 0]]">
-        <oj-bind-for-each data="[[uiListaBeneficiarios()]]">
+
+        <!-- Filas -->
+        <oj-bind-for-each data="[[calcFiltrados()]]">
           <template data-oj-as="item">
-            <div class="beneficiario-item">
-              <span class="oj-ux-ico-organization" style="font-size:14px; color: var(--oj-core-text-color-secondary)"></span>
-              <oj-bind-text value="[[item.data]]"></oj-bind-text>
+            <div class="dash-lista-fila">
+
+              <div class="dash-lista-contrato font-mono">
+                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+              </div>
+
+              <div class="dash-lista-adquisicion oj-text-color-secondary oj-typography-body-sm">
+                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+              </div>
+
+              <!-- Mini-resumen de bienes -->
+              <div class="dash-lista-resumen">
+                <span class="dash-resumen-chip dash-resumen-chip--recibido"
+                  :title="[['En proceso: ' + item.data.resumenBienes.enProceso]]">
+                  <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados + ' recibidos']]"></oj-bind-text>
+                </span>
+                <oj-bind-if test="[[item.data.resumenBienes.procesados > 0]]">
+                  <span class="dash-resumen-chip dash-resumen-chip--procesado">
+                    <oj-bind-text value="[[item.data.resumenBienes.procesados + ' procesados']]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+                <oj-bind-if test="[[item.data.resumenBienes.entregados > 0]]">
+                  <span class="dash-resumen-chip dash-resumen-chip--entregado">
+                    <oj-bind-text value="[[item.data.resumenBienes.entregados + ' entregados']]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+              </div>
+
+              <div>
+                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                  <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <div class="dash-lista-accion">
+                <oj-c-button
+                  label="Ver detalle"
+                  chroming="solid"
+                  size="sm"
+                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                </oj-c-button>
+              </div>
+
             </div>
           </template>
         </oj-bind-for-each>
-      </oj-bind-if>
-    </div>
 
-    <div slot="footer">
-      <oj-c-button
-        label="Cerrar"
-        chroming="outlined"
-        on-oj-action="[[cmdCerrarBeneficiariosDialog]]">
-      </oj-c-button>
-    </div>
+      </div>
+    </oj-bind-if>
 
-  </oj-c-dialog>
+    <!-- ═══ VISTA GRID ═══════════════════════════════════════════ -->
+    <oj-bind-if test="[[uiVista() === 'grid' && calcHayResultados()]]">
+      <div class="dash-grid">
 
-</div> <!-- end of file -->
+        <oj-bind-for-each data="[[calcFiltrados()]]">
+          <template data-oj-as="item">
+            <div class="dash-card oj-panel oj-sm-padding-6x">
 
+              <!-- Card header -->
+              <div class="dash-card-header">
+                <span class="dash-card-numero font-mono">
+                  <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                </span>
+                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                  <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <!-- Adquisición -->
+              <div class="dash-card-adquisicion oj-text-color-secondary oj-typography-body-sm">
+                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+              </div>
+
+              <!-- Métricas -->
+              <div class="dash-card-metricas">
+                <div class="dash-metrica">
+                  <span class="dash-metrica-label">Productos</span>
+                  <span class="dash-metrica-valor">
+                    <oj-bind-text value="[[item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                  </span>
+                </div>
+                <div class="dash-metrica">
+                  <span class="dash-metrica-label">Recibidos</span>
+                  <span class="dash-metrica-valor dash-metrica-valor--azul">
+                    <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                  </span>
+                </div>
+                <div class="dash-metrica">
+                  <span class="dash-metrica-label">Procesados</span>
+                  <span class="dash-metrica-valor dash-metrica-valor--naranja">
+                    <oj-bind-text value="[[item.data.resumenBienes.procesados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                  </span>
+                </div>
+                <div class="dash-metrica">
+                  <span class="dash-metrica-label">Entregados</span>
+                  <span class="dash-metrica-valor dash-metrica-valor--verde">
+                    <oj-bind-text value="[[item.data.resumenBienes.entregados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                  </span>
+                </div>
+                <div class="dash-metrica">
+                  <span class="dash-metrica-label">Monto Total</span>
+                  <span class="dash-metrica-valor">
+                    <oj-bind-text value="[[item.data.montoTotal]]"></oj-bind-text>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Barra de progreso -->
+              <div class="dash-progreso-wrap">
+                <div class="dash-progreso-bar">
+                  <div class="dash-progreso-bar-recibido"
+                    :style="[[{ width: (item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.totalRecibidos/item.data.resumenBienes.totalContratados*100) : 0) + '%' }]]">
+                  </div>
+                  <div class="dash-progreso-bar-entregado"
+                    :style="[[{ width: (item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.entregados/item.data.resumenBienes.totalContratados*100) : 0) + '%' }]]">
+                  </div>
+                </div>
+                <span class="dash-progreso-pct oj-typography-body-sm oj-text-color-secondary">
+                  <oj-bind-text value="[[(item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.totalRecibidos/item.data.resumenBienes.totalContratados*100) : 0) + '% recibido']]"></oj-bind-text>
+                </span>
+              </div>
+
+              <!-- Acción -->
+              <div class="dash-card-footer">
+                <oj-c-button
+                  label="Ver Detalles"
+                  chroming="outlined"
+                  width="100%"
+                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                </oj-c-button>
+              </div>
+
+            </div>
+          </template>
+        </oj-bind-for-each>
+
+      </div>
+    </oj-bind-if>
+
+  </oj-bind-if>
+
+</div>

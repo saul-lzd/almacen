@@ -23,6 +23,16 @@ public interface AlmacenBienRepository extends JpaRepository<AlmacenBienEntity, 
      * Carga bienes de un contrato con JOIN FETCH para evitar N+1:
      * resuelve contratoBien→unidadMedida y recepcionAlmacenBien→recepcionAlmacen en una sola query.
      */
+    /**
+     * Devuelve [idContrato, estatus, count] para todos los contratos indicados en una sola query.
+     * Usado para construir el resumenBienes del listado sin N+1.
+     */
+    @Query("SELECT ab.contrato.idContrato, ab.estatus, COUNT(ab) " +
+           "FROM AlmacenBienEntity ab " +
+           "WHERE ab.contrato.idContrato IN :ids AND ab.activo = true " +
+           "GROUP BY ab.contrato.idContrato, ab.estatus")
+    List<Object[]> countByContratosGroupByEstatus(@Param("ids") List<Integer> ids);
+
     @Query("SELECT ab FROM AlmacenBienEntity ab " +
            "JOIN FETCH ab.contratoBien cb " +
            "JOIN FETCH cb.unidadMedida " +

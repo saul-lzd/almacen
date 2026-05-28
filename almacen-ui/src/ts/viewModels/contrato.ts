@@ -363,6 +363,7 @@ class NuevoContratoViewModel {
   }
 
   connected(): void {
+    document.body.style.cursor = "";
     AccUtils.announce(this.calcTituloPantalla());
     document.title = this.calcTituloPantalla();
     void this.loadInicial();
@@ -490,8 +491,16 @@ class NuevoContratoViewModel {
   // COMMANDS — NAVEGACIÓN
   // ================================================================
 
+  public calcLabelRegresar = ko.pureComputed(() =>
+    this.uiModo() === "EDICION" ? "Regresar al contrato" : "Ir a Inicio"
+  );
+
   public cmdGoToInicio = (): void => {
-    this.router.go({ path: "dashboard" });
+    if (this.uiModo() === "EDICION" && this.contratoId()) {
+      this.router.go({ path: "contrato-detalle", params: { id: this.contratoId() } });
+    } else {
+      this.router.go({ path: "dashboard" });
+    }
   };
 
   // ================================================================

@@ -59,11 +59,12 @@ public class SalidaAlmacenService {
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
 
         if (contrato.getEstatus() != EstatusContrato.LISTO_PARA_ENTREGAR
-                && contrato.getEstatus() != EstatusContrato.ENTREGA_PARCIAL) {
+                && contrato.getEstatus() != EstatusContrato.ENTREGA_PARCIAL
+                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede entregarse porque su estatus es: "
                             + contrato.getEstatus().name()
-                            + ". Solo contratos LISTO_PARA_ENTREGAR o ENTREGA_PARCIAL pueden registrar entregas."));
+                            + ". Solo contratos LISTO_PARA_ENTREGAR, ENTREGA_PARCIAL o RECEPCION_PARCIAL pueden registrar entregas."));
         }
 
         // 2. Validar request
@@ -129,14 +130,24 @@ public class SalidaAlmacenService {
         almacenBienRepository.saveAll(bienes);
 
         // 7. Actualizar estatus del contrato
-        long pendientes = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
+        long pendientesEntrega = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
                 idContrato, EstatusBien.LISTO_PARA_ENTREGAR);
 
-        EstatusContrato nuevoEstatus = pendientes == 0
-                ? EstatusContrato.ENTREGADO
-                : EstatusContrato.ENTREGA_PARCIAL;
+        EstatusContrato estatusOrigen = contrato.getEstatus();
+        EstatusContrato nuevoEstatus;
 
-        salida.setEsEntregaTotal(pendientes == 0);
+        if (estatusOrigen == EstatusContrato.RECEPCION_PARCIAL) {
+            // Aún hay recepciones pendientes — el contrato permanece en RECEPCION_PARCIAL
+            // independientemente de cuántos bienes se hayan entregado ya.
+            nuevoEstatus = EstatusContrato.RECEPCION_PARCIAL;
+        } else {
+            // Todas las recepciones están completas: avanzar según entregados restantes.
+            nuevoEstatus = pendientesEntrega == 0
+                    ? EstatusContrato.ENTREGADO
+                    : EstatusContrato.ENTREGA_PARCIAL;
+        }
+
+        salida.setEsEntregaTotal(pendientesEntrega == 0 && estatusOrigen != EstatusContrato.RECEPCION_PARCIAL);
         contrato.setEstatus(nuevoEstatus);
         contratoRepository.save(contrato);
 

@@ -1,0 +1,384 @@
+<!-- View: Detalle del Contrato -->
+
+<div class="oj-hybrid-padding detalle-view">
+
+  <!-- ═══ BREADCRUMB ══════════════════════════════════════════════ -->
+  <div class="recepcion-breadcrumb">
+    <oj-c-button label="Inicio" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
+      <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
+    </oj-c-button>
+    <span class="recepcion-breadcrumb-sep">/</span>
+    <span class="recepcion-breadcrumb-titulo">
+      <strong><oj-bind-text value="[[contrato() ? contrato().numeroContrato : 'Cargando...']]"></oj-bind-text></strong>
+    </span>
+  </div>
+
+  <!-- ═══ BANNERS ══════════════════════════════════════════════════ -->
+  <oj-bind-if test="[[uiExito()]]">
+    <div class="recepcion-banner recepcion-banner--exito">
+      <span class="oj-ux-ico-check-circle-s"></span>
+      <oj-bind-text value="[[uiExito]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+  <oj-bind-if test="[[uiError()]]">
+    <div class="recepcion-banner recepcion-banner--error">
+      <span class="oj-ux-ico-warning-s"></span>
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
+  <!-- ═══ CARGANDO ════════════════════════════════════════════════ -->
+  <oj-bind-if test="[[uiCargando()]]">
+    <div class="recepcion-cargando">Cargando información del contrato...</div>
+  </oj-bind-if>
+
+  <oj-bind-if test="[[!uiCargando() && contrato()]]">
+
+    <!-- ═══ ENCABEZADO + ACCIONES ════════════════════════════════ -->
+    <div class="detalle-encabezado">
+      <div>
+        <h2 class="detalle-numero"><oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text></h2>
+        <p class="oj-text-color-secondary oj-typography-body-sm">
+          <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+        </p>
+      </div>
+      <div class="detalle-acciones">
+        <oj-bind-if test="[[calcEsAdmin() && contrato().estatus === 'CAPTURA']]">
+          <oj-c-button label="Editar contrato" chroming="callToAction" size="sm"
+            on-oj-action="[[cmdEditarContrato]]">
+            <span slot="startIcon" class="oj-ux-ico-edit"></span>
+          </oj-c-button>
+        </oj-bind-if>
+        <oj-bind-if test="[[calcPuedeRecibirNuevo()]]">
+          <oj-c-button label="Recibir productos" chroming="outlined" size="sm"
+            on-oj-action="[[cmdAbrirRecepcion]]">
+            <span slot="startIcon" class="oj-ux-ico-package"></span>
+          </oj-c-button>
+        </oj-bind-if>
+        <oj-bind-if test="[[calcPuedeProcesar()]]">
+          <oj-c-button label="Procesar bienes" chroming="outlined" size="sm"
+            on-oj-action="[[cmdProcesarBienes]]">
+            <span slot="startIcon" class="oj-ux-ico-process"></span>
+          </oj-c-button>
+        </oj-bind-if>
+        <oj-bind-if test="[[calcPuedeAutorizar()]]">
+          <oj-c-button label="Autorizar entrega" chroming="callToAction" size="sm"
+            :disabled="[[uiAccion()]]"
+            on-oj-action="[[cmdAutorizarEntrega]]">
+            <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
+          </oj-c-button>
+        </oj-bind-if>
+        <oj-bind-if test="[[calcPuedeEntregar()]]">
+          <oj-c-button label="Entregar bienes" chroming="callToAction" size="sm"
+            on-oj-action="[[cmdEntregarBienes]]">
+            <span slot="startIcon" class="oj-ux-ico-export"></span>
+          </oj-c-button>
+        </oj-bind-if>
+      </div>
+    </div>
+
+    <!-- ═══ KPIs (no aplica en CAPTURA) ════════════════════════ -->
+    <oj-bind-if test="[[contrato().estatus !== 'CAPTURA']]">
+    <div class="detalle-kpis">
+      <div class="detalle-kpi detalle-kpi--verde">
+        <span class="oj-ux-ico-data-collection detalle-kpi-icon"></span>
+        <div class="detalle-kpi-valor">
+          <oj-bind-text value="[[contrato().resumenBienes.totalContratados]]"></oj-bind-text>
+        </div>
+        <div class="detalle-kpi-label">Total de Productos</div>
+      </div>
+      <div class="detalle-kpi detalle-kpi--azul">
+        <span class="oj-ux-ico-download detalle-kpi-icon"></span>
+        <div class="detalle-kpi-valor">
+          <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos + '/' + contrato().resumenBienes.totalContratados]]"></oj-bind-text>
+        </div>
+        <div class="detalle-kpi-label">Productos Recibidos</div>
+      </div>
+      <div class="detalle-kpi detalle-kpi--naranja">
+        <span class="oj-ux-ico-process detalle-kpi-icon"></span>
+        <div class="detalle-kpi-valor">
+          <oj-bind-text value="[[contrato().resumenBienes.procesados + '/' + contrato().resumenBienes.totalContratados]]"></oj-bind-text>
+        </div>
+        <div class="detalle-kpi-label">Productos Procesados</div>
+      </div>
+      <div class="detalle-kpi detalle-kpi--morado">
+        <span class="oj-ux-ico-export detalle-kpi-icon"></span>
+        <div class="detalle-kpi-valor">
+          <oj-bind-text value="[[contrato().resumenBienes.entregados]]"></oj-bind-text>
+        </div>
+        <div class="detalle-kpi-label">Productos Entregados</div>
+      </div>
+    </div>
+    </oj-bind-if>
+
+    <!-- ═══ INFO GENERAL ═════════════════════════════════════════ -->
+    <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
+
+      <div class="detalle-info-grid">
+        <div>
+          <div class="recepcion-info-label">Proveedor</div>
+          <div class="recepcion-info-valor"><oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text></div>
+        </div>
+        <div>
+          <div class="recepcion-info-label">Estatus</div>
+          <div class="recepcion-info-valor">
+            <span :class="[['almacen-badge ' + contrato().estatusBadge]]">
+              <oj-bind-text value="[[contrato().estatusLabel]]"></oj-bind-text>
+            </span>
+          </div>
+        </div>
+        <div>
+          <div class="recepcion-info-label">Beneficiarios</div>
+          <div class="recepcion-info-valor"><oj-bind-text value="[[contrato().beneficiarios]]"></oj-bind-text></div>
+        </div>
+        <!-- Fecha tentativa: editable solo en POR_RECIBIR -->
+        <div>
+          <div class="recepcion-info-label">Fecha tentativa de llegada</div>
+          <oj-bind-if test="[[!calcFechaEditable() || !uiEditandoFecha()]]">
+            <div class="recepcion-info-valor detalle-fecha-row">
+              <span><oj-bind-text value="[[contrato().fechaTentativaLlegada]]"></oj-bind-text></span>
+              <oj-bind-if test="[[calcFechaEditable()]]">
+                <oj-c-button label="Editar" chroming="borderless" size="sm"
+                  on-oj-action="[[() => uiEditandoFecha(true)]]">
+                  <span slot="startIcon" class="oj-ux-ico-edit"></span>
+                </oj-c-button>
+              </oj-bind-if>
+            </div>
+          </oj-bind-if>
+          <oj-bind-if test="[[calcFechaEditable() && uiEditandoFecha()]]">
+            <div class="detalle-fecha-editar">
+              <input type="date" class="detalle-fecha-input" data-bind="value: frmFecha">
+              <oj-c-button label="Guardar" chroming="callToAction" size="sm"
+                :disabled="[[uiAccion()]]"
+                on-oj-action="[[cmdGuardarFecha]]">
+              </oj-c-button>
+              <oj-c-button label="Cancelar" chroming="borderless" size="sm"
+                on-oj-action="[[() => uiEditandoFecha(false)]]">
+              </oj-c-button>
+            </div>
+          </oj-bind-if>
+        </div>
+      </div>
+
+      <!-- Información de pago -->
+      <div class="detalle-pago-grid">
+        <div>
+          <span class="recepcion-info-label">Monto sin impuestos: </span>
+          <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().montoSinImpuestos]]"></oj-bind-text></span>
+        </div>
+        <div>
+          <span class="recepcion-info-label">Impuestos: </span>
+          <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().impuestos]]"></oj-bind-text></span>
+        </div>
+        <div>
+          <span class="recepcion-info-label">Monto total: </span>
+          <strong><oj-bind-text value="[[contrato().montoTotal]]"></oj-bind-text></strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ PRODUCTOS DEL CONTRATO ════════════════════════════════ -->
+    <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
+
+      <div class="detalle-productos-header">
+        <div>
+          <div class="recepcion-seccion-titulo">Productos del Contrato</div>
+          <div class="oj-text-color-secondary oj-typography-body-sm">
+            <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos + ' de ' + contrato().resumenBienes.totalContratados + ' productos recibidos · ' + contrato().resumenBienes.entregados + ' entregados']]"></oj-bind-text>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de bienes -->
+      <div class="detalle-bienes-tabla">
+        <div class="detalle-bienes-header">
+          <div>Lote</div>
+          <div>Partida</div>
+          <div>Descripción</div>
+          <div>U. Medida</div>
+          <div class="text-right">Cantidad</div>
+          <div class="text-right">P. Unitario</div>
+          <div class="text-right">Subtotal</div>
+          <div class="text-right">Recibido</div>
+          <div class="text-right">Entregado</div>
+        </div>
+
+        <oj-bind-for-each data="[[contrato().bienes]]">
+          <template data-oj-as="bien">
+            <div class="detalle-bienes-fila">
+              <div class="oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.lote ?? '—']]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.partida ?? '—']]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm detalle-bien-desc">
+                <oj-bind-text value="[[bien.data.descripcionCorta]]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm text-right">
+                <oj-bind-text value="[[bien.data.cantidad]]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm text-right font-mono">
+                <oj-bind-text value="[[bien.data.precioUnitario]]"></oj-bind-text>
+              </div>
+              <div class="oj-typography-body-sm text-right font-mono">
+                <oj-bind-text value="[[bien.data.subtotal]]"></oj-bind-text>
+              </div>
+              <!-- Recibido -->
+              <div class="text-right">
+                <span :class="[['detalle-bien-badge ' + (bien.data.cantidadRecibidaTotal >= bien.data.cantidad ? 'detalle-bien-badge--completo' : (bien.data.cantidadRecibidaTotal > 0 ? 'detalle-bien-badge--parcial' : 'detalle-bien-badge--pendiente'))]]">
+                  <oj-bind-text value="[[bien.data.cantidadRecibidaTotal + '/' + bien.data.cantidad]]"></oj-bind-text>
+                </span>
+              </div>
+              <!-- Entregado (placeholder — requiere query adicional) -->
+              <div class="text-right">
+                <span class="detalle-bien-badge detalle-bien-badge--pendiente">—</span>
+              </div>
+            </div>
+          </template>
+        </oj-bind-for-each>
+
+      </div>
+    </div>
+
+  </oj-bind-if>
+
+  <!-- ═══ DIÁLOGO DE RECEPCIÓN ══════════════════════════════════════ -->
+  <oj-c-dialog
+    opened="{{uiDialogoRecepcion}}"
+    dialog-title="Registrar Recepción"
+    cancel-behavior="icon"
+    min-width="65vw">
+
+    <div slot="body">
+
+      <!-- Error -->
+      <oj-bind-if test="[[uiErrorDialogo()]]">
+        <div class="recepcion-banner recepcion-banner--error dialogo-banner">
+          <span class="oj-ux-ico-warning-s"></span>
+          <oj-bind-text value="[[uiErrorDialogo]]"></oj-bind-text>
+        </div>
+      </oj-bind-if>
+
+      <!-- Advertencia diferencias -->
+      <oj-bind-if test="[[calcHayDiferencias()]]">
+        <div class="recepcion-banner recepcion-banner--advertencia dialogo-banner">
+          <span class="oj-ux-ico-warning-s"></span>
+          Hay productos con cantidad menor a la esperada. Se registrará una recepción parcial.
+        </div>
+      </oj-bind-if>
+
+      <!-- Campos de recepción -->
+      <div class="dialogo-form-grid">
+        <div>
+          <label class="dialogo-label">Transportista / Empresa *</label>
+          <input type="text" class="dialogo-input" placeholder="Nombre del transportista"
+            data-bind="value: frmTransportista, valueUpdate: 'input', disable: uiGuardandoRecepcion()">
+        </div>
+        <div>
+          <label class="dialogo-label">Observaciones</label>
+          <input type="text" class="dialogo-input" placeholder="Observaciones opcionales"
+            data-bind="value: frmObservaciones, valueUpdate: 'input', disable: uiGuardandoRecepcion()">
+        </div>
+      </div>
+
+      <!-- Tabla de bienes -->
+      <div class="dialogo-bienes-titulo">Productos a recibir</div>
+      <div class="dialogo-bienes-tabla">
+
+        <div class="dialogo-bienes-header">
+          <div>Lote / Partida</div>
+          <div>Descripción</div>
+          <div class="text-right">Esperado</div>
+          <div class="text-right">Cantidad recibida *</div>
+          <div class="text-right">Diferencia</div>
+        </div>
+
+        <oj-bind-for-each data="[[listaBienesDialogo()]]">
+          <template data-oj-as="bien">
+            <div class="dialogo-bienes-fila">
+
+              <!-- Lote / Partida -->
+              <div class="oj-typography-body-sm dialogo-lote-col">
+                <oj-bind-if test="[[bien.data.lote !== null]]">
+                  <span class="dialogo-lote-chip">L<oj-bind-text value="[[bien.data.lote]]"></oj-bind-text></span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.partida !== null]]">
+                  <span class="dialogo-lote-chip">P<oj-bind-text value="[[bien.data.partida]]"></oj-bind-text></span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.lote === null && bien.data.partida === null]]">
+                  <span class="oj-text-color-secondary">—</span>
+                </oj-bind-if>
+              </div>
+
+              <!-- Descripción + unidad -->
+              <div class="oj-typography-body-sm">
+                <div><oj-bind-text value="[[bien.data.descripcion]]"></oj-bind-text></div>
+                <div class="oj-text-color-secondary oj-typography-body-xs">
+                  <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
+                </div>
+              </div>
+
+              <!-- Esperado -->
+              <div class="oj-typography-body-sm text-right">
+                <oj-bind-text value="[[bien.data.cantidadEsperada]]"></oj-bind-text>
+              </div>
+
+              <!-- Input cantidad recibida -->
+              <div class="text-right">
+                <input type="number" class="dialogo-cant-input"
+                  min="0"
+                  :max="[[bien.data.cantidadEsperada]]"
+                  placeholder="0"
+                  data-bind="value: bien.data.cantidadRecibida, disable: uiGuardandoRecepcion()">
+              </div>
+
+              <!-- Diferencia -->
+              <div class="text-right">
+                <oj-bind-if test="[[bien.data.calcDiferencia() === null]]">
+                  <span class="oj-text-color-secondary">—</span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() === 0]]">
+                  <span class="dialogo-diff dialogo-diff--ok">✓ Completo</span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0]]">
+                  <span class="dialogo-diff dialogo-diff--faltante">
+                    <oj-bind-text value="[[bien.data.calcDiferencia()]]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() > 0]]">
+                  <span class="dialogo-diff dialogo-diff--exceso">
+                    +<oj-bind-text value="[[bien.data.calcDiferencia()]]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+              </div>
+
+            </div>
+          </template>
+        </oj-bind-for-each>
+
+      </div><!-- /dialogo-bienes-tabla -->
+
+    </div><!-- /slot:body -->
+
+    <div slot="footer">
+      <oj-c-button label="Cancelar" chroming="borderless"
+        :disabled="[[uiGuardandoRecepcion()]]"
+        on-oj-action="[[cmdCerrarRecepcion]]">
+      </oj-c-button>
+      <oj-c-button
+        :label="[[uiGuardandoRecepcion() ? 'Guardando...' : 'Confirmar recepción']]"
+        chroming="callToAction"
+        :disabled="[[!calcPuedeConfirmarRecepcion() || uiGuardandoRecepcion()]]"
+        on-oj-action="[[cmdConfirmarRecepcion]]">
+        <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
+      </oj-c-button>
+    </div><!-- /slot:footer -->
+
+  </oj-c-dialog>
+
+</div>

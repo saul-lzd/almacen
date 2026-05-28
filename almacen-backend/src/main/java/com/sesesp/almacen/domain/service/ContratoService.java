@@ -1,9 +1,12 @@
 package com.sesesp.almacen.domain.service;
 
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
+import com.sesesp.almacen.domain.dto.ActualizarFechaTentativaRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoCreateRequestDto;
 import com.sesesp.almacen.domain.dto.ContratoDto;
+import com.sesesp.almacen.domain.dto.ResumenBienesDto;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
+import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
@@ -19,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,11 +52,17 @@ public class ContratoService {
     // GET ALL
     // ─────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public List<ContratoDto> findAllContratos() {
-        return contratoRepository.findByActivoTrue()
-                .stream()
-                .map(contratoMapper::toResponse)
-                .toList();
+        List<ContratoEntity> contratos = contratoRepository.findByActivoTrue();
+        List<ContratoDto> dtos = contratos.stream().map(contratoMapper::toResponse).toList();
+
+        if (!contratos.isEmpty()) {
+            List<Integer> ids = contratos.stream().map(ContratoEntity::getIdContrato).toList();
+            Map<Integer, ResumenBienesDto> resumenes = buildResumenes(contratos, ids);
+            dtos.forEach(dto -> dto.setResumenBienes(resumenes.get(dto.getIdContrato())));
+        }
+        return dtos;
     }
 
 
@@ -59,19 +70,25 @@ public class ContratoService {
     // GET BY ID
     // ─────────────────────────────────────────────────────────
 
+    @Transactional(readOnly = true)
     public ContratoDto findContratoById(Integer idContrato) {
         ContratoEntity contrato = findContratoOrThrow(idContrato);
         ContratoDto dto = contratoMapper.toResponse(contrato);
 
-        if (contrato.getEstatus() == EstatusContrato.RECEPCION_PARCIAL) {
-            Map<Integer, BigDecimal> totales = recepcionAlmacenBienRepository
-                    .sumCantidadRecibidaByContrato(idContrato)
-                    .stream()
-                    .collect(Collectors.toMap(arr -> (Integer) arr[0], arr -> (BigDecimal) arr[1]));
+        // Cantidades recibidas por bien (para recepciones parciales)
+        Map<Integer, BigDecimal> totales = recepcionAlmacenBienRepository
+                .sumCantidadRecibidaByContrato(idContrato)
+                .stream()
+                .collect(Collectors.toMap(arr -> (Integer) arr[0], arr -> (BigDecimal) arr[1]));
+        if (!totales.isEmpty()) {
             dto.getBienes().forEach(b ->
                     b.setCantidadRecibidaTotal(totales.getOrDefault(b.getIdContratoBien(), BigDecimal.ZERO))
             );
         }
+
+        // Resumen de bienes por estatus
+        Map<Integer, ResumenBienesDto> resumenes = buildResumenes(List.of(contrato), List.of(idContrato));
+        dto.setResumenBienes(resumenes.get(idContrato));
 
         return dto;
     }
@@ -262,18 +279,19 @@ public class ContratoService {
 
         ContratoEntity contrato = findContratoOrThrow(idContrato);
 
-        if (contrato.getEstatus() != EstatusContrato.EN_ALMACEN) {
+        if (contrato.getEstatus() != EstatusContrato.EN_ALMACEN
+                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede autorizarse porque su estatus es: "
                             + contrato.getEstatus().name()
-                            + ". Solo contratos EN_ALMACEN pueden autorizarse para entrega."
+                            + ". Solo contratos EN_ALMACEN o RECEPCION_PARCIAL pueden autorizarse para entrega."
             ));
         }
 
         long sinProcesar = almacenBienRepository
-                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.RECIBIDO)
+                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.RECIBIDO)
                 + almacenBienRepository
-                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.EN_PROCESO);
+                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.EN_PROCESO);
 
         if (sinProcesar > 0) {
             throw new ContratoValidacionException(List.of(
@@ -282,16 +300,53 @@ public class ContratoService {
             ));
         }
 
-        // Marcar todos los bienes PROCESADO como LISTO_PARA_ENTREGAR
+        long procesados = almacenBienRepository
+                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.PROCESADO);
+
+        if (procesados == 0) {
+            throw new ContratoValidacionException(List.of(
+                    "No hay bienes procesados disponibles para autorizar."
+            ));
+        }
+
+        // Cambiar todos los PROCESADO → LISTO_PARA_ENTREGAR
         List<AlmacenBienEntity> bienes = almacenBienRepository
-                .findByContratoIdContratoAndEstatusAndActivoTrue(idContrato, AlmacenBienEntity.EstatusBien.PROCESADO);
-        bienes.forEach(b -> b.setEstatus(AlmacenBienEntity.EstatusBien.LISTO_PARA_ENTREGAR));
+                .findByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.PROCESADO);
+        bienes.forEach(b -> b.setEstatus(EstatusBien.LISTO_PARA_ENTREGAR));
         almacenBienRepository.saveAll(bienes);
 
-        contrato.setEstatus(EstatusContrato.LISTO_PARA_ENTREGAR);
-        contratoRepository.save(contrato);
+        // El contrato avanza a LISTO_PARA_ENTREGAR solo si ya se recibió todo (EN_ALMACEN).
+        // Si aún hay recepciones pendientes (RECEPCION_PARCIAL), el estatus del contrato no cambia.
+        if (contrato.getEstatus() == EstatusContrato.EN_ALMACEN) {
+            contrato.setEstatus(EstatusContrato.LISTO_PARA_ENTREGAR);
+            contratoRepository.save(contrato);
+        }
 
-        logger.info("Contrato ID: {} autorizado para entrega. Estatus: LISTO_PARA_ENTREGAR", idContrato);
+        logger.info("Contrato ID: {} — {} bienes autorizados para entrega.", idContrato, procesados);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PATCH — Actualizar fecha tentativa de llegada
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Permite al admin corregir la fecha tentativa de llegada del proveedor.
+     * Solo es posible cuando el contrato está en POR_RECIBIR —
+     * una vez que llega el primer lote (RECEPCION_PARCIAL en adelante) queda bloqueado.
+     */
+    @Transactional
+    public void actualizarFechaTentativa(Integer idContrato, ActualizarFechaTentativaRequestDto request) {
+        ContratoEntity contrato = findContratoOrThrow(idContrato);
+
+        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR) {
+            throw new ContratoValidacionException(List.of(
+                    "La fecha tentativa de llegada solo puede modificarse cuando el contrato está en estatus POR_RECIBIR."
+            ));
+        }
+
+        contrato.setFechaTentativaLlegada(request.getFechaTentativaLlegada());
+        contratoRepository.save(contrato);
+        logger.info("Contrato ID: {} — fecha tentativa actualizada a {}", idContrato, request.getFechaTentativaLlegada());
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -302,5 +357,48 @@ public class ContratoService {
         return contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Contrato no encontrado con ID: " + idContrato));
+    }
+
+    /**
+     * Construye el resumen de bienes por estatus para un conjunto de contratos.
+     * Usa una sola query GROUP BY para evitar N+1.
+     */
+    private Map<Integer, ResumenBienesDto> buildResumenes(List<ContratoEntity> contratos, List<Integer> ids) {
+        // totalContratados: suma de ContratoBien.cantidad por contrato
+        Map<Integer, Long> totales = contratos.stream().collect(Collectors.toMap(
+                ContratoEntity::getIdContrato,
+                c -> c.getBienes().stream()
+                        .filter(b -> Boolean.TRUE.equals(b.getActivo()))
+                        .mapToLong(b -> b.getCantidad() != null ? b.getCantidad().longValue() : 0L)
+                        .sum()
+        ));
+
+        // Conteos de AlmacenBien agrupados por contrato y estatus
+        Map<Integer, Map<String, Long>> countMap = new HashMap<>();
+        for (Object[] row : almacenBienRepository.countByContratosGroupByEstatus(ids)) {
+            Integer idContrato = (Integer) row[0];
+            String estatus     = ((EstatusBien) row[1]).name();
+            Long   count       = (Long) row[2];
+            countMap.computeIfAbsent(idContrato, k -> new HashMap<>()).put(estatus, count);
+        }
+
+        Map<Integer, ResumenBienesDto> result = new HashMap<>();
+        for (ContratoEntity c : contratos) {
+            Integer id = c.getIdContrato();
+            Map<String, Long> s = countMap.getOrDefault(id, Map.of());
+            long enProceso  = s.getOrDefault("RECIBIDO", 0L) + s.getOrDefault("EN_PROCESO", 0L);
+            long procesados = s.getOrDefault("PROCESADO", 0L);
+            long listos     = s.getOrDefault("LISTO_PARA_ENTREGAR", 0L);
+            long entregados = s.getOrDefault("ENTREGADO", 0L);
+            result.put(id, ResumenBienesDto.builder()
+                    .totalContratados(totales.getOrDefault(id, 0L))
+                    .totalRecibidos(enProceso + procesados + listos + entregados)
+                    .enProceso(enProceso)
+                    .procesados(procesados)
+                    .listos(listos)
+                    .entregados(entregados)
+                    .build());
+        }
+        return result;
     }
 }

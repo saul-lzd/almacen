@@ -32,4 +32,5 @@ public class ContratoDto {
     private List<ClavePresupuestalDto> clavesPresupuestales;
     private List<ContratoBienDto> bienes;
 
+    private ResumenBienesDto resumenBienes;
 }
