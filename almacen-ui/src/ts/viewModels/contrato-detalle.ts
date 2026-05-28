@@ -106,34 +106,38 @@ class ContratoDetalleViewModel {
     );
 
     // ── Rol del usuario (conectar con auth cuando esté implementado) ─
-    private readonly userRole: string = localStorage.getItem("userRole") ?? "ADMIN";
-    public calcEsAdmin = ko.pureComputed(() =>
-        this.userRole === "ADMIN" || this.userRole === "SUPER_ADMIN"
-    );
+    private readonly userRole: string = localStorage.getItem("almacen.userRole") ?? "ALMACEN";
+    public calcEsAdmin       = ko.pureComputed(() => this.userRole === "ADMIN");
+    public calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMIN");
 
-    // ── Computed: permisos según estatus ─────────────────────────
+    // ── Computed: permisos según estatus Y ROL ────────────────────
+    // Recibir, procesar y entregar → sólo ALMACEN
     public calcPuedeRecibirNuevo = ko.pureComputed(() => {
+        if (!this.calcEsAlmacenista()) return false;
         const e = this.contrato()?.estatus;
         return e === "POR_RECIBIR" || e === "RECEPCION_PARCIAL";
     });
 
     public calcPuedeProcesar = ko.pureComputed(() => {
-        const r = this.contrato()?.resumenBienes;
+        if (!this.calcEsAlmacenista()) return false;
         const e = this.contrato()?.estatus;
-        if (!r || e === "CAPTURA") return false;
-        return r.enProceso > 0;
+        return e === "EN_ALMACEN" || e === "RECEPCION_PARCIAL";
     });
 
+    // Autorizar entrega → sólo ADMIN
     public calcPuedeAutorizar = ko.pureComputed(() => {
+        if (!this.calcEsAdmin()) return false;
         const r = this.contrato()?.resumenBienes;
         const e = this.contrato()?.estatus;
         if (!r) return false;
         return r.procesados > 0 && (e === "EN_ALMACEN" || e === "RECEPCION_PARCIAL");
     });
 
-    public calcPuedeEntregar = ko.pureComputed(() =>
-        (this.contrato()?.resumenBienes?.listos ?? 0) > 0
-    );
+    // Entregar bienes → sólo ALMACEN
+    public calcPuedeEntregar = ko.pureComputed(() => {
+        if (!this.calcEsAlmacenista()) return false;
+        return (this.contrato()?.resumenBienes?.listos ?? 0) > 0;
+    });
 
     public calcFechaEditable = ko.pureComputed(() =>
         this.contrato()?.estatus === "POR_RECIBIR"

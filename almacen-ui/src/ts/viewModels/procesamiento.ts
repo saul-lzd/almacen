@@ -37,6 +37,7 @@ type GrupoProcesamiento = {
     esVehiculo: boolean;
     unidades: UnidadProcesamiento[];
     uiModoBloque: ko.Observable<boolean>;
+    uiEditandoBloque: ko.Observable<boolean>;
     frmBulkMarca: ko.Observable<string>;
     frmBulkModelo: ko.Observable<string>;
     frmBulkDescripcion: ko.Observable<string>;
@@ -169,6 +170,7 @@ class ProcesamientoViewModel {
                     totalUnidades:  g.totalUnidades,
                     unidades,
                     uiModoBloque:      ko.observable<boolean>(false),
+                    uiEditandoBloque:  ko.observable<boolean>(false),
                     frmBulkMarca:      ko.observable<string>(""),
                     frmBulkModelo:     ko.observable<string>(""),
                     frmBulkDescripcion: ko.observable<string>(""),
@@ -193,7 +195,7 @@ class ProcesamientoViewModel {
     // COMMANDS
     // ================================================================
     public cmdRegresar = (): void => {
-        this.router?.go({ path: "dashboard" });
+        this.router?.go({ path: "contrato-detalle", params: { id: this.contratoId } });
     };
 
     // Guarda datos del bien sin marcarlo como procesado.
@@ -269,11 +271,13 @@ class ProcesamientoViewModel {
         unidad.uiEditando(true);
     };
 
-    // Modo lote: guarda datos en todos los pendientes y luego los marca PROCESADO.
-    // Paso 1: PATCH /datos para cada RECIBIDO/EN_PROCESO → todos quedan EN_PROCESO.
-    // Paso 2: PATCH /procesar-bloque → todos quedan PROCESADO.
+    // Modo lote: aplica datos compartidos y marca todos los pendientes como PROCESADO.
+    // El backend acepta RECIBIDO y EN_PROCESO, por lo que no se necesita el paso intermedio.
     public cmdAplicarBloque = async (grupo: GrupoProcesamiento): Promise<void> => {
-        const pendientes = grupo.unidades.filter(u => u.uiEstatus() !== "PROCESADO");
+        const pendientes = grupo.uiEditandoBloque()
+            ? grupo.unidades  // re-edición: aplica a todos
+            : grupo.unidades.filter(u => u.uiEstatus() !== "PROCESADO");
+
         if (pendientes.length === 0) return;
 
         grupo.uiGuardandoGrupo(true);
@@ -283,34 +287,12 @@ class ProcesamientoViewModel {
         const modelo     = grupo.frmBulkModelo().trim();
         const descripcion = grupo.frmBulkDescripcion().trim();
 
-        const datosPayload: any = {};
-        if (marca)      datosPayload.marca = marca;
-        if (modelo)     datosPayload.modelo = modelo;
-        if (descripcion) datosPayload.descripcionComplementaria = descripcion;
+        const bloquePayload: any = { ids: pendientes.map(u => u.idAlmacenBien) };
+        if (marca)      bloquePayload.marca = marca;
+        if (modelo)     bloquePayload.modelo = modelo;
+        if (descripcion) bloquePayload.descripcionComplementaria = descripcion;
 
         try {
-            // Paso 1: persistir datos (RECIBIDO → EN_PROCESO)
-            await Promise.all(pendientes.map(async u => {
-                const res = await fetch(
-                    `http://localhost:8080/api/almacen-bienes/${u.idAlmacenBien}/datos`,
-                    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datosPayload) }
-                );
-                if (!res.ok) {
-                    const err = await res.json().catch(() => null);
-                    throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-                }
-                u.uiEstatus("EN_PROCESO");
-                if (marca)      u.frmMarca(marca);
-                if (modelo)     u.frmModelo(modelo);
-                if (descripcion) u.frmDescripcion(descripcion);
-            }));
-
-            // Paso 2: marcar todos como PROCESADO en bloque
-            const bloquePayload: any = { ids: pendientes.map(u => u.idAlmacenBien) };
-            if (marca)      bloquePayload.marca = marca;
-            if (modelo)     bloquePayload.modelo = modelo;
-            if (descripcion) bloquePayload.descripcionComplementaria = descripcion;
-
             const res = await fetch(
                 `http://localhost:8080/api/almacen-bienes/procesar-bloque`,
                 { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bloquePayload) }
@@ -321,7 +303,13 @@ class ProcesamientoViewModel {
                 throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
             }
 
-            pendientes.forEach(u => u.uiEstatus("PROCESADO"));
+            pendientes.forEach(u => {
+                u.uiEstatus("PROCESADO");
+                if (marca)      u.frmMarca(marca);
+                if (modelo)     u.frmModelo(modelo);
+                if (descripcion) u.frmDescripcion(descripcion);
+            });
+            grupo.uiEditandoBloque(false);
         } catch (err: any) {
             console.error("Error al procesar bloque:", err);
             this.uiError(err.message || "No se pudo procesar el bloque de bienes.");

@@ -113,18 +113,18 @@ public class AlmacenBienService {
     }
 
     /**
-     * Marca el bien como PROCESADO de forma explícita.
-     * Solo acepta bienes en estatus EN_PROCESO.
+     * Marca el bien como PROCESADO. Acepta RECIBIDO y EN_PROCESO.
+     * RECIBIDO → PROCESADO (transición directa, sin pasar por EN_PROCESO explícito).
      */
     @Transactional
     public void procesarBien(Integer id, ProcesarBienRequestDto request) {
         AlmacenBienEntity bien = almacenBienRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Bien no encontrado: " + id));
 
-        if (bien.getEstatus() != EstatusBien.EN_PROCESO) {
+        if (bien.getEstatus() != EstatusBien.EN_PROCESO && bien.getEstatus() != EstatusBien.RECIBIDO) {
             throw new ContratoValidacionException(List.of(
                     "El bien " + bien.getCodigoInterno()
-                            + " debe estar EN_PROCESO para poder marcarse como procesado (estatus actual: "
+                            + " debe estar RECIBIDO o EN_PROCESO para poder marcarse como procesado (estatus actual: "
                             + bien.getEstatus() + ")."));
         }
 
@@ -162,8 +162,9 @@ public class AlmacenBienService {
         }
 
         List<String> errores = bienes.stream()
-                .filter(b -> b.getEstatus() != EstatusBien.EN_PROCESO)
-                .map(b -> "El bien " + b.getCodigoInterno() + " no está EN_PROCESO (estatus: " + b.getEstatus() + ").")
+                .filter(b -> b.getEstatus() == EstatusBien.LISTO_PARA_ENTREGAR
+                          || b.getEstatus() == EstatusBien.ENTREGADO)
+                .map(b -> "El bien " + b.getCodigoInterno() + " no puede re-procesarse en estatus " + b.getEstatus() + ".")
                 .collect(Collectors.toList());
         if (!errores.isEmpty()) throw new ContratoValidacionException(errores);
 

@@ -113,46 +113,49 @@
   <!-- ═══════════════════════════════════════════════════════
        HEADER FIJO — resumen del contrato + acciones
   ════════════════════════════════════════════════════════ -->
-  <div class="oj-panel oj-panel-shadow-md oj-flex oj-sm-flex-items-initial oj-sm-justify-content-space-between oj-sm-padding-8x oj-sm-margin-6x-top">
+  <div class="oj-panel oj-panel-shadow-md oj-sm-padding-8x oj-sm-margin-6x-top">
 
-    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
-      <span class="oj-typography-body-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Número de Contrato</span>
-      <span class="oj-typography-subheading-xs">
+    <!-- Fila 1: número de contrato + botones -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 6px;">
+
+      <span style="font-size: 20px; font-weight: 700; letter-spacing: 0.3px;">
         <oj-bind-text value="[[calcNumeroContratoHeader]]"></oj-bind-text>
       </span>
+
+      <oj-bind-if test="[[calcEsAdmin()]]">
+        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+          <oj-c-button
+            chroming="solid"
+            label="Guardar Cambios"
+            disabled="[[uiGuardando()]]"
+            on-oj-action="[[cmdGuardarBorrador]]">
+            <span slot="startIcon" class="oj-ux-ico-save"></span>
+          </oj-c-button>
+
+          <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura']]">
+            <oj-c-button
+              chroming="callToAction"
+              label="Enviar a Almacén"
+              on-oj-action="[[cmdEnviarAlmacen]]">
+              <span slot="startIcon" class="oj-ux-ico-send"></span>
+            </oj-c-button>
+          </oj-bind-if>
+        </div>
+      </oj-bind-if>
+
     </div>
 
-    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
-      <span class="oj-typography-body-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Adquisicion</span>
-      <span class="oj-typography-subheading-xs">
+    <!-- Fila 2: adquisición + estatus -->
+    <div style="display: flex; align-items: center; gap: 16px;">
+
+      <span style="font-size: 13px; color: var(--oj-core-text-color-secondary, #767676); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
         <oj-bind-text value="[[calcAdquisicionHeader]]"></oj-bind-text>
       </span>
-    </div>
 
-    <div class="oj-flex-item oj-flex oj-sm-flex-direction-column">
-      <span class="oj-typography-body-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Estatus</span>
-      <span class="oj-badge oj-badge-subtle oj-badge-info">
+      <span class="oj-badge oj-badge-subtle oj-badge-info" style="flex-shrink: 0;">
         <oj-bind-text value="[[uiEstatusContrato]]"></oj-bind-text>
       </span>
-    </div>
 
-    <div class="oj-flex-item oj-flex oj-sm-align-items-center oj-sm-justify-content-flex-end" style="gap: 8px;">
-      <oj-c-button
-        chroming="solid"
-        label="Guardar Cambios"
-        disabled="[[uiGuardando()]]"
-        on-oj-action="[[cmdGuardarBorrador]]">
-        <span slot="startIcon" class="oj-ux-ico-save"></span>
-      </oj-c-button>
-
-      <oj-bind-if test="[[uiEstatusContrato() == 'En captura']]">
-        <oj-c-button
-          chroming="callToAction"
-          label="Enviar a Almacén"
-          on-oj-action="[[cmdEnviarAlmacen]]">
-          <span slot="startIcon" class="oj-ux-ico-send"></span>
-        </oj-c-button>
-      </oj-bind-if>
     </div>
 
   </div>
@@ -169,28 +172,34 @@
           <h6 slot="header">Información del Contrato</h6>
           <hr>
           <div class="oj-sm-padding-6x-vertical">
-            <oj-c-form-layout max-columns="3" direction="row" label-edge="top" user-assistance-density="compact">
+            <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 16px; align-items: start;">
 
               <oj-c-input-text
                 label-hint="Número de Contrato"
                 value="{{frmNumeroContrato}}"
                 placeholder="Ej: CT-2026-001"
+                label-edge="top"
+                user-assistance-density="compact"
                 required="true">
               </oj-c-input-text>
 
               <oj-c-input-text
-                  label-hint="Adquisición"
-                  value="{{frmAdquisicion}}"
-                  placeholder="Descripción breve de lo que se compra"
-                  required="true">
+                label-hint="Adquisición"
+                value="{{frmAdquisicion}}"
+                placeholder="Descripción breve de lo que se compra"
+                label-edge="top"
+                user-assistance-density="compact"
+                required="true">
               </oj-c-input-text>
 
-              <oj-c-input-date-picker 
-                label-hint="Fecha Tentativa de Llegada (dia/mes/año)"
-                value="{{frmFechaTentativaLlegada}}">
-                </oj-c-input-date-picker>
+              <oj-c-input-date-picker
+                label-hint="Fecha Tentativa de Llegada"
+                value="{{frmFechaTentativaLlegada}}"
+                label-edge="top"
+                user-assistance-density="compact">
+              </oj-c-input-date-picker>
 
-            </oj-c-form-layout>
+            </div>
           </div>
         </oj-c-collapsible>
       </div>

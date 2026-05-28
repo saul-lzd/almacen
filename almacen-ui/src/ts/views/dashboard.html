@@ -98,47 +98,13 @@
                 </span>
               </div>
 
-              <!-- Acciones lista: admin → Ver detalle; almacenista → por estatus -->
               <div class="dash-lista-accion">
-                <oj-bind-if test="[[calcEsAdmin()]]">
-                  <oj-c-button
-                    label="Ver detalle"
-                    chroming="solid"
-                    size="sm"
-                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                  </oj-c-button>
-                </oj-bind-if>
-                <oj-bind-if test="[[calcEsAlmacenista()]]">
-                  <oj-bind-if test="[[item.data.estatus === 'POR_RECIBIR']]">
-                    <oj-c-button label="Recibir proveedor" chroming="callToAction" size="sm"
-                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
-                      <span slot="startIcon" class="oj-ux-ico-truck"></span>
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'RECEPCION_PARCIAL']]">
-                    <oj-c-button label="Recibir pendientes" chroming="outlined" size="sm"
-                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
-                    </oj-c-button>
-                    <oj-c-button label="Procesar bienes" chroming="callToAction" size="sm"
-                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'EN_ALMACEN']]">
-                    <oj-c-button label="Procesar bienes" chroming="callToAction" size="sm"
-                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'LISTO_PARA_ENTREGAR']]">
-                    <oj-c-button label="Entregar bienes" chroming="callToAction" size="sm"
-                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'ENTREGA_PARCIAL']]">
-                    <oj-c-button label="Entregar pendientes" chroming="callToAction" size="sm"
-                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                </oj-bind-if>
+                <oj-c-button
+                  label="Ver detalle"
+                  chroming="solid"
+                  size="sm"
+                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                </oj-c-button>
               </div>
 
             </div>
@@ -194,7 +160,7 @@
               <oj-bind-if test="[[calcEsAdmin()]]">
                 <div class="dash-card-metricas">
                   <div class="dash-metrica">
-                    <span class="dash-metrica-label">Productos</span>
+                    <span class="dash-metrica-label">Bienes</span>
                     <span class="dash-metrica-valor">
                       <oj-bind-text value="[[item.data.resumenBienes.totalContratados]]"></oj-bind-text>
                     </span>
@@ -241,47 +207,13 @@
                 </div>
               </oj-bind-if>
 
-              <!-- Acciones: admin → Ver Detalles; almacenista → por estatus -->
               <div class="dash-card-footer">
-                <oj-bind-if test="[[calcEsAdmin()]]">
-                  <oj-c-button
-                    label="Ver Detalles"
-                    chroming="outlined"
-                    width="100%"
-                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                  </oj-c-button>
-                </oj-bind-if>
-                <oj-bind-if test="[[calcEsAlmacenista()]]">
-                  <oj-bind-if test="[[item.data.estatus === 'POR_RECIBIR']]">
-                    <oj-c-button label="Recibir proveedor" chroming="callToAction" width="100%"
-                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
-                      <span slot="startIcon" class="oj-ux-ico-truck"></span>
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'RECEPCION_PARCIAL']]">
-                    <oj-c-button label="Recibir pendientes" chroming="outlined" width="100%"
-                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
-                    </oj-c-button>
-                    <oj-c-button label="Procesar bienes" chroming="callToAction" width="100%"
-                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'EN_ALMACEN']]">
-                    <oj-c-button label="Procesar bienes" chroming="callToAction" width="100%"
-                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'LISTO_PARA_ENTREGAR']]">
-                    <oj-c-button label="Entregar bienes" chroming="callToAction" width="100%"
-                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[item.data.estatus === 'ENTREGA_PARCIAL']]">
-                    <oj-c-button label="Entregar pendientes" chroming="callToAction" width="100%"
-                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
-                    </oj-c-button>
-                  </oj-bind-if>
-                </oj-bind-if>
+                <oj-c-button
+                  label="Ver Detalles"
+                  chroming="outlined"
+                  width="100%"
+                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                </oj-c-button>
               </div>
 
             </div>

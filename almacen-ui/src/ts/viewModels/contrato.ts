@@ -175,6 +175,9 @@ class NuevoContratoViewModel {
 
   private router: any;
 
+  private readonly userRole = localStorage.getItem("almacen.userRole") ?? "ALMACEN";
+  public calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMIN");
+
   public uiModo                      = ko.observable<ModoPantalla>("NUEVO");
   public uiCargando                  = ko.observable<boolean>(false);
   public uiGuardando                 = ko.observable<boolean>(false);

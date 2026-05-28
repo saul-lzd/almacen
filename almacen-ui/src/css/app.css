@@ -1124,9 +1124,8 @@
   }
 
   .dash-card-adquisicion {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   .dash-card-metricas {
@@ -1346,6 +1345,11 @@
     align-items: center;
   }
 
+  .detalle-bienes-tabla--almacen .detalle-bienes-header,
+  .detalle-bienes-tabla--almacen .detalle-bienes-fila {
+    grid-template-columns: 50px 60px 1fr 90px 70px 80px 80px;
+  }
+
   .detalle-bienes-header {
     background: var(--oj-core-bg-color-secondary);
     border-bottom: 1px solid var(--oj-core-border-color-subtle);
@@ -1374,7 +1378,8 @@
     text-overflow: ellipsis;
   }
 
-  .text-right { text-align: right; }
+  .text-right  { text-align: right; }
+  .text-center { text-align: center; }
 
   /* ── DIÁLOGO DE RECEPCIÓN ── */
 

@@ -89,7 +89,8 @@ class RootViewModel {
     this.appName = ko.observable("Gestion de Almacen");
 
     // user Info used in Global Navigation area
-    this.userLogin = ko.observable("usuario@sesesp.com");
+    const rol = localStorage.getItem("almacen.userRole") ?? "ALMACEN";
+    this.userLogin = ko.observable(rol === "ADMIN" ? "Vista: Administrador" : "Vista: Almacén");
 
     this.footerLinks = [];
     

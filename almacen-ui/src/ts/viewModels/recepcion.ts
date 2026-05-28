@@ -229,7 +229,7 @@ class RecepcionViewModel {
     // COMMANDS
     // ================================================================
     public cmdRegresar = (): void => {
-        this.router?.go({ path: "almacen" });
+        this.router?.go({ path: "dashboard" });
     };
 
     public cmdConfirmarRecepcion = async (): Promise<void> => {

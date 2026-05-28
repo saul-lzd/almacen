@@ -8,7 +8,7 @@
   <!-- BREADCRUMB -->
   <div class="recepcion-breadcrumb">
     <oj-c-button
-      label="Almacén"
+      label="Regresar a detalles"
       chroming="borderless"
       size="sm"
       on-oj-action="[[cmdRegresar]]">
@@ -177,25 +177,24 @@
                 </span>
               </div>
 
-              <!-- Detalle de unidades (solo si seleccionado) -->
-              <oj-bind-if test="[[grupo.data.uiSeleccionado() && grupo.data.unidades.length > 0]]">
+              <!-- Sin número de serie: solo cantidad -->
+              <oj-bind-if test="[[grupo.data.uiSeleccionado() && !calcGrupoTieneSerie(grupo.data)]]">
+                <div class="entrega-unidades">
+                  <span class="oj-typography-body-sm oj-text-color-secondary">
+                    <oj-bind-text value="[[grupo.data.totalUnidades + ' ' + grupo.data.unidadMedida + ' a entregar']]"></oj-bind-text>
+                  </span>
+                </div>
+              </oj-bind-if>
+
+              <!-- Con número de serie: listado -->
+              <oj-bind-if test="[[grupo.data.uiSeleccionado() && calcGrupoTieneSerie(grupo.data)]]">
                 <div class="entrega-unidades">
                   <oj-bind-for-each data="[[grupo.data.unidades]]">
                     <template data-oj-as="unidad">
                       <div class="entrega-unidad-fila">
-                        <span class="oj-typography-body-sm font-mono">
-                          <oj-bind-text value="[[unidad.data.codigoInterno]]"></oj-bind-text>
+                        <span class="oj-typography-body-sm oj-text-color-secondary">
+                          S/N: <oj-bind-text value="[[unidad.data.numeroSerie]]"></oj-bind-text>
                         </span>
-                        <oj-bind-if test="[[unidad.data.numeroSerie]]">
-                          <span class="oj-typography-body-sm oj-text-color-secondary">
-                            S/N: <oj-bind-text value="[[unidad.data.numeroSerie]]"></oj-bind-text>
-                          </span>
-                        </oj-bind-if>
-                        <oj-bind-if test="[[unidad.data.marca]]">
-                          <span class="oj-typography-body-sm oj-text-color-secondary">
-                            <oj-bind-text value="[[unidad.data.marca + (unidad.data.modelo ? ' ' + unidad.data.modelo : '')]]"></oj-bind-text>
-                          </span>
-                        </oj-bind-if>
                       </div>
                     </template>
                   </oj-bind-for-each>

@@ -213,7 +213,7 @@ class EntregaViewModel {
     // COMMANDS
     // ================================================================
     public cmdRegresar = (): void => {
-        this.router?.go({ path: "dashboard" });
+        this.router?.go({ path: "contrato-detalle", params: { id: this.contratoId } });
     };
 
     public cmdConfirmarEntrega = async (): Promise<void> => {
@@ -264,6 +264,10 @@ class EntregaViewModel {
     // ================================================================
     // HELPERS
     // ================================================================
+    public calcGrupoTieneSerie(grupo: GrupoEntrega): boolean {
+        return grupo.unidades.some(u => !!u.numeroSerie);
+    }
+
     public formatMonto(monto: number | null): string {
         if (monto === null || monto === undefined) return "—";
         return monto.toLocaleString("es-MX", { style: "currency", currency: "MXN", minimumFractionDigits: 2 });
