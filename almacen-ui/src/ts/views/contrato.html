@@ -64,6 +64,13 @@
     font-weight: 500;
   }
 
+  /* ── Acción de sección (ej. botón Editar alineado a la derecha) ── */
+  .contrato-seccion-accion {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+  }
+
   /* ── Badge de estatus dinámico ── */
   .estatus-badge-captura      { background: #EBEBEB; color: #3D3D3D; }
   .estatus-badge-porrecibir   { background: #E6F1FB; color: #0C447C; }
@@ -92,6 +99,14 @@
   <oj-bind-if test="[[uiError()]]">
     <div class="oj-messagebanner-section-error oj-sm-margin-4x-bottom oj-sm-padding-4x">
       <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
+  <!-- MENSAJE DE ÉXITO -->
+  <oj-bind-if test="[[uiExito()]]">
+    <div class="recepcion-banner recepcion-banner--exito oj-sm-margin-4x-bottom">
+      <span class="oj-ux-ico-check-circle"></span>
+      <oj-bind-text value="[[uiExito]]"></oj-bind-text>
     </div>
   </oj-bind-if>
 
@@ -150,7 +165,7 @@
 
       <!-- ── 1. INFORMACIÓN DEL CONTRATO ── -->
       <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom">
-        <oj-c-collapsible id="collapsible-contrato" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
+        <oj-c-collapsible id="collapsible-contrato" expanded="{{uiInfoExpanded}}" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
           <h6 slot="header">Información del Contrato</h6>
           <hr>
           <div class="oj-sm-padding-6x-vertical">
@@ -172,7 +187,7 @@
 
               <oj-c-input-date-picker 
                 label-hint="Fecha Tentativa de Llegada (dia/mes/año)"
-                value="{{frmFechaTentativaLlegada}}"">
+                value="{{frmFechaTentativaLlegada}}">
                 </oj-c-input-date-picker>
 
             </oj-c-form-layout>
@@ -185,45 +200,100 @@
         <oj-c-collapsible id="collapsible-comprador" icon-position="end" class="oj-sm-padding-2x-vertical oj-sm-padding-4x-horizontal">
           <h6 slot="header">Comprador y Administrador del Contrato</h6>
           <hr>
-          <div class="oj-flex oj-sm-padding-6x-vertical" style="gap: 24px;">
+
+          <!-- Acciones de la sección funcionarios -->
+          <div class="contrato-seccion-accion">
+            <oj-bind-if test="[[!uiEditandoFuncionarios() && calcPuedeEditarFuncionarios()]]">
+              <oj-c-button
+                label="Editar"
+                chroming="borderless"
+                size="sm"
+                on-oj-action="[[cmdEditarFuncionarios]]">
+                <span slot="startIcon" class="oj-ux-ico-edit"></span>
+              </oj-c-button>
+            </oj-bind-if>
+            <oj-bind-if test="[[uiEditandoFuncionarios()]]">
+              <oj-c-button
+                label="Cancelar"
+                chroming="borderless"
+                size="sm"
+                on-oj-action="[[cmdCancelarEditarFuncionarios]]">
+                <span slot="startIcon" class="oj-ux-ico-close"></span>
+              </oj-c-button>
+            </oj-bind-if>
+          </div>
+
+          <div class="oj-flex oj-sm-padding-4x-vertical" style="gap: 24px;">
 
             <!-- Titular / Comprador -->
             <div class="oj-flex-item">
               <p class="oj-typography-subheading-xs oj-sm-margin-4x-bottom">Titular de la Dependencia (Comprador)</p>
 
-              <oj-c-select-single
-                label-hint="Seleccionar comprador"
-                placeholder="Buscar funcionario..."
-                item-text="label"
-                value="{{frmCompradorId}}"
-                data="[[dpCatFuncionarios]]"
-                on-value-changed="[[onCompradorChanged]]">
-              </oj-c-select-single>
-
-              <!-- Bloque informativo — se llena al seleccionar -->
-              <oj-bind-if test="[[uiCompradorNombre()]]">
-                <div class="funcionario-info-block oj-sm-margin-4x-top">
-                  <div class="oj-flex" style="gap: 24px;">
-                    <div>
-                      <div class="funcionario-info-label">Nombre</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiCompradorNombre]]"></oj-bind-text>
+              <!-- Modo lectura -->
+              <oj-bind-if test="[[!uiEditandoFuncionarios()]]">
+                <oj-bind-if test="[[uiCompradorNombre()]]">
+                  <div class="funcionario-info-block">
+                    <div class="oj-flex" style="gap: 24px;">
+                      <div>
+                        <div class="funcionario-info-label">Nombre</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorNombre]]"></oj-bind-text>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div class="funcionario-info-label">Dependencia</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiCompradorDependencia]]"></oj-bind-text>
+                      <div>
+                        <div class="funcionario-info-label">Dependencia</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorDependencia]]"></oj-bind-text>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div class="funcionario-info-label">Carácter</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiCompradorCaracter]]"></oj-bind-text>
+                      <div>
+                        <div class="funcionario-info-label">Carácter</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorCaracter]]"></oj-bind-text>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </oj-bind-if>
+                <oj-bind-if test="[[!uiCompradorNombre()]]">
+                  <p class="oj-text-color-secondary oj-typography-body-sm">Sin asignar</p>
+                </oj-bind-if>
+              </oj-bind-if>
+
+              <!-- Modo edición -->
+              <oj-bind-if test="[[uiEditandoFuncionarios()]]">
+                <oj-c-select-single
+                  label-hint="Seleccionar comprador"
+                  placeholder="Buscar funcionario..."
+                  item-text="label"
+                  value="{{frmCompradorId}}"
+                  data="[[dpCatCompradores]]"
+                  on-value-changed="[[onCompradorChanged]]">
+                </oj-c-select-single>
+                <oj-bind-if test="[[uiCompradorNombre()]]">
+                  <div class="funcionario-info-block oj-sm-margin-4x-top">
+                    <div class="oj-flex" style="gap: 24px;">
+                      <div>
+                        <div class="funcionario-info-label">Nombre</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorNombre]]"></oj-bind-text>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="funcionario-info-label">Dependencia</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorDependencia]]"></oj-bind-text>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="funcionario-info-label">Carácter</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiCompradorCaracter]]"></oj-bind-text>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </oj-bind-if>
               </oj-bind-if>
             </div>
 
@@ -231,38 +301,71 @@
             <div class="oj-flex-item">
               <p class="oj-typography-subheading-xs oj-sm-margin-4x-bottom">Administrador del Contrato</p>
 
-              <oj-c-select-single
-                label-hint="Seleccionar administrador"
-                placeholder="Buscar funcionario..."
-                item-text="label"
-                value="{{frmAdministradorId}}"
-                data="[[dpCatFuncionarios]]"
-                on-value-changed="[[onAdministradorChanged]]">
-              </oj-c-select-single>
-
-              <oj-bind-if test="[[uiAdministradorNombre()]]">
-                <div class="funcionario-info-block oj-sm-margin-4x-top">
-                  <div class="oj-flex" style="gap: 24px;">
-                    <div>
-                      <div class="funcionario-info-label">Nombre</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiAdministradorNombre]]"></oj-bind-text>
+              <!-- Modo lectura -->
+              <oj-bind-if test="[[!uiEditandoFuncionarios()]]">
+                <oj-bind-if test="[[uiAdministradorNombre()]]">
+                  <div class="funcionario-info-block">
+                    <div class="oj-flex" style="gap: 24px;">
+                      <div>
+                        <div class="funcionario-info-label">Nombre</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorNombre]]"></oj-bind-text>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div class="funcionario-info-label">Dependencia</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiAdministradorDependencia]]"></oj-bind-text>
+                      <div>
+                        <div class="funcionario-info-label">Dependencia</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorDependencia]]"></oj-bind-text>
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div class="funcionario-info-label">Carácter</div>
-                      <div class="funcionario-info-value">
-                        <oj-bind-text value="[[uiAdministradorCaracter]]"></oj-bind-text>
+                      <div>
+                        <div class="funcionario-info-label">Carácter</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorCaracter]]"></oj-bind-text>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </oj-bind-if>
+                <oj-bind-if test="[[!uiAdministradorNombre()]]">
+                  <p class="oj-text-color-secondary oj-typography-body-sm">Sin asignar</p>
+                </oj-bind-if>
+              </oj-bind-if>
+
+              <!-- Modo edición -->
+              <oj-bind-if test="[[uiEditandoFuncionarios()]]">
+                <oj-c-select-single
+                  label-hint="Seleccionar administrador"
+                  placeholder="Buscar funcionario..."
+                  item-text="label"
+                  value="{{frmAdministradorId}}"
+                  data="[[dpCatAdministradores]]"
+                  on-value-changed="[[onAdministradorChanged]]">
+                </oj-c-select-single>
+                <oj-bind-if test="[[uiAdministradorNombre()]]">
+                  <div class="funcionario-info-block oj-sm-margin-4x-top">
+                    <div class="oj-flex" style="gap: 24px;">
+                      <div>
+                        <div class="funcionario-info-label">Nombre</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorNombre]]"></oj-bind-text>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="funcionario-info-label">Dependencia</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorDependencia]]"></oj-bind-text>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="funcionario-info-label">Carácter</div>
+                        <div class="funcionario-info-value">
+                          <oj-bind-text value="[[uiAdministradorCaracter]]"></oj-bind-text>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </oj-bind-if>
               </oj-bind-if>
             </div>
 

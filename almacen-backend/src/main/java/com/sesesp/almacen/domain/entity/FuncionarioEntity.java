@@ -1,6 +1,7 @@
 package com.sesesp.almacen.domain.entity;
 
 import com.sesesp.almacen.common.entity.AuditoriaEntity;
+import com.sesesp.almacen.common.types.TipoFuncionario;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -45,6 +46,10 @@ public class FuncionarioEntity extends AuditoriaEntity {
     @Column(name = "caracter", length = 150)
     private String caracter;
 
+    /** Rol del funcionario en el sistema: TITULAR (comprador) o ADMINISTRADOR */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_funcionario", nullable = false, length = 20)
+    private TipoFuncionario tipoFuncionario;
 
     /** El funcionario esta activo en su rol*/
     @Column(name = "es_activo_en_rol", nullable = false)

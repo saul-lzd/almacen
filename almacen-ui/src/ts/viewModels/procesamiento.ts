@@ -193,7 +193,7 @@ class ProcesamientoViewModel {
     // COMMANDS
     // ================================================================
     public cmdRegresar = (): void => {
-        this.router?.go({ path: "almacen" });
+        this.router?.go({ path: "dashboard" });
     };
 
     // Guarda datos del bien sin marcarlo como procesado.

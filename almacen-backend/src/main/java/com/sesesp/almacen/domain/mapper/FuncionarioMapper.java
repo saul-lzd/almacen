@@ -29,6 +29,7 @@ public class FuncionarioMapper {
                 .nombre(entity.getNombre())
                 .dependencia(entity.getDependencia())
                 .caracter(entity.getCaracter())
+                .tipoFuncionario(entity.getTipoFuncionario())
                 .build();
     }
 

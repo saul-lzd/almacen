@@ -8,11 +8,13 @@
       <h1 class="oj-typography-heading-md dash-titulo">Gestión de Almacén</h1>
       <p class="oj-text-color-secondary oj-typography-body-sm">Administra contratos, recepciones y entregas</p>
     </div>
-    <oj-c-button
-      label="+ Nuevo Contrato"
-      chroming="callToAction"
-      on-oj-action="[[cmdNuevoContrato]]">
-    </oj-c-button>
+    <oj-bind-if test="[[calcEsAdmin()]]">
+      <oj-c-button
+        label="+ Nuevo Contrato"
+        chroming="callToAction"
+        on-oj-action="[[cmdNuevoContrato]]">
+      </oj-c-button>
+    </oj-bind-if>
   </div>
 
   <!-- ═══ BARRA DE HERRAMIENTAS ════════════════════════════════ -->
@@ -30,6 +32,7 @@
       id="select-estatus"
       :label="[[calcLabelFiltroEstatus()]]"
       items="[[itemsEstatus]]"
+      chroming="solid"
       on-oj-menu-action="[[cmdFiltrarEstatus]]">
       <span slot="startIcon" class="oj-ux-ico-filter-alt"></span>
     </oj-c-menu-button>
@@ -95,13 +98,47 @@
                 </span>
               </div>
 
+              <!-- Acciones lista: admin → Ver detalle; almacenista → por estatus -->
               <div class="dash-lista-accion">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="solid"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                </oj-c-button>
+                <oj-bind-if test="[[calcEsAdmin()]]">
+                  <oj-c-button
+                    label="Ver detalle"
+                    chroming="solid"
+                    size="sm"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
+                <oj-bind-if test="[[calcEsAlmacenista()]]">
+                  <oj-bind-if test="[[item.data.estatus === 'POR_RECIBIR']]">
+                    <oj-c-button label="Recibir proveedor" chroming="callToAction" size="sm"
+                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                      <span slot="startIcon" class="oj-ux-ico-truck"></span>
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'RECEPCION_PARCIAL']]">
+                    <oj-c-button label="Recibir pendientes" chroming="outlined" size="sm"
+                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                    </oj-c-button>
+                    <oj-c-button label="Procesar bienes" chroming="callToAction" size="sm"
+                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'EN_ALMACEN']]">
+                    <oj-c-button label="Procesar bienes" chroming="callToAction" size="sm"
+                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'LISTO_PARA_ENTREGAR']]">
+                    <oj-c-button label="Entregar bienes" chroming="callToAction" size="sm"
+                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'ENTREGA_PARCIAL']]">
+                    <oj-c-button label="Entregar pendientes" chroming="callToAction" size="sm"
+                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                </oj-bind-if>
               </div>
 
             </div>
@@ -133,63 +170,118 @@
                 <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
               </div>
 
-              <!-- Métricas -->
-              <div class="dash-card-metricas">
-                <div class="dash-metrica">
-                  <span class="dash-metrica-label">Productos</span>
-                  <span class="dash-metrica-valor">
-                    <oj-bind-text value="[[item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                  </span>
-                </div>
-                <div class="dash-metrica">
-                  <span class="dash-metrica-label">Recibidos</span>
-                  <span class="dash-metrica-valor dash-metrica-valor--azul">
-                    <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                  </span>
-                </div>
-                <div class="dash-metrica">
-                  <span class="dash-metrica-label">Procesados</span>
-                  <span class="dash-metrica-valor dash-metrica-valor--naranja">
-                    <oj-bind-text value="[[item.data.resumenBienes.procesados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                  </span>
-                </div>
-                <div class="dash-metrica">
-                  <span class="dash-metrica-label">Entregados</span>
-                  <span class="dash-metrica-valor dash-metrica-valor--verde">
-                    <oj-bind-text value="[[item.data.resumenBienes.entregados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                  </span>
-                </div>
-                <div class="dash-metrica">
-                  <span class="dash-metrica-label">Monto Total</span>
-                  <span class="dash-metrica-valor">
-                    <oj-bind-text value="[[item.data.montoTotal]]"></oj-bind-text>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Barra de progreso -->
-              <div class="dash-progreso-wrap">
-                <div class="dash-progreso-bar">
-                  <div class="dash-progreso-bar-recibido"
-                    :style="[[{ width: item.data.pctRecibido + '%' }]]">
+              <!-- Meta: proveedor + fecha tentativa (almacenista) -->
+              <oj-bind-if test="[[calcEsAlmacenista()]]">
+                <div class="dash-card-meta">
+                  <div class="dash-card-meta-row">
+                    <span class="oj-ux-ico-truck" style="font-size:12px"></span>
+                    <span class="oj-text-color-secondary oj-typography-body-sm">
+                      <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+                    </span>
                   </div>
-                  <div class="dash-progreso-bar-entregado"
-                    :style="[[{ width: item.data.pctEntregado + '%' }]]">
+                  <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
+                    <div class="dash-card-meta-row">
+                      <span class="oj-badge oj-badge-subtle oj-badge-warning">
+                        <span class="oj-ux-ico-calendar" style="font-size:11px"></span>
+                        <oj-bind-text value="[[item.data.fechaTentativaLlegadaFormateada]]"></oj-bind-text>
+                      </span>
+                    </div>
+                  </oj-bind-if>
+                </div>
+              </oj-bind-if>
+
+              <!-- Métricas (admin) -->
+              <oj-bind-if test="[[calcEsAdmin()]]">
+                <div class="dash-card-metricas">
+                  <div class="dash-metrica">
+                    <span class="dash-metrica-label">Productos</span>
+                    <span class="dash-metrica-valor">
+                      <oj-bind-text value="[[item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-metrica">
+                    <span class="dash-metrica-label">Recibidos</span>
+                    <span class="dash-metrica-valor dash-metrica-valor--azul">
+                      <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-metrica">
+                    <span class="dash-metrica-label">Procesados</span>
+                    <span class="dash-metrica-valor dash-metrica-valor--naranja">
+                      <oj-bind-text value="[[item.data.resumenBienes.procesados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-metrica">
+                    <span class="dash-metrica-label">Entregados</span>
+                    <span class="dash-metrica-valor dash-metrica-valor--verde">
+                      <oj-bind-text value="[[item.data.resumenBienes.entregados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-metrica">
+                    <span class="dash-metrica-label">Monto Total</span>
+                    <span class="dash-metrica-valor">
+                      <oj-bind-text value="[[item.data.montoTotal]]"></oj-bind-text>
+                    </span>
                   </div>
                 </div>
-                <span class="dash-progreso-pct oj-typography-body-sm oj-text-color-secondary">
-                  <oj-bind-text value="[[item.data.pctRecibido + '% recibido']]"></oj-bind-text>
-                </span>
-              </div>
 
-              <!-- Acción -->
+                <!-- Barra de progreso (admin) -->
+                <div class="dash-progreso-wrap">
+                  <div class="dash-progreso-bar">
+                    <div class="dash-progreso-bar-recibido"
+                      :style="[[{ width: item.data.pctRecibido + '%' }]]">
+                    </div>
+                    <div class="dash-progreso-bar-entregado"
+                      :style="[[{ width: item.data.pctEntregado + '%' }]]">
+                    </div>
+                  </div>
+                  <span class="dash-progreso-pct oj-typography-body-sm oj-text-color-secondary">
+                    <oj-bind-text value="[[item.data.pctRecibido + '% recibido']]"></oj-bind-text>
+                  </span>
+                </div>
+              </oj-bind-if>
+
+              <!-- Acciones: admin → Ver Detalles; almacenista → por estatus -->
               <div class="dash-card-footer">
-                <oj-c-button
-                  label="Ver Detalles"
-                  chroming="outlined"
-                  width="100%"
-                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                </oj-c-button>
+                <oj-bind-if test="[[calcEsAdmin()]]">
+                  <oj-c-button
+                    label="Ver Detalles"
+                    chroming="outlined"
+                    width="100%"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
+                <oj-bind-if test="[[calcEsAlmacenista()]]">
+                  <oj-bind-if test="[[item.data.estatus === 'POR_RECIBIR']]">
+                    <oj-c-button label="Recibir proveedor" chroming="callToAction" width="100%"
+                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                      <span slot="startIcon" class="oj-ux-ico-truck"></span>
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'RECEPCION_PARCIAL']]">
+                    <oj-c-button label="Recibir pendientes" chroming="outlined" width="100%"
+                      on-oj-action="[[() => cmdRecibirProveedor(item.data)]]">
+                    </oj-c-button>
+                    <oj-c-button label="Procesar bienes" chroming="callToAction" width="100%"
+                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'EN_ALMACEN']]">
+                    <oj-c-button label="Procesar bienes" chroming="callToAction" width="100%"
+                      on-oj-action="[[() => cmdProcesarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'LISTO_PARA_ENTREGAR']]">
+                    <oj-c-button label="Entregar bienes" chroming="callToAction" width="100%"
+                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[item.data.estatus === 'ENTREGA_PARCIAL']]">
+                    <oj-c-button label="Entregar pendientes" chroming="callToAction" width="100%"
+                      on-oj-action="[[() => cmdEntregarBienes(item.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                </oj-bind-if>
               </div>
 
             </div>

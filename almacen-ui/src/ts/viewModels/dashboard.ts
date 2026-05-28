@@ -12,6 +12,11 @@ import "oj-c/buttonset-single";
 // TIPOS
 // ================================================================
 
+const ESTATUS_ALMACEN = [
+    "POR_RECIBIR", "RECEPCION_PARCIAL", "EN_ALMACEN",
+    "LISTO_PARA_ENTREGAR", "ENTREGA_PARCIAL"
+];
+
 type ResumenBienes = {
     totalContratados: number;
     totalRecibidos: number;
@@ -29,6 +34,9 @@ type ContratoItem = {
     estatusLabel: string;
     estatusBadge: string;
     beneficiarios: string;
+    proveedor: string;
+    fechaTentativaLlegada: string | null;
+    fechaTentativaLlegadaFormateada: string;
     montoTotal: string;
     resumenBienes: ResumenBienes;
     pctRecibido: number;
@@ -54,16 +62,28 @@ class DashboardViewModel {
 
     private contratos  = ko.observableArray<ContratoItem>([]);
 
-    // Filtrado reactivo por búsqueda y estatus
+    // ----------------------------------------------------------------
+    // Rol de usuario (placeholder hasta auth real)
+    // ----------------------------------------------------------------
+    private readonly userRole: string =
+        localStorage.getItem("almacen.userRole") ?? "ALMACEN";
+
+    public readonly calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMIN");
+    public readonly calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMIN");
+
+    // Filtrado reactivo: rol + búsqueda + estatus
     public calcFiltrados = ko.pureComputed<ContratoItem[]>(() => {
         const buscar  = removeAccents(this.frmBuscar().trim().toLowerCase());
         const estatus = this.frmEstatus();
+
         return this.contratos().filter(c => {
+            if (this.calcEsAlmacenista() && !ESTATUS_ALMACEN.includes(c.estatus)) return false;
             const matchEstatus = !estatus || c.estatus === estatus;
             const matchBuscar  = !buscar
                 || removeAccents(c.numeroContrato.toLowerCase()).includes(buscar)
                 || removeAccents(c.adquisicion.toLowerCase()).includes(buscar)
-                || removeAccents(c.beneficiarios.toLowerCase()).includes(buscar);
+                || removeAccents(c.beneficiarios.toLowerCase()).includes(buscar)
+                || removeAccents(c.proveedor.toLowerCase()).includes(buscar);
             return matchEstatus && matchBuscar;
         });
     });
@@ -125,24 +145,32 @@ class DashboardViewModel {
             if (!res.ok) throw new Error(`Error ${res.status}`);
             const data: any[] = await res.json();
 
-            this.contratos(data.map(c => ({
-                idContrato:     c.idContrato,
-                numeroContrato: c.numeroContrato,
-                adquisicion:    c.adquisicion || "—",
-                estatus:        c.estatus,
-                estatusLabel:   mapEstatusToLabel(c.estatus),
-                estatusBadge:   mapEstatusToBadge(c.estatus),
-                beneficiarios:  c.beneficiarios || "—",
-                montoTotal:     this.formatMonto(c.montoTotal),
-                resumenBienes:  c.resumenBienes ?? {
-                    totalContratados: 0, totalRecibidos: 0,
-                    enProceso: 0, procesados: 0, listos: 0, entregados: 0,
-                },
-                pctRecibido:    c.resumenBienes?.totalContratados
-                    ? Math.round(c.resumenBienes.totalRecibidos / c.resumenBienes.totalContratados * 100) : 0,
-                pctEntregado:   c.resumenBienes?.totalContratados
-                    ? Math.round(c.resumenBienes.entregados / c.resumenBienes.totalContratados * 100) : 0,
-            })));
+            this.contratos(data.map(c => {
+                const fechaRaw: string | null = c.fechaTentativaLlegada
+                    ? c.fechaTentativaLlegada.split("T")[0]
+                    : null;
+                return {
+                    idContrato:     c.idContrato,
+                    numeroContrato: c.numeroContrato,
+                    adquisicion:    c.adquisicion || "—",
+                    estatus:        c.estatus,
+                    estatusLabel:   mapEstatusToLabel(c.estatus),
+                    estatusBadge:   mapEstatusToBadge(c.estatus),
+                    beneficiarios:  c.beneficiarios || "—",
+                    proveedor:      c.proveedor?.razonSocial || "Sin proveedor asignado",
+                    fechaTentativaLlegada:          fechaRaw,
+                    fechaTentativaLlegadaFormateada: this.formatFecha(fechaRaw),
+                    montoTotal:     this.formatMonto(c.montoTotal),
+                    resumenBienes:  c.resumenBienes ?? {
+                        totalContratados: 0, totalRecibidos: 0,
+                        enProceso: 0, procesados: 0, listos: 0, entregados: 0,
+                    },
+                    pctRecibido:    c.resumenBienes?.totalContratados
+                        ? Math.round(c.resumenBienes.totalRecibidos / c.resumenBienes.totalContratados * 100) : 0,
+                    pctEntregado:   c.resumenBienes?.totalContratados
+                        ? Math.round(c.resumenBienes.entregados / c.resumenBienes.totalContratados * 100) : 0,
+                };
+            }));
         } catch (err: any) {
             console.error("Error al cargar contratos:", err);
             this.uiError("No se pudo cargar el listado de contratos.");
@@ -162,8 +190,16 @@ class DashboardViewModel {
         this.router?.go({ path: "contrato" });
     };
 
-    public cmdSetVista = (vista: "lista" | "grid"): void => {
-        this.uiVista(vista);
+    public cmdRecibirProveedor = (contrato: ContratoItem): void => {
+        this.router?.go({ path: "recepcion", params: { id: contrato.idContrato } });
+    };
+
+    public cmdProcesarBienes = (contrato: ContratoItem): void => {
+        this.router?.go({ path: "procesamiento", params: { id: contrato.idContrato } });
+    };
+
+    public cmdEntregarBienes = (contrato: ContratoItem): void => {
+        this.router?.go({ path: "entrega", params: { id: contrato.idContrato } });
     };
 
     // ================================================================
@@ -172,6 +208,13 @@ class DashboardViewModel {
     private formatMonto(val: number | null | undefined): string {
         if (val == null) return "—";
         return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(val);
+    }
+
+    private formatFecha(fecha: string | null): string {
+        if (!fecha) return "";
+        const [year, month, day] = fecha.split("-");
+        const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+        return `${day} ${meses[parseInt(month) - 1]} ${year}`;
     }
 
     public calcProgreso(r: ResumenBienes): number {

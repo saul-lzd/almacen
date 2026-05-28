@@ -1191,9 +1191,26 @@
     font-size: 11px;
   }
 
+  .dash-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .dash-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
+  }
+
   .dash-card-footer {
     margin-top: auto;
     padding-top: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
   /* ── DETALLE DEL CONTRATO ── */

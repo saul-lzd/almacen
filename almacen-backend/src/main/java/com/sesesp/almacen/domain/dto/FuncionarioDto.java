@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.dto;
 
+import com.sesesp.almacen.common.types.TipoFuncionario;
 import lombok.*;
 
 @Getter
@@ -13,4 +14,5 @@ public class FuncionarioDto {
     private String nombre;
     private String dependencia;
     private String caracter;
+    private TipoFuncionario tipoFuncionario;
 }

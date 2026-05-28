@@ -54,20 +54,20 @@ class RootViewModel {
       { path: "", redirect: "dashboard" },
       { path: "dashboard",          detail: { label: "Inicio",    iconClass: "oj-ux-ico-home" } },
       { path: "contrato",           detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } },
+      { path: "almacen",            detail: { label: "Almacén",   iconClass: "oj-ux-ico-warehouse" } },
       // Sub-rutas: registradas en el router pero no aparecen en el nav
-      { path: "contrato-detalle",   detail: { label: "Detalle",        iconClass: "oj-ux-ico-data-document" } },
-      { path: "procesamiento",      detail: { label: "Procesamiento",  iconClass: "oj-ux-ico-process" } },
-      // Rutas heredadas (conservadas por compatibilidad, no aparecen en nav)
-      { path: "almacen",            detail: { label: "Almacén",        iconClass: "oj-ux-ico-warehouse" } },
-      { path: "recepcion",          detail: { label: "Recepción",      iconClass: "oj-ux-ico-package" } },
-      { path: "entrega",            detail: { label: "Entrega",        iconClass: "oj-ux-ico-export" } },
+      { path: "contrato-detalle",   detail: { label: "Detalle",       iconClass: "oj-ux-ico-data-document" } },
+      { path: "procesamiento",      detail: { label: "Procesamiento", iconClass: "oj-ux-ico-process" } },
+      { path: "recepcion",          detail: { label: "Recepción",     iconClass: "oj-ux-ico-package" } },
+      { path: "entrega",            detail: { label: "Entrega",       iconClass: "oj-ux-ico-export" } },
     ];
 
     // Rutas visibles en el tab bar
     const navItems = allRoutes.filter(r =>
       r.path !== "" &&
+      r.path !== "almacen" &&
       r.path !== "contrato-detalle" && r.path !== "procesamiento" &&
-      r.path !== "almacen" && r.path !== "recepcion" && r.path !== "entrega"
+      r.path !== "recepcion" && r.path !== "entrega"
     );
 
     // router setup

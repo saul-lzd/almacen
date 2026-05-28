@@ -213,7 +213,7 @@ class EntregaViewModel {
     // COMMANDS
     // ================================================================
     public cmdRegresar = (): void => {
-        this.router?.go({ path: "almacen" });
+        this.router?.go({ path: "dashboard" });
     };
 
     public cmdConfirmarEntrega = async (): Promise<void> => {

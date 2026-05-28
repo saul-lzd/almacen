@@ -55,6 +55,7 @@ type FuncionarioOption = {
   label: string;
   dependencia: string;
   caracter: string;
+  tipo: "TITULAR" | "ADMINISTRADOR";
 };
 
 type ClavePresupuestalItem = {
@@ -178,8 +179,16 @@ class NuevoContratoViewModel {
   public uiCargando                  = ko.observable<boolean>(false);
   public uiGuardando                 = ko.observable<boolean>(false);
   public uiError                     = ko.observable<string>("");
+  public uiExito                     = ko.observable<string>("");
   public uiEstatusContrato           = ko.observable<string>("En captura");
+  public uiEstatusRaw                = ko.observable<string>("CAPTURA");
   public uiBienDescripcionDialogOpen = ko.observable<boolean>(false);
+  public uiInfoExpanded              = ko.observable<boolean>(false);
+  public uiEditandoFuncionarios      = ko.observable<boolean>(false);
+
+  public calcPuedeEditarFuncionarios = ko.pureComputed(() =>
+    this.uiEstatusRaw() === "CAPTURA"
+  );
 
   public contratoId = ko.observable<number | null>(null);
 
@@ -230,10 +239,12 @@ class NuevoContratoViewModel {
   public uiAdministradorDependencia = ko.observable<string>("");
   public uiAdministradorCaracter    = ko.observable<string>("");
 
-  public catFuncionarios   = ko.observableArray<FuncionarioOption>([]);
-  public dpCatFuncionarios = new ArrayDataProvider(this.catFuncionarios, {
-    keyAttributes: "value"
-  });
+  public catFuncionarios      = ko.observableArray<FuncionarioOption>([]);
+  public catCompradores       = ko.observableArray<FuncionarioOption>([]);
+  public catAdministradores   = ko.observableArray<FuncionarioOption>([]);
+
+  public dpCatCompradores     = new ArrayDataProvider(this.catCompradores,     { keyAttributes: "value" });
+  public dpCatAdministradores = new ArrayDataProvider(this.catAdministradores, { keyAttributes: "value" });
 
   // ----------------------------------------------------------------
   // PROVEEDOR
@@ -359,6 +370,9 @@ class NuevoContratoViewModel {
     if (idParam) {
       this.uiModo("EDICION");
       this.contratoId(Number(idParam));
+      this.uiInfoExpanded(false);
+    } else {
+      this.uiInfoExpanded(true);
     }
   }
 
@@ -367,6 +381,12 @@ class NuevoContratoViewModel {
     AccUtils.announce(this.calcTituloPantalla());
     document.title = this.calcTituloPantalla();
     void this.loadInicial();
+
+    if (sessionStorage.getItem("contrato.recienGuardado")) {
+      sessionStorage.removeItem("contrato.recienGuardado");
+      this.uiExito("Contrato guardado correctamente.");
+      setTimeout(() => this.uiExito(""), 3000);
+    }
   }
 
   disconnected(): void {}
@@ -435,10 +455,31 @@ class NuevoContratoViewModel {
       value: f.id,
       label: f.nombre,
       dependencia: f.dependencia,
-      caracter: f.caracter
+      caracter: f.caracter,
+      tipo: f.tipoFuncionario as "TITULAR" | "ADMINISTRADOR"
     }));
 
     this.catFuncionarios(options);
+    this.catCompradores(options.filter(f => f.tipo === "TITULAR"));
+    this.catAdministradores(options.filter(f => f.tipo === "ADMINISTRADOR"));
+
+    if (this.uiModo() === "NUEVO") {
+      const titular = options.find(f => f.tipo === "TITULAR");
+      if (titular) {
+        this.frmCompradorId(titular.value);
+        this.uiCompradorNombre(titular.label);
+        this.uiCompradorDependencia(titular.dependencia);
+        this.uiCompradorCaracter(titular.caracter);
+      }
+
+      const admin = options.find(f => f.tipo === "ADMINISTRADOR");
+      if (admin) {
+        this.frmAdministradorId(admin.value);
+        this.uiAdministradorNombre(admin.label);
+        this.uiAdministradorDependencia(admin.dependencia);
+        this.uiAdministradorCaracter(admin.caracter);
+      }
+    }
   }
 
   // ================================================================
@@ -494,6 +535,14 @@ class NuevoContratoViewModel {
   public calcLabelRegresar = ko.pureComputed(() =>
     this.uiModo() === "EDICION" ? "Regresar al contrato" : "Ir a Inicio"
   );
+
+  public cmdEditarFuncionarios = (): void => {
+    this.uiEditandoFuncionarios(true);
+  };
+
+  public cmdCancelarEditarFuncionarios = (): void => {
+    this.uiEditandoFuncionarios(false);
+  };
 
   public cmdGoToInicio = (): void => {
     if (this.uiModo() === "EDICION" && this.contratoId()) {
@@ -669,16 +718,17 @@ class NuevoContratoViewModel {
 
       const saved: ContratoResponsePayload = await res.json();
 
-      // Si era nuevo, actualizar el ID para que los siguientes guardados sean PUT
       if (!isUpdate) {
-        this.contratoId(saved.idContrato);
-        this.uiModo("EDICION");
+        // Primer guardado: marcar para mostrar banner en la nueva instancia y navegar con ID
+        sessionStorage.setItem("contrato.recienGuardado", "1");
+        this.router?.go({ path: "contrato", params: { id: saved.idContrato } });
+        return;
       }
 
-      // Recargar el contrato para sincronizar IDs de bienes y claves generados por el backend
+      // Guardados subsecuentes: recargar para sincronizar IDs del backend
       await this.loadContrato(saved.idContrato);
-
-      console.log("Contrato guardado:", saved.idContrato);
+      this.uiExito("Contrato guardado correctamente.");
+      setTimeout(() => this.uiExito(""), 3000);
     } catch (err: any) {
       console.error("Error al guardar:", err);
       this.uiError(err.message || "Error desconocido al guardar.");
@@ -779,7 +829,7 @@ class NuevoContratoViewModel {
     this.frmAdquisicion(data.adquisicion);
     this.frmFechaTentativaLlegada(this.toDateOnly(data.fechaTentativaLlegada));
 
-    // Etiqueta de estatus traducida para la UI
+    this.uiEstatusRaw(data.estatus);
     this.uiEstatusContrato(mapEstatusToLabel(data.estatus));
 
     // Montos
