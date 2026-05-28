@@ -17,33 +17,29 @@
 
   <!-- ═══ BARRA DE HERRAMIENTAS ════════════════════════════════ -->
   <div class="dash-toolbar oj-sm-margin-4x-bottom">
-    <oj-c-form-layout   direction="row" max-columns="3"  >
-      <oj-c-input-text
-        id="input-buscar"
-        column-span="2"
-        label-hint="Buscar por número de contrato, adquisición o beneficiario..."
-        label-edge="inside"
-        clear-icon="conditional"
-        raw-value="{{frmBuscar}}">
-        <div slot="start" class="oj-ux-ico-search"></div>
-      </oj-c-input-text>
-      <oj-toolbar id="menuSet" chroming="borderless" class="oj-sm-margin-5x-bottom">
-        <oj-c-menu-button 
-          id="select-estatus" 
-          :label="[[calcLabelFiltroEstatus()]]" 
-          items="[[itemsEstatus]]"
-          on-oj-menu-action="[[cmdFiltrarEstatus]]">
-        </oj-c-menu-button>
-        <oj-c-buttonset-single 
-          display="icons" 
-          value="{{uiVista}}" 
-          items="[[vistaOptions]]">
-        </oj-c-buttonset-single>
-      </oj-toolbar>
-    </oj-c-form-layout>
-
-
-</div>
+    <oj-c-input-text
+      id="input-buscar"
+      class="dash-toolbar-buscar"
+      label-hint="Buscar por número de contrato o adquisición..."
+      label-edge="inside"
+      clear-icon="conditional"
+      raw-value="{{frmBuscar}}">
+      <div slot="start" class="oj-ux-ico-search"></div>
+    </oj-c-input-text>
+    <oj-c-menu-button
+      id="select-estatus"
+      :label="[[calcLabelFiltroEstatus()]]"
+      items="[[itemsEstatus]]"
+      on-oj-menu-action="[[cmdFiltrarEstatus]]">
+      <span slot="startIcon" class="oj-ux-ico-filter-alt"></span>
+    </oj-c-menu-button>
+    <oj-c-buttonset-single
+      class="dash-toolbar-toggle"
+      display="icons"
+      value="{{uiVista}}"
+      items="[[vistaOptions]]">
+    </oj-c-buttonset-single>
+  </div>
 
   <!-- ═══ BANNER ERROR ═════════════════════════════════════════ -->
   <oj-bind-if test="[[uiError()]]">
@@ -76,7 +72,6 @@
         <div class="dash-lista-header">
           <div>Contrato</div>
           <div>Adquisición</div>
-          <div>Bienes</div>
           <div>Estatus</div>
           <div></div>
         </div>
@@ -94,26 +89,8 @@
                 <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
               </div>
 
-              <!-- Mini-resumen de bienes -->
-              <div class="dash-lista-resumen">
-                <span class="dash-resumen-chip dash-resumen-chip--recibido"
-                  :title="[['En proceso: ' + item.data.resumenBienes.enProceso]]">
-                  <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados + ' recibidos']]"></oj-bind-text>
-                </span>
-                <oj-bind-if test="[[item.data.resumenBienes.procesados > 0]]">
-                  <span class="dash-resumen-chip dash-resumen-chip--procesado">
-                    <oj-bind-text value="[[item.data.resumenBienes.procesados + ' procesados']]"></oj-bind-text>
-                  </span>
-                </oj-bind-if>
-                <oj-bind-if test="[[item.data.resumenBienes.entregados > 0]]">
-                  <span class="dash-resumen-chip dash-resumen-chip--entregado">
-                    <oj-bind-text value="[[item.data.resumenBienes.entregados + ' entregados']]"></oj-bind-text>
-                  </span>
-                </oj-bind-if>
-              </div>
-
               <div>
-                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                <span :class="[['oj-badge oj-badge-subtle ' + item.data.estatusBadge]]">
                   <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
                 </span>
               </div>
@@ -137,7 +114,6 @@
     <!-- ═══ VISTA GRID ═══════════════════════════════════════════ -->
     <oj-bind-if test="[[uiVista() === 'grid' && calcHayResultados()]]">
       <div class="dash-grid">
-
         <oj-bind-for-each data="[[calcFiltrados()]]">
           <template data-oj-as="item">
             <div class="dash-card oj-panel oj-sm-padding-6x">
@@ -147,7 +123,7 @@
                 <span class="dash-card-numero font-mono">
                   <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
                 </span>
-                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                <span :class="[['oj-badge oj-badge-subtle ' + item.data.estatusBadge]]">
                   <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
                 </span>
               </div>
@@ -195,14 +171,14 @@
               <div class="dash-progreso-wrap">
                 <div class="dash-progreso-bar">
                   <div class="dash-progreso-bar-recibido"
-                    :style="[[{ width: (item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.totalRecibidos/item.data.resumenBienes.totalContratados*100) : 0) + '%' }]]">
+                    :style="[[{ width: item.data.pctRecibido + '%' }]]">
                   </div>
                   <div class="dash-progreso-bar-entregado"
-                    :style="[[{ width: (item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.entregados/item.data.resumenBienes.totalContratados*100) : 0) + '%' }]]">
+                    :style="[[{ width: item.data.pctEntregado + '%' }]]">
                   </div>
                 </div>
                 <span class="dash-progreso-pct oj-typography-body-sm oj-text-color-secondary">
-                  <oj-bind-text value="[[(item.data.resumenBienes.totalContratados ? Math.round(item.data.resumenBienes.totalRecibidos/item.data.resumenBienes.totalContratados*100) : 0) + '% recibido']]"></oj-bind-text>
+                  <oj-bind-text value="[[item.data.pctRecibido + '% recibido']]"></oj-bind-text>
                 </span>
               </div>
 
@@ -219,7 +195,6 @@
             </div>
           </template>
         </oj-bind-for-each>
-
       </div>
     </oj-bind-if>
 

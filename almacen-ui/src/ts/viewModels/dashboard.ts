@@ -1,6 +1,5 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
-import ArrayDataProvider = require("ojs/ojarraydataprovider");
 import { mapEstatusToLabel, mapEstatusToBadge, removeAccents } from "../utils/contratoUtils";
 import 'ojs/ojtoolbar';
 import "oj-c/button";
@@ -32,6 +31,8 @@ type ContratoItem = {
     beneficiarios: string;
     montoTotal: string;
     resumenBienes: ResumenBienes;
+    pctRecibido: number;
+    pctEntregado: number;
 };
 
 // ================================================================
@@ -137,6 +138,10 @@ class DashboardViewModel {
                     totalContratados: 0, totalRecibidos: 0,
                     enProceso: 0, procesados: 0, listos: 0, entregados: 0,
                 },
+                pctRecibido:    c.resumenBienes?.totalContratados
+                    ? Math.round(c.resumenBienes.totalRecibidos / c.resumenBienes.totalContratados * 100) : 0,
+                pctEntregado:   c.resumenBienes?.totalContratados
+                    ? Math.round(c.resumenBienes.entregados / c.resumenBienes.totalContratados * 100) : 0,
             })));
         } catch (err: any) {
             console.error("Error al cargar contratos:", err);

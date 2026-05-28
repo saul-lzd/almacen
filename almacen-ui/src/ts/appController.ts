@@ -61,20 +61,13 @@ class RootViewModel {
       { path: "almacen",            detail: { label: "Almacén",        iconClass: "oj-ux-ico-warehouse" } },
       { path: "recepcion",          detail: { label: "Recepción",      iconClass: "oj-ux-ico-package" } },
       { path: "entrega",            detail: { label: "Entrega",        iconClass: "oj-ux-ico-export" } },
-      // Rutas de desarrollo (temporales)
-      { path: "dashboard_demo", detail: { label: "Dashboard Demo", iconClass: "oj-ux-ico-data-document" } },
-      { path: "dashboard_OG",   detail: { label: "Dashboard OG",   iconClass: "oj-ux-ico-data-document" } },
-      { path: "contrato_BAK",   detail: { label: "Contratos BAK",  iconClass: "oj-ux-ico-data-document" } },
-      { path: "contrato_old",   detail: { label: "Contratos OLD",  iconClass: "oj-ux-ico-data-document" } },
     ];
 
     // Rutas visibles en el tab bar
     const navItems = allRoutes.filter(r =>
       r.path !== "" &&
       r.path !== "contrato-detalle" && r.path !== "procesamiento" &&
-      r.path !== "almacen" && r.path !== "recepcion" && r.path !== "entrega" &&
-      !r.path.endsWith("_demo") && !r.path.endsWith("_OG") &&
-      !r.path.endsWith("_BAK") && !r.path.endsWith("_old")
+      r.path !== "almacen" && r.path !== "recepcion" && r.path !== "entrega"
     );
 
     // router setup
@@ -98,14 +91,7 @@ class RootViewModel {
     // user Info used in Global Navigation area
     this.userLogin = ko.observable("usuario@sesesp.com");
 
-    // footer
-    this.footerLinks = [
-      {name: 'About Oracle', linkId: 'aboutOracle', linkTarget:'http://www.oracle.com/us/corporate/index.html#menu-about'},
-      { name: "Contact Us", id: "contactUs", linkTarget: "http://www.oracle.com/us/corporate/contact/index.html" },
-      { name: "Legal Notices", id: "legalNotices", linkTarget: "http://www.oracle.com/us/legal/index.html" },
-      { name: "Terms Of Use", id: "termsOfUse", linkTarget: "http://www.oracle.com/us/legal/terms/index.html" },
-      { name: "Your Privacy Rights", id: "yourPrivacyRights", linkTarget: "http://www.oracle.com/us/legal/privacy/index.html" },
-    ];
+    this.footerLinks = [];
     
     // release the application bootstrap busy state
     Context.getPageContext().getBusyContext().applicationBootstrapComplete();        

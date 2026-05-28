@@ -138,7 +138,7 @@
                 <span class="almacen-card-num">
                   <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
                 </span>
-                <span :class="[['almacen-badge ' + item.data.estatusBadge]]">
+                <span :class="[['oj-badge oj-badge-subtle ' + item.data.estatusBadge]]">
                   <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
                 </span>
               </div>
@@ -156,7 +156,7 @@
                 </div>
                 <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
                   <div class="almacen-card-meta-row">
-                    <span class="fecha-chip">
+                    <span class="oj-badge oj-badge-subtle oj-badge-warning">
                       <span class="oj-ux-ico-calendar" style="font-size:11px"></span>
                       <oj-bind-text value="[[formatFecha(item.data.fechaTentativaLlegada)]]"></oj-bind-text>
                     </span>

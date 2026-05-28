@@ -14,14 +14,14 @@ export const ESTATUS_LABELS: Record<string, string> = {
 };
 
 export const ESTATUS_BADGE: Record<string, string> = {
-    CAPTURA:             "oj-badge-neutral",
+    CAPTURA:             "",
     POR_RECIBIR:         "oj-badge-info",
     RECEPCION_PARCIAL:   "oj-badge-info",
     EN_ALMACEN:          "oj-badge-warning",
     LISTO_PARA_ENTREGAR: "oj-badge-success",
     ENTREGA_PARCIAL:     "oj-badge-warning",
     ENTREGADO:           "oj-badge-success",
-    CERRADO:             "oj-badge-neutral"
+    CERRADO:             ""
 };
 
 /**

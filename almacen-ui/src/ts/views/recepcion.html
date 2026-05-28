@@ -59,7 +59,7 @@
         <div class="recepcion-info-item">
           <div class="recepcion-info-label">Estatus</div>
           <div class="recepcion-info-valor">
-            <span :class="[['almacen-badge ' + (contrato() ? (contrato().estatus === 'POR_RECIBIR' ? 'oj-badge-info' : contrato().estatus === 'EN_ALMACEN' ? 'oj-badge-warning' : 'oj-badge-success') : '')]]">
+            <span :class="[['oj-badge oj-badge-subtle ' + (contrato() ? (contrato().estatus === 'POR_RECIBIR' ? 'oj-badge-info' : contrato().estatus === 'EN_ALMACEN' ? 'oj-badge-warning' : 'oj-badge-success') : '')]]">
               <oj-bind-text value="[[contrato().estatusLabel]]"></oj-bind-text>
             </span>
           </div>
