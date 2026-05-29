@@ -12,4 +12,10 @@ public interface ContratoRepository extends JpaRepository<ContratoEntity, Intege
 
     /** Lista todos los contratos activos */
     List<ContratoEntity> findByActivoTrue();
+
+    /** Validación de número único al crear */
+    boolean existsByNumeroContratoAndActivoTrue(String numeroContrato);
+
+    /** Validación de número único al editar — excluye el propio contrato */
+    boolean existsByNumeroContratoAndActivoTrueAndIdContratoNot(String numeroContrato, Integer idContrato);
 }

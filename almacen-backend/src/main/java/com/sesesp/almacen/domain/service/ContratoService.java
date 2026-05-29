@@ -101,6 +101,12 @@ public class ContratoService {
     public ContratoDto createContrato(ContratoCreateRequestDto request) {
         logger.info("Creando contrato: {}", request.getNumeroContrato());
 
+        if (contratoRepository.existsByNumeroContratoAndActivoTrue(request.getNumeroContrato())) {
+            throw new ContratoValidacionException(List.of(
+                    "El número de contrato '" + request.getNumeroContrato() + "' ya existe."
+            ));
+        }
+
         // 1. Construir la entidad base del contrato
         ContratoEntity contrato = ContratoEntity.builder()
                 .numeroContrato(request.getNumeroContrato())
@@ -171,6 +177,13 @@ public class ContratoService {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede editarse porque su estatus es: "
                             + contrato.getEstatus().name()
+            ));
+        }
+
+        if (contratoRepository.existsByNumeroContratoAndActivoTrueAndIdContratoNot(
+                request.getNumeroContrato(), idContrato)) {
+            throw new ContratoValidacionException(List.of(
+                    "El número de contrato '" + request.getNumeroContrato() + "' ya existe."
             ));
         }
 

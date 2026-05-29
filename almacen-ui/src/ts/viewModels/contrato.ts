@@ -715,8 +715,8 @@ class NuevoContratoViewModel {
       });
 
       if (!res.ok) {
-        const errBody = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errBody}`);
+        const errBody = await res.json().catch(() => null);
+        throw new Error(errBody?.errores?.[0] ?? errBody?.mensaje ?? `Error ${res.status}`);
       }
 
       const saved: ContratoResponsePayload = await res.json();
