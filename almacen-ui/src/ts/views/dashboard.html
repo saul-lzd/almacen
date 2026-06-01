@@ -69,7 +69,7 @@
 
     <!-- ═══ VISTA LISTA ══════════════════════════════════════════ -->
     <oj-bind-if test="[[uiVista() === 'lista' && calcHayResultados()]]">
-      <div class="dash-lista-tabla">
+      <div class="dash-lista-tabla oj-panel oj-panel-shadow-md">
 
         <!-- Encabezado -->
         <div class="dash-lista-header">
@@ -101,7 +101,7 @@
               <div class="dash-lista-accion">
                 <oj-c-button
                   label="Ver detalle"
-                  chroming="solid"
+                  chroming="outlined"
                   size="sm"
                   on-oj-action="[[() => cmdVerDetalle(item.data)]]">
                 </oj-c-button>

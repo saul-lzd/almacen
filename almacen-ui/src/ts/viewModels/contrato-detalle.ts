@@ -1,6 +1,7 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
+import { getRole } from "../utils/auth";
 import "oj-c/button";
 import "oj-c/dialog";
 import "oj-c/input-text";
@@ -106,9 +107,9 @@ class ContratoDetalleViewModel {
     );
 
     // ── Rol del usuario (conectar con auth cuando esté implementado) ─
-    private readonly userRole: string = localStorage.getItem("almacen.userRole") ?? "ALMACEN";
-    public calcEsAdmin       = ko.pureComputed(() => this.userRole === "ADMIN");
-    public calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMIN");
+    private readonly userRole: string = getRole() ?? "ALMACEN";
+    public calcEsAdmin       = ko.pureComputed(() => this.userRole === "ADMINISTRADOR");
+    public calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMINISTRADOR");
 
     // ── Computed: permisos según estatus Y ROL ────────────────────
     // Recibir, procesar y entregar → sólo ALMACEN
@@ -224,7 +225,7 @@ class ContratoDetalleViewModel {
     // ================================================================
     // COMMANDS — Navegación
     // ================================================================
-    public cmdRegresar = (): void => {
+    public cmdGoBack = (): void => {
         this.router?.go({ path: "dashboard" });
     };
 

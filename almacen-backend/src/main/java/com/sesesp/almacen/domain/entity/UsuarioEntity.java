@@ -24,6 +24,12 @@ public class UsuarioEntity extends AuditoriaEntity {
     @Column(name = "id_usuario")
     private Integer idUsuario;
 
+    @Column(name = "username", nullable = false, unique = true, length = 80)
+    private String username;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
     @Column(name = "nombre", nullable = false, length = 150)
     private String nombre;
 

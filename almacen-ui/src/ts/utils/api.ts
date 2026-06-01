@@ -1,13 +1,23 @@
 // ================================================================
 // API SERVICE — punto central de llamadas al backend
-// Cambiar BASE_URL para apuntar al servidor de producción.
 // ================================================================
+
+import { getToken, redirectToLogin } from "./auth";
 
 export const BASE_URL = "http://localhost:8080";
 
 // ── Helpers internos ─────────────────────────────────────────────
 
+function authHeader(): Record<string, string> {
+    const token = getToken();
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
+    if (res.status === 401) {
+        redirectToLogin();
+        throw new Error("Sesión expirada");
+    }
     if (!res.ok) {
         const err = await res.json().catch(() => null);
         throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
@@ -18,9 +28,13 @@ async function handleResponse<T>(res: Response): Promise<T> {
 function jsonInit(method: string, body?: unknown): RequestInit {
     return {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         ...(body !== undefined && { body: JSON.stringify(body) }),
     };
+}
+
+function getInit(): RequestInit {
+    return { headers: authHeader() };
 }
 
 // ================================================================
@@ -30,10 +44,10 @@ function jsonInit(method: string, body?: unknown): RequestInit {
 export const contratosApi = {
 
     listar: (): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/contratos`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/contratos`, getInit()).then(r => handleResponse(r)),
 
     obtener: (id: number): Promise<any> =>
-        fetch(`${BASE_URL}/api/contratos/${id}`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/contratos/${id}`, getInit()).then(r => handleResponse(r)),
 
     crear: (payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos`, jsonInit("POST", payload)).then(r => handleResponse(r)),
@@ -54,10 +68,10 @@ export const contratosApi = {
         fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, jsonInit("POST", payload)).then(r => handleResponse(r)),
 
     obtenerBienesAlmacen: (id: number): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/contratos/${id}/almacen-bienes`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/contratos/${id}/almacen-bienes`, getInit()).then(r => handleResponse(r)),
 
     obtenerBienesEntrega: (id: number): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/contratos/${id}/bienes-entrega`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/contratos/${id}/bienes-entrega`, getInit()).then(r => handleResponse(r)),
 
     registrarEntrega: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/entrega`, jsonInit("POST", payload)).then(r => handleResponse(r)),
@@ -86,11 +100,11 @@ export const almacenBienesApi = {
 export const catalogosApi = {
 
     clavePresupuestales: (): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/claves-presupuestales`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/claves-presupuestales`, getInit()).then(r => handleResponse(r)),
 
     unidadesMedida: (): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/unidadesMedida`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/unidadesMedida`, getInit()).then(r => handleResponse(r)),
 
     funcionarios: (): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/funcionarios`).then(r => handleResponse(r)),
+        fetch(`${BASE_URL}/api/funcionarios`, getInit()).then(r => handleResponse(r)),
 };

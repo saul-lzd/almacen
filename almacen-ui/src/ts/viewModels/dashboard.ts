@@ -1,6 +1,8 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge, removeAccents } from "../utils/contratoUtils";
+import { getRole } from "../utils/auth";
+import { contratosApi } from "../utils/api";
 import 'ojs/ojtoolbar';
 import "oj-c/button";
 import "oj-c/input-text";
@@ -65,11 +67,10 @@ class DashboardViewModel {
     // ----------------------------------------------------------------
     // Rol de usuario (placeholder hasta auth real)
     // ----------------------------------------------------------------
-    private readonly userRole: string =
-        localStorage.getItem("almacen.userRole") ?? "ALMACEN";
+    private readonly userRole: string = getRole() ?? "ALMACEN";
 
-    public readonly calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMIN");
-    public readonly calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMIN");
+    public readonly calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMINISTRADOR");
+    public readonly calcEsAlmacenista = ko.pureComputed(() => this.userRole !== "ADMINISTRADOR");
 
     // Filtrado reactivo: rol + búsqueda + estatus
     public calcFiltrados = ko.pureComputed<ContratoItem[]>(() => {
@@ -141,9 +142,7 @@ class DashboardViewModel {
         this.uiCargando(true);
         this.uiError("");
         try {
-            const res = await fetch("http://localhost:8080/api/contratos");
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            const data: any[] = await res.json();
+            const data: any[] = await contratosApi.listar();
 
             this.contratos(data.map(c => {
                 const fechaRaw: string | null = c.fechaTentativaLlegada

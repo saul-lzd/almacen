@@ -1,16 +1,12 @@
 <!-- View: Detalle del Contrato -->
 
-<div class="oj-hybrid-padding detalle-view">
+<div class="oj-hybrid-padding">
 
   <!-- ═══ BREADCRUMB ══════════════════════════════════════════════ -->
   <div class="recepcion-breadcrumb">
-    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
+    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdGoBack]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
-    <span class="recepcion-breadcrumb-sep">/</span>
-    <span class="recepcion-breadcrumb-titulo">
-      <strong><oj-bind-text value="[[contrato() ? contrato().numeroContrato : 'Cargando...']]"></oj-bind-text></strong>
-    </span>
   </div>
 
   <!-- ═══ BANNERS ══════════════════════════════════════════════════ -->

@@ -21,6 +21,7 @@ import ArrayDataProvider = require("ojs/ojarraydataprovider");
 import { IntlDateTimeConverter } from "ojs/ojconverter-datetime";
 import "../jet-composites/quill-editor/quill-editor"; // Importar el componente QuillEditorViewModel para que se registre globalmente
 import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { getRole } from "../utils/auth";
 
 import "oj-c/collapsible";
 import "oj-c/list-view";
@@ -175,8 +176,8 @@ class NuevoContratoViewModel {
 
   private router: any;
 
-  private readonly userRole = localStorage.getItem("almacen.userRole") ?? "ALMACEN";
-  public calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMIN");
+  private readonly userRole = getRole() ?? "ALMACEN";
+  public calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMINISTRADOR");
 
   public uiModo                      = ko.observable<ModoPantalla>("NUEVO");
   public uiCargando                  = ko.observable<boolean>(false);
@@ -536,7 +537,7 @@ class NuevoContratoViewModel {
   // ================================================================
 
   public calcLabelRegresar = ko.pureComputed(() =>
-    this.uiModo() === "EDICION" ? "Regresar al contrato" : "Ir a Inicio"
+    this.uiModo() === "EDICION" ? "Regresar" : "Ir a Inicio"
   );
 
   public cmdEditarFuncionarios = (): void => {
@@ -547,7 +548,7 @@ class NuevoContratoViewModel {
     this.uiEditandoFuncionarios(false);
   };
 
-  public cmdGoToInicio = (): void => {
+  public cmdGoBack = (): void => {
     if (this.uiModo() === "EDICION" && this.contratoId()) {
       this.router.go({ path: "contrato-detalle", params: { id: this.contratoId() } });
     } else {
