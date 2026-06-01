@@ -25,23 +25,48 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (usuarioRepository.findByUsername("admin").isPresent()) {
-            return;
+        if (!usuarioRepository.findByUsername("admin").isPresent()) {
+            UsuarioEntity admin = buildUsuarioAdministrador();
+            usuarioRepository.save(admin);
+            System.out.println(">>> Usuario admin creado. Contraseña inicial: Sesesp2026! — cámbiala.");
         }
 
-        UsuarioEntity admin = new UsuarioEntity();
-        admin.setUsername("admin");
-        admin.setPasswordHash(passwordEncoder.encode("Sesesp2026!"));
-        admin.setNombre("Administrador");
-        admin.setCorreo("admin@sesesp.mx");
-        admin.setRol(UsuarioEntity.RolUsuario.ADMINISTRADOR);
-        admin.setUsuarioSistema(false);
-        // Campos de auditoría manuales (bootstrap — no hay sesión activa)
-        admin.setUsuarioCreacion(1);
-        admin.setFechaCreacion(LocalDateTime.now());
-        admin.setActivo(true);
+        if (!usuarioRepository.findByUsername("almacen").isPresent()) {
+            UsuarioEntity almacen = buildUsuarioAlmacen();
+            usuarioRepository.save(almacen);
+            System.out.println(">>> Usuario almacen creado. Contraseña inicial: Sesesp2026! — cámbiala.");
+        }
+    }
 
-        usuarioRepository.save(admin);
-        System.out.println(">>> Usuario admin creado. Contraseña inicial: Sesesp2026! — cámbiala.");
+    private UsuarioEntity buildUsuarioAdministrador() {
+        UsuarioEntity user = new UsuarioEntity();
+        user.setUsername("admin");
+        user.setPasswordHash(passwordEncoder.encode("Sesesp2026!"));
+        user.setNombre("Administrador");
+        user.setCorreo("admin@sesesp.mx");
+        user.setRol(UsuarioEntity.RolUsuario.ADMINISTRADOR);
+        user.setUsuarioSistema(false);
+        // Campos de auditoría manuales (bootstrap — no hay sesión activa)
+        user.setUsuarioCreacion(1);
+        user.setFechaCreacion(LocalDateTime.now());
+        user.setActivo(true);
+
+        return user;
+    }
+
+    private UsuarioEntity buildUsuarioAlmacen() {
+        UsuarioEntity user = new UsuarioEntity();
+        user.setUsername("almacen");
+        user.setPasswordHash(passwordEncoder.encode("Sesesp2026!"));
+        user.setNombre("Almacen");
+        user.setCorreo("almacen@sesesp.mx");
+        user.setRol(UsuarioEntity.RolUsuario.ALMACEN);
+        user.setUsuarioSistema(false);
+        // Campos de auditoría manuales (bootstrap — no hay sesión activa)
+        user.setUsuarioCreacion(1);
+        user.setFechaCreacion(LocalDateTime.now());
+        user.setActivo(true);
+
+        return user;
     }
 }
