@@ -96,7 +96,7 @@ class DashboardViewModel {
     // ----------------------------------------------------------------
     public readonly itemsEstatus = [
         { key: "",                      label: "Todos" },
-        { key: "CAPTURA",               label: "En captura" },
+        ...(this.userRole === "ADMINISTRADOR" ? [{ key: "CAPTURA", label: "En captura" }] : []),
         { key: "POR_RECIBIR",           label: "Por recibir" },
         { key: "RECEPCION_PARCIAL",     label: "Recepción parcial" },
         { key: "EN_ALMACEN",            label: "En almacén" },
