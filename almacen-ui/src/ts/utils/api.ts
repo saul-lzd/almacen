@@ -1,5 +1,7 @@
 // ================================================================
 // API SERVICE — punto central de llamadas al backend
+// Todas las llamadas pasan por aquí para garantizar autenticación
+// y manejo uniforme de errores.
 // ================================================================
 
 import { getToken, redirectToLogin } from "./auth";
@@ -13,6 +15,8 @@ function authHeader(): Record<string, string> {
     return token ? { "Authorization": `Bearer ${token}` } : {};
 }
 
+// Redirige al login si el servidor responde 401.
+// Para otros errores, extrae el primer mensaje del cuerpo { errores[], mensaje }.
 async function handleResponse<T>(res: Response): Promise<T> {
     if (res.status === 401) {
         redirectToLogin();
@@ -22,9 +26,11 @@ async function handleResponse<T>(res: Response): Promise<T> {
         const err = await res.json().catch(() => null);
         throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
     }
-    return res.json() as Promise<T>;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : null) as T;
 }
 
+// RequestInit para peticiones con cuerpo JSON (POST, PUT, PATCH con body).
 function jsonInit(method: string, body?: unknown): RequestInit {
     return {
         method,
@@ -33,6 +39,7 @@ function jsonInit(method: string, body?: unknown): RequestInit {
     };
 }
 
+// RequestInit para peticiones de solo lectura (GET).
 function getInit(): RequestInit {
     return { headers: authHeader() };
 }
@@ -43,68 +50,92 @@ function getInit(): RequestInit {
 
 export const contratosApi = {
 
-    listar: (): Promise<any[]> =>
+    // GET  /api/contratos — lista todos los contratos visibles para el rol actual
+    listarTodos: (): Promise<any[]> =>
         fetch(`${BASE_URL}/api/contratos`, getInit()).then(r => handleResponse(r)),
 
-    obtener: (id: number): Promise<any> =>
+    // GET  /api/contratos/:id
+    obtenerPorId: (id: number): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}`, getInit()).then(r => handleResponse(r)),
 
+    // POST /api/contratos — crea un contrato nuevo en estado CAPTURA
     crear: (payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos`, jsonInit("POST", payload)).then(r => handleResponse(r)),
 
+    // PUT  /api/contratos/:id — reemplaza todos los campos del contrato (upsert de bienes y claves)
     actualizar: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}`, jsonInit("PUT", payload)).then(r => handleResponse(r)),
 
+    // PATCH /api/contratos/:id/fecha-tentativa — actualiza solo la fecha tentativa de llegada
     actualizarFechaTentativa: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/fecha-tentativa`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
 
+    // PATCH /api/contratos/:id/enviar-almacen — transición CAPTURA → POR_RECIBIR
     enviarAlmacen: (id: number): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/enviar-almacen`, jsonInit("PATCH")).then(r => handleResponse(r)),
 
+    // PATCH /api/contratos/:id/autorizar-entrega — transición EN_ALMACEN → LISTO_PARA_ENTREGAR
     autorizarEntrega: (id: number): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/autorizar-entrega`, jsonInit("PATCH")).then(r => handleResponse(r)),
 
+    // GET   /api/contratos/:id/recepcion — recupera la recepción guardada si existe
+    obtenerRecepcion: (id: number): Promise<any> =>
+        fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, getInit()).then(r => handleResponse(r)),
+
+    // POST  /api/contratos/:id/recepcion — registra la recepción física de bienes en almacén
     registrarRecepcion: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, jsonInit("POST", payload)).then(r => handleResponse(r)),
 
+    // GET  /api/contratos/:id/almacen-bienes — bienes con su estado en almacén (para vista de recepción)
     obtenerBienesAlmacen: (id: number): Promise<any[]> =>
         fetch(`${BASE_URL}/api/contratos/${id}/almacen-bienes`, getInit()).then(r => handleResponse(r)),
 
+    // GET  /api/contratos/:id/bienes-entrega — bienes listos para entrega al beneficiario
     obtenerBienesEntrega: (id: number): Promise<any[]> =>
         fetch(`${BASE_URL}/api/contratos/${id}/bienes-entrega`, getInit()).then(r => handleResponse(r)),
 
+    // POST /api/contratos/:id/entrega — registra la entrega al beneficiario
     registrarEntrega: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/entrega`, jsonInit("POST", payload)).then(r => handleResponse(r)),
 };
 
 // ================================================================
 // ALMACÉN BIENES
+// Operaciones sobre bienes individuales dentro de un contrato
+// una vez que están en almacén.
 // ================================================================
 
 export const almacenBienesApi = {
 
+    // PATCH /api/almacen-bienes/:id/datos — guarda número de serie, ubicación y otros datos de recepción
     guardarDatos: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/almacen-bienes/${id}/datos`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
 
+    // PATCH /api/almacen-bienes/:id/procesar — marca un bien individual como procesado
     procesarUnidad: (id: number, payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/almacen-bienes/${id}/procesar`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
 
+    // PATCH /api/almacen-bienes/procesar-bloque — procesa múltiples bienes en una sola llamada
     procesarBloque: (payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/almacen-bienes/procesar-bloque`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
 };
 
 // ================================================================
 // CATÁLOGOS
+// Listas de referencia de solo lectura usadas en formularios.
 // ================================================================
 
 export const catalogosApi = {
 
-    clavePresupuestales: (): Promise<any[]> =>
+    // GET /api/claves-presupuestales
+    obtenerClavesPresupuestales: (): Promise<any[]> =>
         fetch(`${BASE_URL}/api/claves-presupuestales`, getInit()).then(r => handleResponse(r)),
 
-    unidadesMedida: (): Promise<any[]> =>
+    // GET /api/unidadesMedida
+    obtenerUnidadesMedida: (): Promise<any[]> =>
         fetch(`${BASE_URL}/api/unidadesMedida`, getInit()).then(r => handleResponse(r)),
 
-    funcionarios: (): Promise<any[]> =>
+    // GET /api/funcionarios — devuelve titulares y administradores de contrato
+    obtenerFuncionarios: (): Promise<any[]> =>
         fetch(`${BASE_URL}/api/funcionarios`, getInit()).then(r => handleResponse(r)),
 };

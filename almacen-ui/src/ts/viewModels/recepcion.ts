@@ -16,6 +16,7 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { contratosApi } from "../utils/api";
 
 import "oj-c/form-layout";
 import "oj-c/input-text";
@@ -149,9 +150,7 @@ class RecepcionViewModel {
         this.uiError("");
 
         try {
-            const res = await fetch(`http://localhost:8080/api/contratos/${id}`);
-            if (!res.ok) throw new Error(`Error al cargar contrato ${id}`);
-            const data = await res.json();
+            const data = await contratosApi.obtenerPorId(id);
             this.mapResponseToUI(data);
 
             const esEditable = data.estatus === "POR_RECIBIR" || data.estatus === "RECEPCION_PARCIAL";
@@ -169,12 +168,11 @@ class RecepcionViewModel {
 
     private async loadRecepcion(id: number): Promise<void> {
         try {
-            const res = await fetch(`http://localhost:8080/api/contratos/${id}/recepcion`);
-            if (!res.ok) return; // sin recepción guardada — no sobreescribir
-            const data = await res.json();
+            const data = await contratosApi.obtenerRecepcion(id);
             this.frmRepresentante(data.nombreEntrega ?? "");
             this.frmObservaciones(data.observaciones ?? "");
         } catch (err) {
+            // Sin recepción guardada — no sobreescribir los campos
             console.warn("No se pudo cargar la recepción guardada:", err);
         }
     }
@@ -249,20 +247,7 @@ class RecepcionViewModel {
         };
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${this.contratoId}/recepcion`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }
-            );
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => null);
-                throw new Error(errData?.message ?? `Error ${res.status}`);
-            }
-
+            await contratosApi.registrarRecepcion(this.contratoId, payload);
             this.uiExito("Recepción registrada. El contrato está ahora en almacén.");
             this.uiModoLectura(true);
             await this.loadContrato(this.contratoId);

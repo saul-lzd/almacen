@@ -603,6 +603,12 @@
                 min="1">
               </oj-c-input-number>
 
+              <oj-c-input-number
+                label-hint="Cantidad"
+                value="{{frmBienCantidad}}"
+                min="1">
+              </oj-c-input-number>
+
               <oj-c-select-single
                 label-hint="Unidad de Medida"
                 placeholder="Seleccione"
@@ -610,12 +616,6 @@
                 value="{{frmBienIdUnidadMedida}}"
                 data="[[dpCatUnidadesMedida]]">
               </oj-c-select-single>
-
-              <oj-c-input-number
-                label-hint="Cantidad"
-                value="{{frmBienCantidad}}"
-                min="1">
-              </oj-c-input-number>
 
               <oj-c-input-number
                 label-hint="Precio Unitario"
@@ -681,16 +681,13 @@
                       </div>
 
                       <div>
-                        <strong>
-                          <oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text>
-                        </strong>
-                        
-                        <oj-bind-text value="[[' (' + item.data.cantidad + ')']]"></oj-bind-text>
+                        <oj-bind-text value="[[item.data.descripcionCorta]]"></oj-bind-text>
                       </div>
 
                       <div slot="secondary">
-                        <oj-bind-text value="[['Precio unitario: $ ' +item.data.precioUnitario.toLocaleString('es-MX')]]"></oj-bind-text>
-                        <oj-bind-text value="[['· Subtotal: $ ' +item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
+                        <oj-bind-text value="[[item.data.cantidad + ' ' + item.data.unidadMedida]]"></oj-bind-text>
+                        · <oj-bind-text value="[['$ ' + item.data.precioUnitario.toLocaleString('es-MX') + ' c/u']]"></oj-bind-text>
+                        · <oj-bind-text value="[['Subtotal: $ ' + item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
                       </div>
 
                       <div slot="action" class="oj-flex oj-sm-align-items-center">

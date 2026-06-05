@@ -2,6 +2,7 @@ import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
+import { contratosApi } from "../utils/api";
 import "oj-c/button";
 import "oj-c/dialog";
 import "oj-c/input-text";
@@ -32,6 +33,8 @@ type BienContrato = {
     precioUnitario: string;
     subtotal: string;
     cantidadRecibidaTotal: number;
+    cantidadProcesadaTotal: number;
+    cantidadEntregadaTotal: number;
 };
 
 type BienDialogo = {
@@ -141,7 +144,7 @@ class ContratoDetalleViewModel {
     });
 
     public calcFechaEditable = ko.pureComputed(() =>
-        this.contrato()?.estatus === "POR_RECIBIR"
+        this.calcEsAdmin() && this.contrato()?.estatus === "POR_RECIBIR"
     );
 
     // ================================================================
@@ -173,9 +176,7 @@ class ContratoDetalleViewModel {
         this.uiCargando(true);
         this.uiError("");
         try {
-            const res = await fetch(`http://localhost:8080/api/contratos/${id}`);
-            if (!res.ok) throw new Error(`Error ${res.status}`);
-            const c = await res.json();
+            const c = await contratosApi.obtenerPorId(id);
 
             const r: ResumenBienes = c.resumenBienes ?? {
                 totalContratados: 0, totalRecibidos: 0,
@@ -205,7 +206,9 @@ class ContratoDetalleViewModel {
                     cantidad:             b.cantidad ?? 0,
                     precioUnitario:       this.formatMonto(b.precioUnitario),
                     subtotal:             this.formatMonto(b.subtotal),
-                    cantidadRecibidaTotal: b.cantidadRecibidaTotal ?? 0,
+                    cantidadRecibidaTotal:  b.cantidadRecibidaTotal ?? 0,
+                    cantidadProcesadaTotal: b.cantidadProcesadaTotal ?? 0,
+                    cantidadEntregadaTotal: b.cantidadEntregadaTotal ?? 0,
                 })),
             });
 
@@ -227,6 +230,10 @@ class ContratoDetalleViewModel {
     // ================================================================
     public cmdGoBack = (): void => {
         this.router?.go({ path: "dashboard" });
+    };
+
+    public cmdActualizar = (): void => {
+        if (this.contratoId) void this.loadContrato(this.contratoId);
     };
 
     public cmdEditarContrato = (): void => {
@@ -254,14 +261,7 @@ class ContratoDetalleViewModel {
         this.uiError("");
         this.uiExito("");
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${this.contratoId}/autorizar-entrega`,
-                { method: "PATCH" }
-            );
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
+            await contratosApi.autorizarEntrega(this.contratoId);
             this.uiExito("Entrega autorizada. Los bienes están listos para ser entregados.");
             await this.loadContrato(this.contratoId);
         } catch (err: any) {
@@ -279,18 +279,7 @@ class ContratoDetalleViewModel {
         this.uiAccion(true);
         this.uiError("");
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${this.contratoId}/fecha-tentativa`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ fechaTentativaLlegada: this.frmFecha() + "T00:00:00" }),
-                }
-            );
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
+            await contratosApi.actualizarFechaTentativa(this.contratoId, { fechaTentativaLlegada: this.frmFecha() + "T00:00:00" });
             this.uiEditandoFecha(false);
             this.uiExito("Fecha actualizada.");
             await this.loadContrato(this.contratoId);
@@ -363,20 +352,7 @@ class ContratoDetalleViewModel {
         };
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${this.contratoId}/recepcion`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                }
-            );
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
-
+            await contratosApi.registrarRecepcion(this.contratoId, payload);
             this.uiDialogoRecepcion(false);
             this.uiExito("Recepción registrada correctamente.");
             await this.loadContrato(this.contratoId);

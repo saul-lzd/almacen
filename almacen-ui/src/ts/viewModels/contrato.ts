@@ -18,10 +18,10 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
-import { IntlDateTimeConverter } from "ojs/ojconverter-datetime";
 import "../jet-composites/quill-editor/quill-editor"; // Importar el componente QuillEditorViewModel para que se registre globalmente
 import { mapEstatusToLabel } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
+import { catalogosApi, contratosApi } from "../utils/api";
 
 import "oj-c/collapsible";
 import "oj-c/list-view";
@@ -72,6 +72,7 @@ type BienContratoItem = {
   lote: number;
   partida: number;
   descripcionTecnica: string;     // HTML generado por Quill
+  descripcionCorta: string;       // texto plano truncado para mostrar en el listado
   idUnidadMedida: number;
   unidadMedida: string;           // nombre para mostrar en el listado
   cantidad: number;
@@ -156,6 +157,7 @@ type ContratoResponsePayload = {
     lote: number;
     partida: number;
     descripcionTecnica: string;
+    descripcionCorta: string;
     idUnidadMedida: number;
     unidadMedida: string;
     cantidad: number;
@@ -423,35 +425,23 @@ class NuevoContratoViewModel {
   }
 
   private async loadContrato(id: number): Promise<void> {
-    const res = await fetch(`http://localhost:8080/api/contratos/${id}`);
-    if (!res.ok) throw new Error(`Error al cargar contrato ${id}`);
-
-    const data: ContratoResponsePayload = await res.json();
+    const data: ContratoResponsePayload = await contratosApi.obtenerPorId(id);
     console.log("=== JSON CRUDO DEL BACKEND ===", JSON.stringify(data, null, 2));
     this.mapResponseToUI(data);
   }
 
   private async loadCatalogoClaves(): Promise<void> {
-    const res = await fetch("http://localhost:8080/api/claves-presupuestales");
-    if (!res.ok) throw new Error("Error al cargar claves presupuestales");
-
-    const data: CatalogoOption[] = await res.json();
+    const data: CatalogoOption[] = await catalogosApi.obtenerClavesPresupuestales();
     this.catClaves(data);
   }
 
   private async loadCatalogoUnidadesMedida(): Promise<void> {
-    const res = await fetch("http://localhost:8080/api/unidadesMedida");
-    if (!res.ok) throw new Error("Error al cargar unidades de medida");
-
-    const data: CatalogoOption[] = await res.json();
+    const data: CatalogoOption[] = await catalogosApi.obtenerUnidadesMedida();
     this.catUnidadesMedida(data);
   }
 
   private async loadCatalogoFuncionarios(): Promise<void> {
-    const res = await fetch("http://localhost:8080/api/funcionarios");
-    if (!res.ok) throw new Error("Error al cargar funcionarios");
-
-    const data: any[] = await res.json();
+    const data: any[] = await catalogosApi.obtenerFuncionarios();
 
     // El backend devuelve { id, nombre, dependencia, caracter }
     // Lo adaptamos al formato que necesita oj-c-select-single
@@ -632,6 +622,7 @@ class NuevoContratoViewModel {
       lote:               Number(this.frmBienLote()),
       partida:            Number(this.frmBienPartida()),
       descripcionTecnica: this.frmBienDescripcionHtml(),
+      descripcionCorta:   this.stripHtml(this.frmBienDescripcionHtml()),
       idUnidadMedida:     Number(idUnidad),
       unidadMedida:       unidad.label,
       cantidad:           Number(this.frmBienCantidad()),
@@ -699,28 +690,13 @@ class NuevoContratoViewModel {
     this.uiGuardando(true);
     this.uiError("");
 
-    console.log("=== PAYLOAD QUE SE ENVIARÁ AL BACKEND ===", JSON.stringify(this.mapUIToRequest(), null, 2));
-
     try {
-      const payload = this.mapUIToRequest();
+      const payload  = this.mapUIToRequest();
       const isUpdate = !!this.contratoId();
-      const method   = isUpdate ? "PUT" : "POST";
-      const url      = isUpdate
-        ? `http://localhost:8080/api/contratos/${this.contratoId()}`
-        : "http://localhost:8080/api/contratos";
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => null);
-        throw new Error(errBody?.errores?.[0] ?? errBody?.mensaje ?? `Error ${res.status}`);
-      }
-
-      const saved: ContratoResponsePayload = await res.json();
+      const saved: ContratoResponsePayload = isUpdate
+        ? await contratosApi.actualizar(this.contratoId()!, payload)
+        : await contratosApi.crear(payload);
 
       if (!isUpdate) {
         // Primer guardado: marcar para mostrar banner en la nueva instancia y navegar con ID
@@ -748,19 +724,7 @@ class NuevoContratoViewModel {
     }
 
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/contratos/${this.contratoId()}/enviar-almacen`,
-        { method: "PATCH" }
-      );
-
-      if (!res.ok) {
-        const errBody = await res.json();
-        // El backend devuelve { mensaje, errores: string[] }
-        const errores = errBody.errores?.join("\n") || "Error desconocido.";
-        alert("No se puede enviar al almacén:\n\n" + errores);
-        return;
-      }
-
+      await contratosApi.enviarAlmacen(this.contratoId()!);
       this.uiEstatusContrato("Pendiente de recibir");
       alert("Contrato enviado al almacén correctamente.");
       this.router.go({ path: "dashboard" });
@@ -887,6 +851,7 @@ class NuevoContratoViewModel {
         lote:              b.lote,
         partida:           b.partida,
         descripcionTecnica: b.descripcionTecnica,
+        descripcionCorta:   b.descripcionCorta,
         idUnidadMedida:    b.idUnidadMedida,
         unidadMedida:      b.unidadMedida,
         cantidad:          b.cantidad,
@@ -898,21 +863,13 @@ class NuevoContratoViewModel {
 
   }
 
-  // /**
-  //  * Convierte el enum del backend a etiqueta en español para la UI.
-  //  */
-  // private mapEstatusToLabel(estatus: string): string {
-  //   const etiquetas: Record<string, string> = {
-  //     CAPTURA:               "En captura",
-  //     POR_RECIBIR:           "Pendiente de recibir",
-  //     EN_ALMACEN:            "En almacén",
-  //     LISTO_PARA_ENTREGAR:   "Listo para entregar",
-  //     ENTREGA_PARCIAL:       "Entrega parcial",
-  //     ENTREGADO:             "Entregado",
-  //     CERRADO:               "Cerrado"
-  //   };
-  //   return etiquetas[estatus] || estatus;
-  // }
+    // Extrae texto plano del HTML de Quill y lo trunca para mostrar en listados
+    private stripHtml(html: string): string {
+        const div = document.createElement("div");
+        div.innerHTML = html;
+        const text = (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+        return text.length > 100 ? text.slice(0, 100) + "…" : text;
+    }
 
     // Convierte "2026-06-15T09:00:00" → "2026-06-15" para el input-date-text
     private toDateOnly(isoDateTime: string | null): string {
@@ -943,12 +900,6 @@ class NuevoContratoViewModel {
         // Retorna formato YYYY-MM-DD
         return fecha.toISOString().split("T")[0];
     }
-
-    // // Converter para mostrar dd/MM/yyyy al usuario
-    // // El valor interno sigue siendo YYYY-MM-DD (ISO)
-    // public converterFecha = new IntlDateTimeConverter({
-    //     pattern: "dd/MM/yyyy"
-    // });
 
 }
 

@@ -16,6 +16,7 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { contratosApi } from "../utils/api";
 
 import "oj-c/form-layout";
 import "oj-c/input-text";
@@ -158,16 +159,10 @@ class EntregaViewModel {
         this.uiError("");
 
         try {
-            const [resContrato, resBienes] = await Promise.all([
-                fetch(`http://localhost:8080/api/contratos/${id}`),
-                fetch(`http://localhost:8080/api/contratos/${id}/bienes-entrega`)
+            const [dataContrato, dataGrupos] = await Promise.all([
+                contratosApi.obtenerPorId(id),
+                contratosApi.obtenerBienesEntrega(id)
             ]);
-
-            if (!resContrato.ok) throw new Error(`Error al cargar contrato ${id}`);
-            if (!resBienes.ok) throw new Error(`Error al cargar bienes del contrato ${id}`);
-
-            const dataContrato = await resContrato.json();
-            const dataGrupos: any[] = await resBienes.json();
 
             this.contrato({
                 idContrato:   dataContrato.idContrato,
@@ -236,20 +231,7 @@ class EntregaViewModel {
         };
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/contratos/${this.contratoId}/entrega`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                }
-            );
-
-            if (!res.ok) {
-                const errData = await res.json().catch(() => null);
-                throw new Error(errData?.errores?.[0] ?? errData?.mensaje ?? `Error ${res.status}`);
-            }
-
+            await contratosApi.registrarEntrega(this.contratoId, payload);
             this.uiExito("Entrega registrada correctamente.");
             await this.loadDatos(this.contratoId);
 

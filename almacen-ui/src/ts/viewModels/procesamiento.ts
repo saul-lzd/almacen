@@ -1,6 +1,7 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { contratosApi, almacenBienesApi } from "../utils/api";
 
 import "oj-c/form-layout";
 import "oj-c/input-text";
@@ -111,16 +112,10 @@ class ProcesamientoViewModel {
         this.uiError("");
 
         try {
-            const [resContrato, resBienes] = await Promise.all([
-                fetch(`http://localhost:8080/api/contratos/${id}`),
-                fetch(`http://localhost:8080/api/contratos/${id}/almacen-bienes`)
+            const [dataContrato, dataGrupos] = await Promise.all([
+                contratosApi.obtenerPorId(id),
+                contratosApi.obtenerBienesAlmacen(id)
             ]);
-
-            if (!resContrato.ok) throw new Error(`Error al cargar contrato ${id}`);
-            if (!resBienes.ok) throw new Error(`Error al cargar bienes del contrato ${id}`);
-
-            const dataContrato = await resContrato.json();
-            const dataGrupos: any[] = await resBienes.json();
 
             this.contrato({
                 idContrato:     dataContrato.idContrato,
@@ -212,16 +207,7 @@ class ProcesamientoViewModel {
         if (unidad.frmDescripcion().trim())  payload.descripcionComplementaria = unidad.frmDescripcion().trim();
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/almacen-bienes/${unidad.idAlmacenBien}/datos`,
-                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
-            );
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
-
+            await almacenBienesApi.guardarDatos(unidad.idAlmacenBien, payload);
             unidad.uiEstatus("EN_PROCESO");
             unidad.uiEditando(false);
         } catch (err: any) {
@@ -246,16 +232,7 @@ class ProcesamientoViewModel {
         if (unidad.frmDescripcion().trim())  payload.descripcionComplementaria = unidad.frmDescripcion().trim();
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/almacen-bienes/${unidad.idAlmacenBien}/procesar`,
-                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }
-            );
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
-
+            await almacenBienesApi.procesarUnidad(unidad.idAlmacenBien, payload);
             unidad.uiEstatus("PROCESADO");
             unidad.uiEditando(false);
         } catch (err: any) {
@@ -293,16 +270,7 @@ class ProcesamientoViewModel {
         if (descripcion) bloquePayload.descripcionComplementaria = descripcion;
 
         try {
-            const res = await fetch(
-                `http://localhost:8080/api/almacen-bienes/procesar-bloque`,
-                { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(bloquePayload) }
-            );
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => null);
-                throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
-            }
-
+            await almacenBienesApi.procesarBloque(bloquePayload);
             pendientes.forEach(u => {
                 u.uiEstatus("PROCESADO");
                 if (marca)      u.frmMarca(marca);

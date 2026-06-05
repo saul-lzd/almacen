@@ -3,6 +3,7 @@ package com.sesesp.almacen.domain.entity;
 import com.sesesp.almacen.common.entity.AuditoriaEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
 
@@ -63,4 +64,14 @@ public class ContratoBienEntity extends AuditoriaEntity {
     /** cantidad × precio_unitario. Se calcula en el servicio antes de guardar. */
     @Column(name = "subtotal", nullable = false, precision = 15, scale = 2)
     private BigDecimal subtotal;
+
+    /** Unidades individuales que ya fueron procesadas (PROCESADO, LISTO_PARA_ENTREGAR o ENTREGADO). */
+    @Formula("(SELECT COUNT(*) FROM almacen_bien ab WHERE ab.id_contrato_bien = id_contrato_bien" +
+             " AND ab.estatus IN ('PROCESADO', 'LISTO_PARA_ENTREGAR', 'ENTREGADO'))")
+    private Long cantidadProcesadaTotal;
+
+    /** Unidades individuales ya entregadas al beneficiario. */
+    @Formula("(SELECT COUNT(*) FROM almacen_bien ab WHERE ab.id_contrato_bien = id_contrato_bien" +
+             " AND ab.estatus = 'ENTREGADO')")
+    private Long cantidadEntregadaTotal;
 }

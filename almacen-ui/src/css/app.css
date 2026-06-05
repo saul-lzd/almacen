@@ -1339,15 +1339,15 @@
   .detalle-bienes-header,
   .detalle-bienes-fila {
     display: grid;
-    grid-template-columns: 50px 60px 1fr 90px 70px 100px 110px 80px 80px;
+    grid-template-columns: 50px 60px 1fr 80px 60px 90px 100px 70px 70px 70px;
     gap: 0 10px;
-    padding: 10px 16px;
+    padding: 10px;
     align-items: center;
   }
 
   .detalle-bienes-tabla--almacen .detalle-bienes-header,
   .detalle-bienes-tabla--almacen .detalle-bienes-fila {
-    grid-template-columns: 50px 60px 1fr 90px 70px 80px 80px;
+    grid-template-columns: 50px 60px 1fr 80px 60px 70px 70px 70px;
   }
 
   .detalle-bienes-header {

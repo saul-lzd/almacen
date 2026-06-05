@@ -106,6 +106,8 @@ public class ContratoMapper {
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
                 .subtotal(entity.getSubtotal())
+                .cantidadProcesadaTotal(entity.getCantidadProcesadaTotal() != null ? entity.getCantidadProcesadaTotal() : 0L)
+                .cantidadEntregadaTotal(entity.getCantidadEntregadaTotal() != null ? entity.getCantidadEntregadaTotal() : 0L)
                 .build();
     }
 

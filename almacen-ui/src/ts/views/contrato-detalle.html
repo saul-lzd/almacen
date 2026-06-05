@@ -39,6 +39,14 @@
         </p>
       </div>
       <div class="detalle-acciones">
+        <oj-c-button
+          label="Actualizar"
+          chroming="outlined"
+          size="sm"
+          :disabled="[[uiCargando()]]"
+          on-oj-action="[[cmdActualizar]]">
+          <span slot="startIcon" class="oj-ux-ico-refresh"></span>
+        </oj-c-button>
         <oj-bind-if test="[[calcEsAdmin() && contrato().estatus === 'CAPTURA']]">
           <oj-c-button label="Editar contrato" chroming="callToAction" size="sm"
             on-oj-action="[[cmdEditarContrato]]">
@@ -156,21 +164,23 @@
         </div>
       </div>
 
-      <!-- Información de pago -->
-      <div class="detalle-pago-grid">
-        <div>
-          <span class="recepcion-info-label">Monto sin impuestos: </span>
-          <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().montoSinImpuestos]]"></oj-bind-text></span>
+      <!-- Información de pago (solo administrador) -->
+      <oj-bind-if test="[[calcEsAdmin()]]">
+        <div class="detalle-pago-grid">
+          <div>
+            <span class="recepcion-info-label">Monto sin impuestos: </span>
+            <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().montoSinImpuestos]]"></oj-bind-text></span>
+          </div>
+          <div>
+            <span class="recepcion-info-label">Impuestos: </span>
+            <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().impuestos]]"></oj-bind-text></span>
+          </div>
+          <div>
+            <span class="recepcion-info-label">Monto total: </span>
+            <strong><oj-bind-text value="[[contrato().montoTotal]]"></oj-bind-text></strong>
+          </div>
         </div>
-        <div>
-          <span class="recepcion-info-label">Impuestos: </span>
-          <span class="recepcion-info-valor"><oj-bind-text value="[[contrato().impuestos]]"></oj-bind-text></span>
-        </div>
-        <div>
-          <span class="recepcion-info-label">Monto total: </span>
-          <strong><oj-bind-text value="[[contrato().montoTotal]]"></oj-bind-text></strong>
-        </div>
-      </div>
+      </oj-bind-if>
 
     </div>
 
@@ -199,6 +209,7 @@
             <div class="text-right">Subtotal</div>
           </oj-bind-if>
           <div class="text-center">Recibido</div>
+          <div class="text-center">Procesado</div>
           <div class="text-center">Entregado</div>
         </div>
 
@@ -234,9 +245,17 @@
                   <oj-bind-text value="[[bien.data.cantidadRecibidaTotal + '/' + bien.data.cantidad]]"></oj-bind-text>
                 </span>
               </div>
-              <!-- Entregado (placeholder — requiere query adicional) -->
+              <!-- Procesado -->
               <div class="text-center">
-                <span class="oj-badge oj-badge-subtle">—</span>
+                <span :class="[['oj-badge oj-badge-subtle ' + (bien.data.cantidadProcesadaTotal >= bien.data.cantidad ? 'oj-badge-success' : (bien.data.cantidadProcesadaTotal > 0 ? 'oj-badge-warning' : ''))]]">
+                  <oj-bind-text value="[[bien.data.cantidadProcesadaTotal + '/' + bien.data.cantidad]]"></oj-bind-text>
+                </span>
+              </div>
+              <!-- Entregado -->
+              <div class="text-center">
+                <span :class="[['oj-badge oj-badge-subtle ' + (bien.data.cantidadEntregadaTotal >= bien.data.cantidad ? 'oj-badge-success' : (bien.data.cantidadEntregadaTotal > 0 ? 'oj-badge-warning' : ''))]]">
+                  <oj-bind-text value="[[bien.data.cantidadEntregadaTotal + '/' + bien.data.cantidad]]"></oj-bind-text>
+                </span>
               </div>
             </div>
           </template>

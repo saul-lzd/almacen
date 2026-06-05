@@ -27,4 +27,10 @@ public class ContratoBienDto {
     /** Total acumulado recibido en todas las recepciones previas. Null si no aplica. */
     private BigDecimal cantidadRecibidaTotal;
 
+    /** Unidades ya procesadas (PROCESADO, LISTO_PARA_ENTREGAR o ENTREGADO). */
+    private Long cantidadProcesadaTotal;
+
+    /** Unidades ya entregadas al beneficiario. */
+    private Long cantidadEntregadaTotal;
+
 }

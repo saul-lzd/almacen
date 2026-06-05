@@ -142,9 +142,9 @@ class DashboardViewModel {
         this.uiCargando(true);
         this.uiError("");
         try {
-            const data: any[] = await contratosApi.listar();
+            const data: any[] = await contratosApi.listarTodos();
 
-            this.contratos(data.map(c => {
+            this.contratos([...data].reverse().map(c => {
                 const fechaRaw: string | null = c.fechaTentativaLlegada
                     ? c.fechaTentativaLlegada.split("T")[0]
                     : null;
@@ -187,6 +187,10 @@ class DashboardViewModel {
 
     public cmdNuevoContrato = (): void => {
         this.router?.go({ path: "contrato" });
+    };
+
+    public cmdActualizar = (): void => {
+        void this.loadContratos();
     };
 
     public cmdRecibirProveedor = (contrato: ContratoItem): void => {
