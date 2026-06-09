@@ -11,6 +11,7 @@ import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
@@ -67,12 +68,23 @@ public class RecepcionAlmacenService {
         ContratoEntity contrato = contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
 
-        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR
-                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
+        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR) {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede recibirse porque su estatus es: "
                             + contrato.getEstatus().name()
-                            + ". Solo se pueden recibir contratos en estatus POR_RECIBIR o RECEPCION_PARCIAL."
+                            + ". Solo se pueden recibir contratos en estatus POR_RECIBIR."
+            ));
+        }
+
+        if (contrato.isContratoCerrado()) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato ya está cerrado — todos los bienes han sido entregados."
+            ));
+        }
+
+        if (contrato.isTodosLosBienesRecibidos()) {
+            throw new ContratoValidacionException(List.of(
+                    "Todos los bienes de este contrato ya fueron recibidos."
             ));
         }
 
@@ -128,6 +140,7 @@ public class RecepcionAlmacenService {
                 .nombreEntrega(request.getTransportista())
                 .observaciones(request.getObservaciones())
                 .nombreRecibe("Almacén SESESP")
+                .estatus(EstatusRecepcion.INICIADA)
                 .build();
 
         // 6. Agregar el detalle por bien
@@ -162,16 +175,17 @@ public class RecepcionAlmacenService {
         // 7.1 Crear una AlmacenBienEntity por cada unidad física recibida
         crearUnidadesAlmacen(contrato, recepcion);
 
-        // 8. Actualizar el estatus del contrato
-        EstatusContrato nuevoEstatus = recepcionCompleta
-                ? EstatusContrato.EN_ALMACEN
-                : EstatusContrato.RECEPCION_PARCIAL;
-
-        contrato.setEstatus(nuevoEstatus);
+        // 8. Actualizar checkpoints del contrato
+        if (!contrato.isPrimeraRecepcionRegistrada()) {
+            contrato.setPrimeraRecepcionRegistrada(true);
+        }
+        if (recepcionCompleta && !contrato.isTodosLosBienesRecibidos()) {
+            contrato.setTodosLosBienesRecibidos(true);
+        }
         contratoRepository.save(contrato);
 
-        logger.info("Recepción registrada. Folio: {}. Contrato ID: {} → {}",
-                recepcion.getFolioEntradaAlmacen(), idContrato, nuevoEstatus);
+        logger.info("Recepción registrada. Folio: {}. Contrato ID: {}. Completa: {}",
+                recepcion.getFolioEntradaAlmacen(), idContrato, recepcionCompleta);
     }
 
     // ─────────────────────────────────────────────────────────────

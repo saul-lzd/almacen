@@ -7,11 +7,14 @@ import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.BeneficiarioEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.entity.SalidaAlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.SalidaAlmacenEntity;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.BeneficiarioRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import com.sesesp.almacen.domain.repository.SalidaAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,19 +40,21 @@ public class SalidaAlmacenService {
     private final BeneficiarioRepository beneficiarioRepository;
     private final AlmacenBienRepository almacenBienRepository;
     private final SalidaAlmacenRepository salidaAlmacenRepository;
+    private final RecepcionAlmacenRepository recepcionAlmacenRepository;
 
     /**
      * Registra la entrega de bienes a un beneficiario.
      *
      * Validaciones:
-     *   - Contrato en LISTO_PARA_ENTREGAR o ENTREGA_PARCIAL
+     *   - Contrato en POR_RECIBIR y no cerrado
      *   - El beneficiario existe
      *   - Todos los bienes indicados están en LISTO_PARA_ENTREGAR y pertenecen al contrato
      *
      * Efecto:
      *   - Crea SalidaAlmacenEntity con su folio
      *   - Marca los bienes como ENTREGADO
-     *   - Si quedan bienes LISTO_PARA_ENTREGAR → ENTREGA_PARCIAL; si no → ENTREGADO
+     *   - Actualiza checkpoints del contrato (primeraEntregaAutorizada, contratoCerrado)
+     *   - Marca la recepción como ENTREGADA si todos sus bienes están en ENTREGADO
      */
     @Transactional
     public void registrarEntrega(Integer idContrato, EntregaRequestDto request) {
@@ -58,13 +64,15 @@ public class SalidaAlmacenService {
         ContratoEntity contrato = contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
 
-        if (contrato.getEstatus() != EstatusContrato.LISTO_PARA_ENTREGAR
-                && contrato.getEstatus() != EstatusContrato.ENTREGA_PARCIAL
-                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
+        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR) {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede entregarse porque su estatus es: "
-                            + contrato.getEstatus().name()
-                            + ". Solo contratos LISTO_PARA_ENTREGAR, ENTREGA_PARCIAL o RECEPCION_PARCIAL pueden registrar entregas."));
+                            + contrato.getEstatus().name() + "."));
+        }
+
+        if (contrato.isContratoCerrado()) {
+            throw new ContratoValidacionException(List.of(
+                    "El contrato ya está cerrado — todos los bienes han sido entregados."));
         }
 
         // 2. Validar request
@@ -129,30 +137,48 @@ public class SalidaAlmacenService {
         salidaAlmacenRepository.save(salida);
         almacenBienRepository.saveAll(bienes);
 
-        // 7. Actualizar estatus del contrato
-        long pendientesEntrega = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
-                idContrato, EstatusBien.LISTO_PARA_ENTREGAR);
-
-        EstatusContrato estatusOrigen = contrato.getEstatus();
-        EstatusContrato nuevoEstatus;
-
-        if (estatusOrigen == EstatusContrato.RECEPCION_PARCIAL) {
-            // Aún hay recepciones pendientes — el contrato permanece en RECEPCION_PARCIAL
-            // independientemente de cuántos bienes se hayan entregado ya.
-            nuevoEstatus = EstatusContrato.RECEPCION_PARCIAL;
-        } else {
-            // Todas las recepciones están completas: avanzar según entregados restantes.
-            nuevoEstatus = pendientesEntrega == 0
-                    ? EstatusContrato.ENTREGADO
-                    : EstatusContrato.ENTREGA_PARCIAL;
+        // 7. Marcar checkpoint de primera entrega
+        if (!contrato.isPrimeraEntregaAutorizada()) {
+            contrato.setPrimeraEntregaAutorizada(true);
         }
 
-        salida.setEsEntregaTotal(pendientesEntrega == 0 && estatusOrigen != EstatusContrato.RECEPCION_PARCIAL);
-        contrato.setEstatus(nuevoEstatus);
+        // 8. Verificar si todos los bienes del contrato están entregados → cerrar contrato
+        long totalBienes    = almacenBienRepository.countByContratoIdContratoAndActivoTrue(idContrato);
+        long totalEntregados = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
+                idContrato, EstatusBien.ENTREGADO);
+        boolean contratoCompleto = totalBienes > 0 && totalEntregados == totalBienes;
+
+        salida.setEsEntregaTotal(contratoCompleto);
+
+        if (contratoCompleto) {
+            contrato.setContratoCerrado(true);
+        }
         contratoRepository.save(contrato);
 
-        logger.info("Entrega registrada. Folio: {}. Contrato ID: {} → {}",
-                salida.getFolioSalidaAlmacen(), idContrato, nuevoEstatus);
+        // 9. Verificar recepciones afectadas → marcar ENTREGADA si todos sus bienes están entregados
+        Set<Integer> recepcionesAfectadas = bienes.stream()
+                .filter(b -> b.getRecepcionAlmacenBien() != null)
+                .map(b -> b.getRecepcionAlmacenBien().getRecepcionAlmacen().getIdRecepcionAlmacen())
+                .collect(Collectors.toSet());
+
+        for (Integer idRecepcion : recepcionesAfectadas) {
+            long totalRec    = almacenBienRepository
+                    .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndActivoTrue(idRecepcion);
+            long entregadosRec = almacenBienRepository
+                    .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                            idRecepcion, List.of(EstatusBien.ENTREGADO));
+
+            if (totalRec > 0 && entregadosRec == totalRec) {
+                recepcionAlmacenRepository.findById(idRecepcion).ifPresent(rec -> {
+                    rec.setEstatus(EstatusRecepcion.ENTREGADA);
+                    recepcionAlmacenRepository.save(rec);
+                    logger.info("Recepción {} → ENTREGADA", rec.getFolioEntradaAlmacen());
+                });
+            }
+        }
+
+        logger.info("Entrega registrada. Folio: {}. Contrato ID: {}. Cerrado: {}",
+                salida.getFolioSalidaAlmacen(), idContrato, contratoCompleto);
     }
 
     private String generarFolio() {

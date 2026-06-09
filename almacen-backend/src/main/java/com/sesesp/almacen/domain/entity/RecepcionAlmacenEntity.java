@@ -59,6 +59,11 @@ public class RecepcionAlmacenEntity extends AuditoriaEntity {
     @Column(name = "observaciones", length = 500)
     private String observaciones;
 
+    @Column(name = "estatus", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private EstatusRecepcion estatus = EstatusRecepcion.INICIADA;
+
     @OneToMany(mappedBy = "recepcionAlmacen", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<RecepcionAlmacenBienEntity> bienes = new ArrayList<>();
@@ -66,4 +71,11 @@ public class RecepcionAlmacenEntity extends AuditoriaEntity {
     @OneToMany(mappedBy = "recepcionAlmacen", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EvidenciaEntradaEntity> evidencias = new ArrayList<>();
+
+    public enum EstatusRecepcion {
+        INICIADA,    // recepción registrada, bienes en estatus RECIBIDO
+        EN_PROCESO,  // al menos un bien de esta recepción está siendo procesado
+        PROCESADA,   // todos los bienes de esta recepción están en PROCESADO
+        ENTREGADA    // todos los bienes de esta recepción están en ENTREGADO
+    }
 }

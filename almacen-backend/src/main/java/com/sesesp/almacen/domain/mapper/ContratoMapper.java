@@ -51,6 +51,12 @@ public class ContratoMapper {
                .beneficiarios(joinNames(entity.getBeneficiarios()))
                .listaBeneficiarios(convertBeneficiarios(entity.getBeneficiarios()))
                .bienes(convertBienes(entity.getBienes()))
+
+               // checkpoints
+               .primeraRecepcionRegistrada(entity.isPrimeraRecepcionRegistrada())
+               .primeraEntregaAutorizada(entity.isPrimeraEntregaAutorizada())
+               .todosLosBienesRecibidos(entity.isTodosLosBienesRecibidos())
+               .contratoCerrado(entity.isContratoCerrado())
                .build();
     }
 

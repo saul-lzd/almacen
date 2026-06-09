@@ -69,19 +69,39 @@ public class ContratoEntity extends AuditoriaEntity {
     private BigDecimal montoTotal;
 
     // =========================================================
-    // ESTATUS — ciclo de vida del contrato
+    // ESTATUS — fase administrativa del contrato
+    // Solo dos valores: CAPTURA (editable) y POR_RECIBIR (bloqueado, activo en almacén)
     // =========================================================
 
-    /**
-     * Estatus actual del contrato.
-     * Valores: CAPTURA → POR_RECIBIR → RECEPCION_PARCIAL* → EN_ALMACEN
-     *          → LISTO_PARA_ENTREGAR → ENTREGA_PARCIAL* → ENTREGADO → CERRADO
-     * (*) estados opcionales según si las entregas son parciales
-     */
     @Column(name = "estatus", nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
-    //private EstatusContrato estatus = EstatusContrato.CAPTURA;
     private EstatusContrato estatus;
+
+    // =========================================================
+    // CHECKPOINTS — hitos irreversibles del ciclo de vida
+    // Se marcan automáticamente conforme avanza el proceso.
+    // Nunca retroceden.
+    // =========================================================
+
+    /** Se marca cuando llega la primera entrega del proveedor. */
+    @Column(name = "primera_recepcion_registrada", nullable = false)
+    @Builder.Default
+    private boolean primeraRecepcionRegistrada = false;
+
+    /** Se marca cuando el almacén registra la primera salida (entrega a beneficiario). */
+    @Column(name = "primera_entrega_autorizada", nullable = false)
+    @Builder.Default
+    private boolean primeraEntregaAutorizada = false;
+
+    /** Se marca cuando totalRecibidos === totalContratados. */
+    @Column(name = "todos_bienes_recibidos", nullable = false)
+    @Builder.Default
+    private boolean todosLosBienesRecibidos = false;
+
+    /** Se marca cuando el 100% de los bienes están en estatus ENTREGADO. */
+    @Column(name = "contrato_cerrado", nullable = false)
+    @Builder.Default
+    private boolean contratoCerrado = false;
 
     // =========================================================
     // RELACIONES CON PARTICIPANTES DEL CONTRATO
@@ -125,13 +145,7 @@ public class ContratoEntity extends AuditoriaEntity {
     // =========================================================
 
     public enum EstatusContrato {
-        CAPTURA,
-        POR_RECIBIR,
-        RECEPCION_PARCIAL,   // algunos bienes recibidos del proveedor, otros pendientes
-        EN_ALMACEN,          // todos los bienes físicamente en almacén
-        LISTO_PARA_ENTREGAR, // admin aprobó entrega a beneficiarios
-        ENTREGA_PARCIAL,     // algunos bienes entregados a beneficiarios, otros pendientes
-        ENTREGADO,
-        CERRADO
+        CAPTURA,      // admin capturando datos — contrato editable
+        POR_RECIBIR   // enviado al almacén — bloqueado para edición, activo en almacén
     }
 }

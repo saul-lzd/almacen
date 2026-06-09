@@ -12,7 +12,10 @@ import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
 import com.sesesp.almacen.domain.mapper.ContratoMapper;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenBienRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -38,6 +41,7 @@ public class ContratoService {
     private final ContratoMapper contratoMapper;
     private final RecepcionAlmacenBienRepository recepcionAlmacenBienRepository;
     private final AlmacenBienRepository almacenBienRepository;
+    private final RecepcionAlmacenRepository recepcionAlmacenRepository;
 
     // Servicios delegados — cada uno es responsable de su propia entidad
     private final ProveedorService proveedorService;
@@ -277,14 +281,15 @@ public class ContratoService {
     // ─────────────────────────────────────────────────────────────
 
     /**
-     * Autoriza el contrato para entrega a beneficiarios.
+     * Autoriza la entrega de todas las recepciones que están en estatus PROCESADA.
      *
      * Validaciones:
-     *   - El contrato debe estar en estatus EN_ALMACEN
-     *   - Todos los bienes recibidos deben estar en estatus PROCESADO (ninguno en RECIBIDO)
+     *   - El contrato debe estar en POR_RECIBIR y no estar cerrado
+     *   - Debe existir al menos una recepción en estatus PROCESADA
      *
      * Efecto:
-     *   - Estatus cambia a LISTO_PARA_ENTREGAR
+     *   - Los bienes de las recepciones PROCESADAS cambian de PROCESADO → LISTO_PARA_ENTREGAR
+     *   - El contrato no cambia de estatus (permanece POR_RECIBIR)
      */
     @Transactional
     public void autorizarEntrega(Integer idContrato) {
@@ -292,50 +297,41 @@ public class ContratoService {
 
         ContratoEntity contrato = findContratoOrThrow(idContrato);
 
-        if (contrato.getEstatus() != EstatusContrato.EN_ALMACEN
-                && contrato.getEstatus() != EstatusContrato.RECEPCION_PARCIAL) {
+        if (contrato.getEstatus() != EstatusContrato.POR_RECIBIR) {
             throw new ContratoValidacionException(List.of(
                     "El contrato no puede autorizarse porque su estatus es: "
                             + contrato.getEstatus().name()
-                            + ". Solo contratos EN_ALMACEN o RECEPCION_PARCIAL pueden autorizarse para entrega."
+                            + ". Solo contratos en POR_RECIBIR pueden autorizarse para entrega."
             ));
         }
 
-        long sinProcesar = almacenBienRepository
-                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.RECIBIDO)
-                + almacenBienRepository
-                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.EN_PROCESO);
-
-        if (sinProcesar > 0) {
+        if (contrato.isContratoCerrado()) {
             throw new ContratoValidacionException(List.of(
-                    "No se puede autorizar la entrega: quedan " + sinProcesar
-                            + (sinProcesar == 1 ? " bien sin procesar." : " bienes sin procesar.")
+                    "El contrato ya está cerrado — todos los bienes han sido entregados."
             ));
         }
 
-        long procesados = almacenBienRepository
-                .countByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.PROCESADO);
+        List<RecepcionAlmacenEntity> recepcionesProcesadas = recepcionAlmacenRepository
+                .findByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusRecepcion.PROCESADA);
 
-        if (procesados == 0) {
+        if (recepcionesProcesadas.isEmpty()) {
             throw new ContratoValidacionException(List.of(
-                    "No hay bienes procesados disponibles para autorizar."
+                    "No hay recepciones completamente procesadas disponibles para autorizar."
             ));
         }
 
-        // Cambiar todos los PROCESADO → LISTO_PARA_ENTREGAR
+        List<Integer> idsRecepciones = recepcionesProcesadas.stream()
+                .map(RecepcionAlmacenEntity::getIdRecepcionAlmacen)
+                .collect(Collectors.toList());
+
         List<AlmacenBienEntity> bienes = almacenBienRepository
-                .findByContratoIdContratoAndEstatusAndActivoTrue(idContrato, EstatusBien.PROCESADO);
+                .findByRecepcionesAndEstatus(idsRecepciones, EstatusBien.PROCESADO);
+
         bienes.forEach(b -> b.setEstatus(EstatusBien.LISTO_PARA_ENTREGAR));
         almacenBienRepository.saveAll(bienes);
 
-        // El contrato avanza a LISTO_PARA_ENTREGAR solo si ya se recibió todo (EN_ALMACEN).
-        // Si aún hay recepciones pendientes (RECEPCION_PARCIAL), el estatus del contrato no cambia.
-        if (contrato.getEstatus() == EstatusContrato.EN_ALMACEN) {
-            contrato.setEstatus(EstatusContrato.LISTO_PARA_ENTREGAR);
-            contratoRepository.save(contrato);
-        }
-
-        logger.info("Contrato ID: {} — {} bienes autorizados para entrega.", idContrato, procesados);
+        logger.info("Contrato ID: {} — {} bienes de {} recepción(es) autorizados para entrega.",
+                idContrato, bienes.size(), recepcionesProcesadas.size());
     }
 
     // ─────────────────────────────────────────────────────────────

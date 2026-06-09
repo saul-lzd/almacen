@@ -33,4 +33,10 @@ public class ContratoDto {
     private List<ContratoBienDto> bienes;
 
     private ResumenBienesDto resumenBienes;
+
+    // Checkpoints de ciclo de vida (irreversibles)
+    private boolean primeraRecepcionRegistrada;
+    private boolean primeraEntregaAutorizada;
+    private boolean todosLosBienesRecibidos;
+    private boolean contratoCerrado;
 }

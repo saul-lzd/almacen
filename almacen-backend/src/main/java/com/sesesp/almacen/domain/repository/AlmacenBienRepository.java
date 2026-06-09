@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface AlmacenBienRepository extends JpaRepository<AlmacenBienEntity, Integer> {
@@ -32,6 +33,26 @@ public interface AlmacenBienRepository extends JpaRepository<AlmacenBienEntity, 
            "WHERE ab.contrato.idContrato IN :ids AND ab.activo = true " +
            "GROUP BY ab.contrato.idContrato, ab.estatus")
     List<Object[]> countByContratosGroupByEstatus(@Param("ids") List<Integer> ids);
+
+    /** Total de bienes activos de una recepción (sin importar estatus). */
+    long countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndActivoTrue(
+            Integer idRecepcionAlmacen);
+
+    /** Bienes de una recepción que están en alguno de los estatus indicados. */
+    long countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+            Integer idRecepcionAlmacen, Collection<EstatusBien> estatuses);
+
+    /** Todos los bienes activos de un contrato (para verificar cierre). */
+    long countByContratoIdContratoAndActivoTrue(Integer idContrato);
+
+    /** Bienes activos de un conjunto de recepciones, filtrados por estatus. */
+    @Query("SELECT ab FROM AlmacenBienEntity ab " +
+           "WHERE ab.recepcionAlmacenBien.recepcionAlmacen.idRecepcionAlmacen IN :idRecepciones " +
+           "AND ab.estatus = :estatus " +
+           "AND ab.activo = true")
+    List<AlmacenBienEntity> findByRecepcionesAndEstatus(
+            @Param("idRecepciones") List<Integer> idRecepciones,
+            @Param("estatus") EstatusBien estatus);
 
     @Query("SELECT ab FROM AlmacenBienEntity ab " +
            "JOIN FETCH ab.contratoBien cb " +

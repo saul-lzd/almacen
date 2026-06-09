@@ -1,72 +1,98 @@
 package com.sesesp.almacen.config;
 
 import com.sesesp.almacen.domain.entity.UsuarioEntity;
+import com.sesesp.almacen.domain.entity.UsuarioEntity.RolUsuario;
 import com.sesesp.almacen.domain.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 /**
- * Crea el usuario admin inicial si la tabla usuario está vacía.
- * Cambiar la contraseña desde la app o directamente en BD después del primer arranque.
+ * Garantiza que los usuarios de sistema existen al arrancar.
+ *
+ * Orden de creación:
+ *   1. SISTEMA  — usuario técnico, nunca inicia sesión, ID = 1 (referencia de auditoría por defecto)
+ *   2. admin    — administrador operativo
+ *   3. almacen  — operador de almacén
+ *
+ * El usuario SISTEMA se inserta via JDBC para resolver la FK circular
+ * (usuario_creacion → id_usuario) cuando la tabla está vacía.
+ * Los demás se crean via JPA porque ya existe el ID 1 como referencia válida.
  */
 @Component
 public class DataInitializer implements CommandLineRunner {
 
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
+    private final JdbcTemplate jdbc;
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(JdbcTemplate jdbc,
+                           UsuarioRepository usuarioRepository,
+                           PasswordEncoder passwordEncoder) {
+        this.jdbc = jdbc;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     public void run(String... args) {
-        if (!usuarioRepository.findByUsername("admin").isPresent()) {
-            UsuarioEntity admin = buildUsuarioAdministrador();
-            usuarioRepository.save(admin);
-            System.out.println(">>> Usuario admin creado. Contraseña inicial: Sesesp2026! — cámbiala.");
-        }
+        crearUsuarioSistema();
+        crearUsuario("admin",   "Administrador", "admin@sesesp.mx",   RolUsuario.ADMINISTRADOR);
+        crearUsuario("almacen", "Almacén",       "almacen@sesesp.mx", RolUsuario.ALMACEN);
+    }
 
-        if (!usuarioRepository.findByUsername("almacen").isPresent()) {
-            UsuarioEntity almacen = buildUsuarioAlmacen();
-            usuarioRepository.save(almacen);
-            System.out.println(">>> Usuario almacen creado. Contraseña inicial: Sesesp2026! — cámbiala.");
+    /**
+     * Crea el usuario técnico SISTEMA (ID 1) si no existe.
+     * Usa JDBC con FK checks desactivados para resolver la auto-referencia
+     * en usuario_creacion al insertar en una tabla vacía.
+     * Este usuario nunca inicia sesión — no tiene contraseña válida.
+     */
+    private void crearUsuarioSistema() {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM usuario WHERE username = 'sistema'", Integer.class);
+        if (count != null && count > 0) return;
+
+        jdbc.execute("SET FOREIGN_KEY_CHECKS = 0");
+        try {
+            jdbc.update(
+                "INSERT INTO usuario " +
+                "(username, password_hash, nombre, correo, rol, usuario_sistema, " +
+                " activo, fecha_creacion, usuario_creacion) " +
+                "VALUES ('sistema', '[SISTEMA]', 'Sistema', 'sistema@sesesp.mx', " +
+                "        'SISTEMA', 1, 1, NOW(), 0)");
+            // Corrección: apuntar usuario_creacion a su propio ID recién generado
+            jdbc.update(
+                "UPDATE usuario SET usuario_creacion = id_usuario WHERE username = 'sistema'");
+            logger.info("Usuario SISTEMA creado (ID de referencia para auditoría).");
+        } finally {
+            jdbc.execute("SET FOREIGN_KEY_CHECKS = 1");
         }
     }
 
-    private UsuarioEntity buildUsuarioAdministrador() {
+    /**
+     * Crea un usuario operativo via JPA. Requiere que el usuario SISTEMA (ID 1) ya exista
+     * para satisfacer la FK de usuario_creacion en @PrePersist.
+     * Contraseña inicial: Sesesp2026!
+     */
+    private void crearUsuario(String username, String nombre, String correo, RolUsuario rol) {
+        if (usuarioRepository.findByUsername(username).isPresent()) return;
+
         UsuarioEntity user = new UsuarioEntity();
-        user.setUsername("admin");
+        user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode("Sesesp2026!"));
-        user.setNombre("Administrador");
-        user.setCorreo("admin@sesesp.mx");
-        user.setRol(UsuarioEntity.RolUsuario.ADMINISTRADOR);
+        user.setNombre(nombre);
+        user.setCorreo(correo);
+        user.setRol(rol);
         user.setUsuarioSistema(false);
-        // Campos de auditoría manuales (bootstrap — no hay sesión activa)
-        user.setUsuarioCreacion(1);
-        user.setFechaCreacion(LocalDateTime.now());
-        user.setActivo(true);
+        usuarioRepository.save(user);
 
-        return user;
-    }
-
-    private UsuarioEntity buildUsuarioAlmacen() {
-        UsuarioEntity user = new UsuarioEntity();
-        user.setUsername("almacen");
-        user.setPasswordHash(passwordEncoder.encode("Sesesp2026!"));
-        user.setNombre("Almacen");
-        user.setCorreo("almacen@sesesp.mx");
-        user.setRol(UsuarioEntity.RolUsuario.ALMACEN);
-        user.setUsuarioSistema(false);
-        // Campos de auditoría manuales (bootstrap — no hay sesión activa)
-        user.setUsuarioCreacion(1);
-        user.setFechaCreacion(LocalDateTime.now());
-        user.setActivo(true);
-
-        return user;
+        logger.info("Usuario '{}' creado. Contraseña inicial: Sesesp2026! — cámbiala.", username);
     }
 }

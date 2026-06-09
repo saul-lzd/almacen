@@ -11,8 +11,10 @@ import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
+import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -36,6 +38,7 @@ public class AlmacenBienService {
 
     private final AlmacenBienRepository almacenBienRepository;
     private final ContratoRepository contratoRepository;
+    private final RecepcionAlmacenRepository recepcionAlmacenRepository;
 
     @Transactional(readOnly = true)
     public List<AlmacenBienGrupoDto> getBienesAgrupados(Integer idContrato) {
@@ -107,6 +110,7 @@ public class AlmacenBienService {
 
         if (bien.getEstatus() != EstatusBien.EN_PROCESO) {
             bien.setEstatus(EstatusBien.EN_PROCESO);
+            avanzarRecepcionAEnProceso(bien);
         }
 
         almacenBienRepository.save(bien);
@@ -133,19 +137,13 @@ public class AlmacenBienService {
         Optional.ofNullable(request.getMarca()).ifPresent(bien::setMarca);
         Optional.ofNullable(request.getModelo()).ifPresent(bien::setModelo);
         Optional.ofNullable(request.getDescripcionComplementaria()).ifPresent(bien::setDescripcionComplementaria);
+        avanzarRecepcionAEnProceso(bien);
         bien.setEstatus(EstatusBien.PROCESADO);
         bien.setFechaProcesamiento(LocalDateTime.now());
 
         almacenBienRepository.save(bien);
 
-        long pendientes = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
-                bien.getContrato().getIdContrato(), EstatusBien.RECIBIDO)
-                + almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
-                bien.getContrato().getIdContrato(), EstatusBien.EN_PROCESO);
-        if (pendientes == 0) {
-            logger.info("Todos los bienes del contrato {} fueron procesados — notificar al admin.",
-                    bien.getContrato().getIdContrato());
-        }
+        verificarRecepcionProcesada(bien);
     }
 
     @Transactional
@@ -187,12 +185,7 @@ public class AlmacenBienService {
 
         almacenBienRepository.saveAll(bienes);
 
-        Integer idContrato = bienes.get(0).getContrato().getIdContrato();
-        long pendientes = almacenBienRepository.countByContratoIdContratoAndEstatusAndActivoTrue(
-                idContrato, EstatusBien.RECIBIDO);
-        if (pendientes == 0) {
-            logger.info("Todos los bienes del contrato {} fueron procesados — notificar al admin.", idContrato);
-        }
+        verificarRecepcionProcesada(bienes.get(0));
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -217,6 +210,40 @@ public class AlmacenBienService {
                 .modelo(ab.getModelo())
                 .descripcionComplementaria(ab.getDescripcionComplementaria())
                 .build();
+    }
+
+    /** Si la recepción está en INICIADA, la avanza a EN_PROCESO. */
+    private void avanzarRecepcionAEnProceso(AlmacenBienEntity bien) {
+        RecepcionAlmacenEntity recepcion = getRecepcion(bien);
+        if (recepcion != null && recepcion.getEstatus() == EstatusRecepcion.INICIADA) {
+            recepcion.setEstatus(EstatusRecepcion.EN_PROCESO);
+            recepcionAlmacenRepository.save(recepcion);
+            logger.info("Recepción {} → EN_PROCESO", recepcion.getFolioEntradaAlmacen());
+        }
+    }
+
+    /** Si todos los bienes de la recepción están en PROCESADO, avanza a PROCESADA. */
+    private void verificarRecepcionProcesada(AlmacenBienEntity bien) {
+        RecepcionAlmacenEntity recepcion = getRecepcion(bien);
+        if (recepcion == null || recepcion.getEstatus() == EstatusRecepcion.PROCESADA) return;
+
+        Integer idRecepcion = recepcion.getIdRecepcionAlmacen();
+        long total = almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndActivoTrue(idRecepcion);
+        long sinProcesar = almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                        idRecepcion, List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO));
+
+        if (total > 0 && sinProcesar == 0) {
+            recepcion.setEstatus(EstatusRecepcion.PROCESADA);
+            recepcionAlmacenRepository.save(recepcion);
+            logger.info("Recepción {} → PROCESADA", recepcion.getFolioEntradaAlmacen());
+        }
+    }
+
+    private RecepcionAlmacenEntity getRecepcion(AlmacenBienEntity bien) {
+        if (bien.getRecepcionAlmacenBien() == null) return null;
+        return bien.getRecepcionAlmacenBien().getRecepcionAlmacen();
     }
 
     private String stripHtml(String html, int maxLen) {
