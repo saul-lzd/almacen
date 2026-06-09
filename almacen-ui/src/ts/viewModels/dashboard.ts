@@ -1,6 +1,6 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
-import { mapEstatusToLabel, mapEstatusToBadge, removeAccents } from "../utils/contratoUtils";
+import { calcEstatusEfectivo, mapEstatusToLabel, mapEstatusToBadge, removeAccents, EstatusEfectivo } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
 import { contratosApi } from "../utils/api";
 import 'ojs/ojtoolbar';
@@ -14,9 +14,9 @@ import "oj-c/buttonset-single";
 // TIPOS
 // ================================================================
 
-const ESTATUS_ALMACEN = [
-    "POR_RECIBIR", "RECEPCION_PARCIAL", "EN_ALMACEN",
-    "LISTO_PARA_ENTREGAR", "ENTREGA_PARCIAL"
+// Estatus efectivos visibles para el almacenista (excluye CAPTURA y CERRADO)
+const ESTATUS_ALMACEN: EstatusEfectivo[] = [
+    "POR_RECIBIR", "RECEPCION_PARCIAL", "RECIBIDO", "EN_ENTREGA"
 ];
 
 type ResumenBienes = {
@@ -33,8 +33,13 @@ type ContratoItem = {
     numeroContrato: string;
     adquisicion: string;
     estatus: string;
+    estatusEfectivo: EstatusEfectivo;
     estatusLabel: string;
     estatusBadge: string;
+    primeraRecepcionRegistrada: boolean;
+    primeraEntregaAutorizada:   boolean;
+    todosLosBienesRecibidos:    boolean;
+    contratoCerrado:            boolean;
     beneficiarios: string;
     proveedor: string;
     fechaTentativaLlegada: string | null;
@@ -78,8 +83,8 @@ class DashboardViewModel {
         const estatus = this.frmEstatus();
 
         return this.contratos().filter(c => {
-            if (this.calcEsAlmacenista() && !ESTATUS_ALMACEN.includes(c.estatus)) return false;
-            const matchEstatus = !estatus || c.estatus === estatus;
+            if (this.calcEsAlmacenista() && !ESTATUS_ALMACEN.includes(c.estatusEfectivo)) return false;
+            const matchEstatus = !estatus || c.estatusEfectivo === estatus;
             const matchBuscar  = !buscar
                 || removeAccents(c.numeroContrato.toLowerCase()).includes(buscar)
                 || removeAccents(c.adquisicion.toLowerCase()).includes(buscar)
@@ -91,18 +96,24 @@ class DashboardViewModel {
 
     public calcHayResultados = ko.pureComputed(() => this.calcFiltrados().length > 0);
 
+    // Lista completamente vacía en BD (no es un problema de filtros)
+    public calcListaVacia = ko.pureComputed(() =>
+        !this.uiCargando() && this.contratos().length === 0
+    );
+
     // ----------------------------------------------------------------
     // Filtro de estatus — split menu button
     // ----------------------------------------------------------------
     public readonly itemsEstatus = [
-        { key: "",                      label: "Todos" },
-        ...(this.userRole === "ADMINISTRADOR" ? [{ key: "CAPTURA", label: "En captura" }] : []),
-        { key: "POR_RECIBIR",           label: "Por recibir" },
-        { key: "RECEPCION_PARCIAL",     label: "Recepción parcial" },
-        { key: "EN_ALMACEN",            label: "En almacén" },
-        { key: "LISTO_PARA_ENTREGAR",   label: "Listo para entregar" },
-        { key: "ENTREGA_PARCIAL",       label: "Entrega parcial" },
-        { key: "ENTREGADO",             label: "Entregado" },
+        { key: "",                   label: "Todos" },
+        ...(this.userRole === "ADMINISTRADOR" ? [
+            { key: "CAPTURA",        label: "En captura" },
+            { key: "CERRADO",        label: "Cerrado" },
+        ] : []),
+        { key: "POR_RECIBIR",        label: "Por recibir" },
+        { key: "RECEPCION_PARCIAL",  label: "Recepción parcial" },
+        { key: "RECIBIDO",           label: "Recibido" },
+        { key: "EN_ENTREGA",         label: "En entrega" },
     ];
 
     public calcLabelFiltroEstatus = ko.pureComputed(() => {
@@ -148,13 +159,19 @@ class DashboardViewModel {
                 const fechaRaw: string | null = c.fechaTentativaLlegada
                     ? c.fechaTentativaLlegada.split("T")[0]
                     : null;
+                const efectivo = calcEstatusEfectivo(c);
                 return {
                     idContrato:     c.idContrato,
                     numeroContrato: c.numeroContrato,
                     adquisicion:    c.adquisicion || "—",
                     estatus:        c.estatus,
-                    estatusLabel:   mapEstatusToLabel(c.estatus),
-                    estatusBadge:   mapEstatusToBadge(c.estatus),
+                    estatusEfectivo: efectivo,
+                    estatusLabel:   mapEstatusToLabel(efectivo),
+                    estatusBadge:   mapEstatusToBadge(efectivo),
+                    primeraRecepcionRegistrada: c.primeraRecepcionRegistrada ?? false,
+                    primeraEntregaAutorizada:   c.primeraEntregaAutorizada   ?? false,
+                    todosLosBienesRecibidos:    c.todosLosBienesRecibidos    ?? false,
+                    contratoCerrado:            c.contratoCerrado            ?? false,
                     beneficiarios:  c.beneficiarios || "—",
                     proveedor:      c.proveedor?.razonSocial || "Sin proveedor asignado",
                     fechaTentativaLlegada:          fechaRaw,

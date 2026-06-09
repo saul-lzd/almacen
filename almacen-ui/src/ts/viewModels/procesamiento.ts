@@ -1,6 +1,6 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
-import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 import { contratosApi, almacenBienesApi } from "../utils/api";
 
 import "oj-c/form-layout";
@@ -53,6 +53,7 @@ type ContratoResumen = {
     adquisicion: string;
     estatus: string;
     estatusLabel: string;
+    estatusBadge: string;
     proveedor: string;
     beneficiarios: string;
 };
@@ -123,6 +124,7 @@ class ProcesamientoViewModel {
                 adquisicion:    dataContrato.adquisicion,
                 estatus:        dataContrato.estatus,
                 estatusLabel:   mapEstatusToLabel(dataContrato.estatus),
+                estatusBadge:   mapEstatusToBadge(dataContrato.estatus),
                 proveedor:      dataContrato.proveedor?.razonSocial || "Sin proveedor asignado",
                 beneficiarios:  dataContrato.beneficiarios || "",
             });
@@ -191,6 +193,10 @@ class ProcesamientoViewModel {
     // ================================================================
     public cmdRegresar = (): void => {
         this.router?.go({ path: "contrato-detalle", params: { id: this.contratoId } });
+    };
+
+    public cmdActualizar = (): void => {
+        if (this.contratoId) void this.loadBienes(this.contratoId);
     };
 
     // Guarda datos del bien sin marcarlo como procesado.

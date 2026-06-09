@@ -9,16 +9,12 @@
   <!-- BREADCRUMB -->
   <div class="recepcion-breadcrumb">
     <oj-c-button
-      label="Regresar a detalles"
+      label="Regresar"
       chroming="borderless"
       size="sm"
       on-oj-action="[[cmdRegresar]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
-    <span class="recepcion-breadcrumb-sep">/</span>
-    <span class="recepcion-breadcrumb-titulo">
-      <strong><oj-bind-text value="[['Procesar bienes: ' + (contrato() ? contrato().numeroContrato : 'Cargando...')]]"></oj-bind-text></strong>
-    </span>
   </div>
 
   <!-- BANNER COMPLETADO -->
@@ -44,39 +40,44 @@
 
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
-    <!-- ═══════════════════════════════════════════════
-         INFO DEL CONTRATO
-    ════════════════════════════════════════════════ -->
-    <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
-      <div class="recepcion-seccion-titulo">Información del Contrato</div>
-      <div class="recepcion-info-grid">
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Número de Contrato</div>
-          <div class="recepcion-info-valor font-mono">
-            <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
-          </div>
-        </div>
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Estatus</div>
-          <div class="recepcion-info-valor">
-            <span class="oj-badge oj-badge-subtle oj-badge-warning">
-              <oj-bind-text value="[[contrato().estatusLabel]]"></oj-bind-text>
-            </span>
-          </div>
-        </div>
-        <div class="recepcion-info-item recepcion-info-item--full">
-          <div class="recepcion-info-label">Adquisición</div>
-          <div class="recepcion-info-valor">
-            <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
-          </div>
-        </div>
-        <div class="recepcion-info-item">
+    <!-- ═══ ENCABEZADO + ACCIONES ════════════════════════════════ -->
+    <div class="detalle-encabezado">
+      <div>
+        <h2 class="detalle-numero"><oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text></h2>
+        <p class="oj-text-color-secondary oj-typography-body-sm">
+          <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+        </p>
+      </div>
+      <div class="detalle-acciones">
+        <oj-c-button
+          label="Actualizar"
+          chroming="outlined"
+          size="sm"
+          :disabled="[[uiCargando()]]"
+          on-oj-action="[[cmdActualizar]]">
+          <span slot="startIcon" class="oj-ux-ico-refresh"></span>
+        </oj-c-button>
+      </div>
+    </div>
+
+    <!-- ═══ INFO DEL CONTRATO ════════════════════════════════════ -->
+    <div class="oj-sm-margin-6x-bottom oj-sm-padding-6x">
+      <div class="detalle-info-grid">
+        <div>
           <div class="recepcion-info-label">Proveedor</div>
           <div class="recepcion-info-valor">
             <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
           </div>
         </div>
-        <div class="recepcion-info-item">
+        <div>
+          <div class="recepcion-info-label">Estatus</div>
+          <div class="recepcion-info-valor">
+            <span :class="[['oj-badge oj-badge-subtle ' + contrato().estatusBadge]]">
+              <oj-bind-text value="[[contrato().estatusLabel]]"></oj-bind-text>
+            </span>
+          </div>
+        </div>
+        <div>
           <div class="recepcion-info-label">Beneficiarios</div>
           <div class="recepcion-info-valor">
             <oj-bind-text value="[[contrato().beneficiarios || '—']]"></oj-bind-text>

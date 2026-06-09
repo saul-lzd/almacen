@@ -70,8 +70,25 @@
 
   <oj-bind-if test="[[!uiCargando()]]">
 
-    <!-- Sin resultados -->
-    <oj-bind-if test="[[!calcHayResultados()]]">
+    <!-- Lista vacía: no hay contratos en BD -->
+    <oj-bind-if test="[[calcListaVacia()]]">
+      <div class="dash-empty-state oj-panel oj-panel-shadow-sm">
+        <span class="oj-ux-ico-box dash-empty-state-icon"></span>
+        <p class="dash-empty-state-titulo">No hay contratos registrados</p>
+        <p class="dash-empty-state-subtitulo">Comienza creando tu primer contrato</p>
+        <oj-bind-if test="[[calcEsAdmin()]]">
+          <oj-c-button
+            label="Crear Contrato"
+            chroming="callToAction"
+            on-oj-action="[[cmdNuevoContrato]]">
+            <span slot="startIcon" class="oj-ux-ico-plus"></span>
+          </oj-c-button>
+        </oj-bind-if>
+      </div>
+    </oj-bind-if>
+
+    <!-- Sin resultados por filtro/búsqueda -->
+    <oj-bind-if test="[[!calcHayResultados() && !calcListaVacia()]]">
       <div class="dash-sin-resultados">
         <span class="oj-ux-ico-no-data"></span>
         <p>No se encontraron contratos con los filtros aplicados.</p>
