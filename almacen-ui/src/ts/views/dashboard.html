@@ -74,8 +74,8 @@
     <oj-bind-if test="[[calcListaVacia()]]">
       <div class="dash-empty-state oj-panel oj-panel-shadow-sm">
         <span class="oj-ux-ico-box dash-empty-state-icon"></span>
-        <p class="dash-empty-state-titulo">No hay contratos registrados</p>
-        <p class="dash-empty-state-subtitulo">Comienza creando tu primer contrato</p>
+        <div class="oj-typography-heading-sm text-center">No hay contratos registrados</div>
+        <div class="oj-typography-body-md oj-text-color-secondary oj-sm-margin-4x-bottom text-center">Comienza creando tu primer contrato</div>
         <oj-bind-if test="[[calcEsAdmin()]]">
           <oj-c-button
             label="Crear Contrato"

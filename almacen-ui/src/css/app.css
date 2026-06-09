@@ -1028,6 +1028,22 @@
     font-size: 14px;
   }
 
+  /* Estado vacío — BD sin contratos */
+  .dash-empty-state {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 8px;
+    padding: 64px 32px;
+    text-align: center;
+  }
+
+  .dash-empty-state-icon {
+    font-size: 48px;
+    color: var(--oj-core-text-color-disabled);
+    margin-bottom: 8px;
+  }
+
   /* ─ Vista lista ─ */
 
   .dash-lista-tabla {
