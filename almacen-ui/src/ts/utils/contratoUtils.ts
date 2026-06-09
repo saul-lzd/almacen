@@ -1,40 +1,77 @@
 /**
  * Utilidades compartidas para contratos.
- * Usado en cualquier vista que muestre estatus.
  */
-export const ESTATUS_LABELS: Record<string, string> = {
-    CAPTURA:             "En captura",
-    POR_RECIBIR:         "Pendiente de recibir",
-    RECEPCION_PARCIAL:   "Recepción parcial",
-    EN_ALMACEN:          "En almacén",
-    LISTO_PARA_ENTREGAR: "Listo para entregar",
-    ENTREGA_PARCIAL:     "Entrega parcial",
-    ENTREGADO:           "Entregado",
-    CERRADO:             "Cerrado"
-};
 
-export const ESTATUS_BADGE: Record<string, string> = {
-    CAPTURA:             "",
-    POR_RECIBIR:         "oj-badge-info",
-    RECEPCION_PARCIAL:   "oj-badge-info",
-    EN_ALMACEN:          "oj-badge-warning",
-    LISTO_PARA_ENTREGAR: "oj-badge-success",
-    ENTREGA_PARCIAL:     "oj-badge-warning",
-    ENTREGADO:           "oj-badge-success",
-    CERRADO:             ""
+// ──────────────────────────────────────────────────────────────────
+// Estatus efectivo — derivado de estatus + 4 checkpoints
+//
+// El backend persiste CAPTURA como estatus formal.
+// El resto se deriva de los checkpoints booleanos irreversibles.
+// ──────────────────────────────────────────────────────────────────
+
+export type EstatusEfectivo =
+    | "CAPTURA"
+    | "POR_RECIBIR"
+    | "RECEPCION_PARCIAL"
+    | "RECIBIDO"
+    | "EN_ENTREGA"
+    | "CERRADO";
+
+export type ContratoCheckpoints = {
+    estatus: string;
+    primeraRecepcionRegistrada: boolean;
+    primeraEntregaAutorizada:   boolean;
+    todosLosBienesRecibidos:    boolean;
+    contratoCerrado:            boolean;
 };
 
 /**
-   * Convierte el enum del backend a etiqueta en español para la UI.
-   */
+ * Calcula el estado visual del contrato a partir de sus checkpoints.
+ * Orden de prioridad descendente.
+ */
+export function calcEstatusEfectivo(c: ContratoCheckpoints): EstatusEfectivo {
+    if (c.estatus === "CAPTURA")        return "CAPTURA";
+    if (c.contratoCerrado)              return "CERRADO";
+    if (c.primeraEntregaAutorizada)     return "EN_ENTREGA";
+    if (c.todosLosBienesRecibidos)      return "RECIBIDO";
+    if (c.primeraRecepcionRegistrada)   return "RECEPCION_PARCIAL";
+    return "POR_RECIBIR";
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Etiquetas y badges para el estatus efectivo
+// ──────────────────────────────────────────────────────────────────
+
+const ESTATUS_LABELS: Record<EstatusEfectivo, string> = {
+    CAPTURA:           "En captura",
+    POR_RECIBIR:       "Por recibir",
+    RECEPCION_PARCIAL: "Recepción parcial",
+    RECIBIDO:          "Recibido",
+    EN_ENTREGA:        "En entrega",
+    CERRADO:           "Cerrado",
+};
+
+const ESTATUS_BADGE: Record<EstatusEfectivo, string> = {
+    CAPTURA:           "",
+    POR_RECIBIR:       "oj-badge-info",
+    RECEPCION_PARCIAL: "oj-badge-info",
+    RECIBIDO:          "oj-badge-warning",
+    EN_ENTREGA:        "oj-badge-warning",
+    CERRADO:           "oj-badge-success",
+};
+
 export function mapEstatusToLabel(estatus: string): string {
-    return ESTATUS_LABELS[estatus] || estatus;
+    return (ESTATUS_LABELS as Record<string, string>)[estatus] ?? estatus;
 }
 
 export function mapEstatusToBadge(estatus: string): string {
-    return ESTATUS_BADGE[estatus] || "oj-badge-neutral";
+    return (ESTATUS_BADGE as Record<string, string>)[estatus] ?? "oj-badge-neutral";
 }
 
+// ──────────────────────────────────────────────────────────────────
+// Helpers generales
+// ──────────────────────────────────────────────────────────────────
+
 export function removeAccents(str: string): string {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-};
+    return str.normalize("NFD").replace(/[̀-ͯ]/g, "");
+}

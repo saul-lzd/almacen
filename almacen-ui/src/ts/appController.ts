@@ -60,8 +60,9 @@ class RootViewModel {
     const allRoutes = [
       { path: "", redirect: "dashboard" },
       { path: "dashboard",          detail: { label: "Inicio",    iconClass: "oj-ux-ico-home" } },
-      { path: "contrato",           detail: { label: "Contratos", iconClass: "oj-ux-ico-data-document" } },
-      { path: "almacen",            detail: { label: "Almacén",   iconClass: "oj-ux-ico-warehouse" } },
+      { path: "contrato",           detail: { label: "Contratos",  iconClass: "oj-ux-ico-data-document" } },
+      { path: "contrato-v1",        detail: { label: "Cto. v1",   iconClass: "oj-ux-ico-file-text" } },
+      { path: "almacen",            detail: { label: "Almacén",    iconClass: "oj-ux-ico-warehouse" } },
       // Sub-rutas: registradas en el router pero no aparecen en el nav
       { path: "contrato-detalle",   detail: { label: "Detalle",       iconClass: "oj-ux-ico-data-document" } },
       { path: "procesamiento",      detail: { label: "Procesamiento", iconClass: "oj-ux-ico-process" } },

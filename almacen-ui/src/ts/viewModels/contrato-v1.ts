@@ -192,26 +192,6 @@ class NuevoContratoViewModel {
   public uiInfoExpanded              = ko.observable<boolean>(false);
   public uiEditandoFuncionarios      = ko.observable<boolean>(false);
 
-  // ── Navegación de secciones ──
-  public readonly listSecciones = [
-    { id: "general",       label: "Datos generales",           hint: "Número de contrato, objeto de adquisición y fecha tentativa de llegada." },
-    { id: "funcionarios",  label: "Comprador y administrador", hint: "Titular de la dependencia y administrador del contrato asignado al expediente." },
-    { id: "proveedor",     label: "Proveedor",                 hint: "Datos de la empresa proveedora y su representante legal." },
-    { id: "pagos",         label: "Pagos y claves",            hint: "Montos del contrato y distribución por claves presupuestales." },
-    { id: "beneficiarios", label: "Beneficiarios",             hint: "Municipios o dependencias que recibirán los bienes de esta adquisición." },
-    { id: "bienes",        label: "Adquisición",               hint: "Bienes contratados: lote, partida, cantidad, precio y descripción técnica." },
-  ];
-
-  public uiSeccionActiva = ko.observable<string>("general");
-
-  public calcSeccionActiva = ko.pureComputed(() =>
-    this.listSecciones.find(s => s.id === this.uiSeccionActiva()) ?? this.listSecciones[0]
-  );
-
-  public cmdNavegar = (id: string): void => {
-    this.uiSeccionActiva(id);
-  };
-
   public calcPuedeEditarFuncionarios = ko.pureComputed(() =>
     this.uiEstatusRaw() === "CAPTURA"
   );
@@ -227,15 +207,15 @@ class NuevoContratoViewModel {
   );
 
   public calcNumeroContratoHeader = ko.pureComputed(() =>
-    this.frmNumeroContrato() || "Sin capturar"
+    this.frmNumeroContrato() || "Pendiente"
   );
 
   public calcAdquisicionHeader = ko.pureComputed(() =>
-    this.frmAdquisicion() || "Sin capturar"
+    this.frmAdquisicion() || "Pendiente"
   );
 
   public calcProveedorHeader = ko.pureComputed(() =>
-    this.frmProveedorRazonSocial() || "Sin capturar"
+    this.frmProveedorRazonSocial() || "Pendiente"
   );
 
   // ----------------------------------------------------------------

@@ -1588,3 +1588,134 @@
     border: 1px solid #FCD34D;
     color: #92400E;
   }
+
+/* ── Layout sidebar + workspace del formulario de contrato ── */
+.cf-layout {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--oj-core-border-color-subtle, #ddd);
+  border-radius: 4px;
+  overflow: hidden;
+  min-height: calc(100vh - 300px);
+}
+
+.cf-layout-top {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--oj-core-divider-color, #e0e0e0);
+}
+
+.cf-sidebar-spacer {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--oj-core-bg-color-primary, #ffffff);
+  border-right: 1px solid var(--oj-core-divider-color, #e0e0e0);
+}
+
+.cf-layout-body {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+}
+
+.cf-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--oj-core-bg-color-primary, #ffffff);
+  border-right: 1px solid var(--oj-core-divider-color, #e0e0e0);
+}
+
+.cf-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  color: var(--oj-core-text-color-secondary);
+  font-size: 13px;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.cf-sidebar-item:hover:not(.cf-sidebar-item--active) {
+  background: var(--oj-core-bg-color-secondary);
+}
+
+.cf-sidebar-item--active {
+  border-left-color: var(--oj-core-brand-color, #0572CE);
+  color: var(--oj-core-text-color-primary);
+  background: #EBF3FC;
+  font-weight: 600;
+}
+
+/* ── Sidebar status badges ── */
+.cf-sb-badge {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.cf-sb-badge--done {
+  background: #16A34A;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cf-sb-badge--num {
+  border: 1.5px solid var(--oj-core-border-color-default, #bbb);
+  color: var(--oj-core-text-color-secondary, #767676);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cf-sb-badge--warn {
+  color: #D97706;
+  font-size: 16px;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+}
+
+.cf-workspace-header {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 24px;
+  background: var(--oj-core-bg-color-primary, #ffffff);
+}
+
+.cf-workspace-hint {
+  color: #78909C;
+  text-align: right;
+  max-width: 360px;
+}
+
+.cf-workspace-body {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  background: var(--oj-core-bg-color-secondary, #f5f5f5);
+}
+
+/* ── Context bar del formulario de contrato ── */
+.cf-ctx-item {
+  padding: 0 20px;
+  border-right: 1px solid var(--oj-core-divider-color, #e0e0e0);
+  min-width: 0;
+}
+
+.cf-ctx-item:first-child {
+  padding-left: 0;
+}
+
+.cf-ctx-item--wide {
+  min-width: 200px;
+}
