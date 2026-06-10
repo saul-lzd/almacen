@@ -23,8 +23,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
         throw new Error("Sesión expirada");
     }
     if (!res.ok) {
-        const err = await res.json().catch(() => null);
-        throw new Error(err?.errores?.[0] ?? err?.mensaje ?? `Error ${res.status}`);
+        const text = await res.text().catch(() => null);
+        let message = `Error ${res.status}`;
+        if (text) {
+            try {
+                const err = JSON.parse(text);
+                message = err?.errores?.[0] ?? err?.mensaje ?? message;
+            } catch {
+                message = text;
+            }
+        }
+        throw new Error(message);
     }
     const text = await res.text();
     return (text ? JSON.parse(text) : null) as T;

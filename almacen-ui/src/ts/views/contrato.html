@@ -145,6 +145,15 @@
             </div>
           </div>
 
+          <oj-bind-if test="[[calcEsAdmin()]]">
+            <div class="cf-ctx-item">
+              <div class="oj-typography-body-xs oj-text-color-secondary">MONTO SIN IMPUESTOS</div>
+              <div class="oj-typography-body-md oj-typography-semi-bold">
+                <oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text>
+              </div>
+            </div>
+          </oj-bind-if>
+
         </div>
       </div>
 
@@ -178,7 +187,7 @@
   <!-- ═══════════════════════════════════════════════════════
        LAYOUT: SIDEBAR + WORKSPACE
   ════════════════════════════════════════════════════════ -->
-  <div class="cf-layout oj-sm-margin-6x-top oj-sm-margin-6x-bottom">
+  <div class="cf-layout oj-panel oj-sm-padding-0 oj-panel-shadow-sm oj-sm-margin-6x-vertical">
 
     <!-- ── HEADER ROW ── -->
     <div class="cf-layout-top">
@@ -199,23 +208,38 @@
     <!-- ── SIDEBAR ── -->
     <div class="cf-sidebar">
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'general'}]]" on-click="[[() => cmdNavegar('general')]]">
-        <span class="cf-sb-badge cf-sb-badge--done">✓</span>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionGeneralDone(), 'cf-sb-badge--num': !calcSeccionGeneralDone()}]]">
+          <oj-bind-if test="[[calcSeccionGeneralDone()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!calcSeccionGeneralDone()]]"><span>1</span></oj-bind-if>
+        </span>
         <span class="cf-sidebar-item-label">Datos generales</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'partes'}]]" on-click="[[() => cmdNavegar('partes')]]">
-        <span class="cf-sb-badge cf-sb-badge--num">2</span>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionPartesDone(), 'cf-sb-badge--num': !calcSeccionPartesDone()}]]">
+          <oj-bind-if test="[[calcSeccionPartesDone()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!calcSeccionPartesDone()]]"><span>2</span></oj-bind-if>
+        </span>
         <span class="cf-sidebar-item-label">Partes</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'pagos'}]]" on-click="[[() => cmdNavegar('pagos')]]">
-        <span class="cf-sb-badge cf-sb-badge--warn">⚠</span>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionFinancieraDone(), 'cf-sb-badge--num': !calcSeccionFinancieraDone()}]]">
+          <oj-bind-if test="[[calcSeccionFinancieraDone()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!calcSeccionFinancieraDone()]]"><span>3</span></oj-bind-if>
+        </span>
         <span class="cf-sidebar-item-label">Información financiera</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'beneficiarios'}]]" on-click="[[() => cmdNavegar('beneficiarios')]]">
-        <span class="cf-sb-badge cf-sb-badge--num">4</span>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionBeneficiariosDone(), 'cf-sb-badge--num': !calcSeccionBeneficiariosDone()}]]">
+          <oj-bind-if test="[[calcSeccionBeneficiariosDone()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!calcSeccionBeneficiariosDone()]]"><span>4</span></oj-bind-if>
+        </span>
         <span class="cf-sidebar-item-label">Beneficiarios</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'bienes'}]]" on-click="[[() => cmdNavegar('bienes')]]">
-        <span class="cf-sb-badge cf-sb-badge--num">5</span>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionBienesDone(), 'cf-sb-badge--num': !calcSeccionBienesDone()}]]">
+          <oj-bind-if test="[[calcSeccionBienesDone()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!calcSeccionBienesDone()]]"><span>5</span></oj-bind-if>
+        </span>
         <span class="cf-sidebar-item-label">Adquisición</span>
       </div>
     </div>
@@ -237,7 +261,8 @@
               label-hint="Fecha Tentativa de Llegada"
               value="{{frmFechaTentativaLlegada}}"
               label-edge="top"
-              user-assistance-density="compact">
+              user-assistance-density="compact"
+              help-hints.definition="La fecha por defecto corresponde a 10 días hábiles posteriores a la fecha actual.">
             </oj-c-input-date-picker>
             <oj-c-input-text
               label-hint="Objeto del contrato"
@@ -409,7 +434,7 @@
           <oj-c-form-layout max-columns="3" direction="row" label-edge="top" user-assistance-density="compact">
             <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="{{frmMontoSinImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
             <oj-c-input-number label-hint="Impuestos" input-prefix="$" value="{{frmImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
-            <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="[[calcMontoTotal]]" readonly="true" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
+            <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="[[calcMontoTotal]]" readonly="true" label-edge="top" user-assistance-density="compact" help-hints.definition="Calculado por sistema"></oj-c-input-number>
           </oj-c-form-layout>
           <!-- </div> -->
 
@@ -418,55 +443,86 @@
             <h2 class="oj-typography-subheading-xs oj-sm-margin-4x-bottom">Claves Presupuestales</h2>
             <hr>
 
-            <oj-bind-for-each data="[[dpListClaves]]">
-              <template data-oj-as="item">
-                <div style="display: flex; align-items: flex-end; gap: 8px; margin-top: 16px;">
-                  <div style="flex: 1;">
-                    <oj-c-form-layout columns="6" direction="row" label-edge="top" user-assistance-density="compact">
-                      <oj-c-select-single
-                        label-hint="Clave Presupuestal"
-                        placeholder="Seleccione una clave"
-                        column-span="2"
-                        value="[[item.data.claveId()]]"
-                        on-value-changed="[[ev => item.data.claveId(ev.detail.value ?? null)]]"
-                        data="[[dpCatClaves]]">
-                      </oj-c-select-single>
-                      <oj-c-input-text
-                        column-span="3"
-                        label-hint="Partida Específica"
-                        value="[[item.data.partidaEspecifica]]"
-                        readonly="true"
-                        placeholder="Se llena al seleccionar la clave">
-                      </oj-c-input-text>
+            <oj-bind-if test="[[!calcPuedeIngresarClaves()]]">
+              <div class="oj-typography-body-sm oj-sm-margin-4x-top" style="color: var(--oj-core-text-color-secondary, #767676);">
+                Ingresa el monto sin impuestos para habilitar las claves presupuestales.
+              </div>
+            </oj-bind-if>
 
-                      <oj-c-input-number
-                        label-hint="Monto Asignado"
-                        input-prefix="$"
-                        column-span="1"
-                        value="[[item.data.montoAsignado()]]"
-                        on-value-changed="[[ev => item.data.montoAsignado(ev.detail.value ?? null)]]"
-                        min="1">
-                      </oj-c-input-number>
-                    </oj-c-form-layout>
+            <oj-bind-if test="[[calcPuedeIngresarClaves()]]">
+
+              <oj-bind-for-each data="[[dpListClaves]]">
+                <template data-oj-as="item">
+                  <div style="display: flex; align-items: flex-end; gap: 8px; margin-top: 16px;">
+                    <div style="flex: 1;">
+                      <oj-c-form-layout columns="6" direction="row" user-assistance-density="compact">
+                        <oj-c-select-single
+                          label-hint="Clave Presupuestal"
+                          placeholder="Seleccione una clave"
+                          column-span="2"
+                          item-text="label"
+                          value="[[item.data.claveId]]"
+                          on-value-changed="[[ev => cmdSetClaveId(item.data, ev)]]"
+                          data="[[dpCatClaves]]">
+                        </oj-c-select-single>
+                        <oj-c-input-text
+                          column-span="3"
+                          label-hint="Partida Específica"
+                          value="[[item.data.partidaEspecifica]]"
+                          readonly="true"
+                          placeholder="Se llena al seleccionar la clave"
+                          help-hints.definition="Calculado por sistema">
+                        </oj-c-input-text>
+                        <oj-c-input-number
+                          label-hint="Monto Asignado"
+                          input-prefix="$"
+                          column-span="1"
+                          value="[[item.data.montoAsignado]]"
+                          on-value-changed="[[ev => cmdSetMonto(item.data, ev)]]"
+                          min="0">
+                        </oj-c-input-number>
+                      </oj-c-form-layout>
+                    </div>
+                    <oj-c-button
+                      chroming="danger"
+                      display="icons"
+                      size="sm"
+                      label="Quitar"
+                      disabled="[[listClaves().length <= 1]]"
+                      on-oj-action="[[() => cmdEliminarClave(item.data)]]"
+                      style="margin-bottom: 6px;">
+                      <span slot="startIcon" class="oj-ux-ico-trash"></span>
+                    </oj-c-button>
                   </div>
-                  <oj-c-button
-                    chroming="danger"
-                    display="icons"
-                    size="sm"
-                    label="Quitar"
-                    on-oj-action="[[() => cmdEliminarClave(item.data)]]"
-                    style="margin-bottom: 6px;">
-                    <span slot="startIcon" class="oj-ux-ico-trash "></span>
+                </template>
+              </oj-bind-for-each>
+
+              <div class="oj-flex-bar oj-sm-align-items-flex-start oj-sm-margin-4x-top">
+                <div class="oj-flex-bar-start">
+                  <oj-c-button chroming="outlined" label="Agregar Clave" on-oj-action="[[cmdAgregarClave]]">
+                    <span slot="startIcon" class="oj-ux-ico-plus-square"></span>
                   </oj-c-button>
                 </div>
-              </template>
-            </oj-bind-for-each>
+                <div class="oj-flex-bar-end" style="display: flex; flex-direction: column; align-items: flex-end;">
+                  <div class="oj-typography-body-sm">
+                    Suma: <strong><oj-bind-text value="[[calcSumaClavesStr]]"></oj-bind-text></strong>
+                    &nbsp;/&nbsp;
+                    Total: <strong><oj-bind-text value="[[calcMontoTotalClavesStr]]"></oj-bind-text></strong>
+                  </div>
+                  <oj-bind-if test="[[calcClavesIncompletas()]]">
+                    <div class="oj-typography-body-sm" style="color: #D97706; margin-top: 2px;">
+                      ⚠ Falta asignar <strong><oj-bind-text value="[[calcFaltaAsignarStr]]"></oj-bind-text></strong>
+                    </div>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[calcClavesExceden()]]">
+                    <div class="oj-typography-body-sm" style="color: #16A34A; margin-top: 2px;">
+                      ✓ Monto total cubierto · Disponible: <strong><oj-bind-text value="[[calcSobranteClavesStr]]"></oj-bind-text></strong>
+                    </div>
+                  </oj-bind-if>
+                </div>
+              </div>
 
-            <div class="oj-sm-margin-4x-top">
-              <oj-c-button chroming="outlined" label="Agregar Clave" on-oj-action="[[cmdAgregarClave]]">
-                <span slot="startIcon" class="oj-ux-ico-plus-square"></span>
-              </oj-c-button>
-            </div>
+            </oj-bind-if>
           </div>
         </oj-bind-if>
 
@@ -498,72 +554,126 @@
 
         <!-- ── 6. ADQUISICIÓN (BIENES) ── -->
         <oj-bind-if test="[[uiSeccionActiva() === 'bienes']]">
-          <div class="oj-flex-bar oj-sm-margin-4x-bottom">
-            <div class="oj-flex-bar-start">
-              <h2 class="oj-typography-subheading-xs">Agregar bienes</h2>
-            </div>
-            <div class="oj-flex-bar-end" style="gap: 8px;">
-              <oj-bind-if test="[[calcHayBienEnEdicion]]">
-                <oj-c-button chroming="ghost" label="Cancelar Edición" on-oj-action="[[cmdCancelarEditarBien]]"></oj-c-button>
+
+          <!-- Header -->
+          <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-4x-bottom">
+            <div class="oj-flex-bar-start oj-flex oj-sm-align-items-center" style="gap: 8px;">
+              <span class="oj-badge oj-badge-subtle">
+                <oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text> Total
+              </span>
+              <oj-bind-if test="[[calcBienesNuevos() > 0]]">
+                <span class="oj-badge oj-badge-subtle oj-badge-success">
+                  <oj-bind-text value="[[calcBienesNuevos]]"></oj-bind-text> Nuevos
+                </span>
               </oj-bind-if>
-              <oj-c-button chroming="solid" label="[[calcLabelBtnBien]]" on-oj-action="[[cmdAgregarBien]]">
-                <span slot="startIcon" class="oj-ux-ico-plus-square"></span>
+              <oj-bind-if test="[[calcBienesExistentes() > 0]]">
+                <span class="oj-badge oj-badge-subtle oj-badge-info">
+                  <oj-bind-text value="[[calcBienesExistentes]]"></oj-bind-text> Guardados
+                </span>
+              </oj-bind-if>
+            </div>
+            <div class="oj-flex-bar-end">
+              <oj-c-button chroming="callToAction" label="Agregar Bien" on-oj-action="[[cmdAbrirNuevoBien]]">
+                <span slot="startIcon" class="oj-ux-ico-plus"></span>
               </oj-c-button>
             </div>
           </div>
 
-          <oj-c-form-layout columns="6" direction="row" label-edge="top" user-assistance-density="compact">
-            <oj-c-input-number label-hint="Lote" value="{{frmBienLote}}" min="1"></oj-c-input-number>
-            <oj-c-input-number label-hint="Partida" value="{{frmBienPartida}}" min="1"></oj-c-input-number>
-            <oj-c-input-number label-hint="Cantidad" value="{{frmBienCantidad}}" min="1"></oj-c-input-number>
-            <oj-c-select-single label-hint="Unidad de Medida" placeholder="Seleccione" item-text="label" value="{{frmBienIdUnidadMedida}}" data="[[dpCatUnidadesMedida]]"></oj-c-select-single>
-            <oj-c-input-number label-hint="Precio Unitario" input-prefix="$" value="{{frmBienPrecioUnitario}}" min="0"></oj-c-input-number>
-            <oj-c-input-number label-hint="Subtotal" input-prefix="$" value="[[calcBienSubtotal]]" readonly="true"></oj-c-input-number>
-          </oj-c-form-layout>
-
-          <div class="oj-sm-margin-6x-top">
-            <label class="oj-label" style="font-size: 12px; color: var(--oj-core-text-color-secondary, #767676);">
-              Descripción Técnica (Características Mínimas)
-            </label>
-            <quill-editor
-              placeholder="Describe las Descripción Técnica del bien..."
-              value="{{frmBienDescripcionHtml}}"
-              on-value-changed="[[onQuillChanged]]">
-            </quill-editor>
+          <!-- Resumen total vs monto sin impuestos -->
+          <div class="oj-flex-bar oj-sm-align-items-flex-start oj-sm-margin-4x-bottom">
+            <div class="oj-flex-bar-end" style="display: flex; flex-direction: column; align-items: flex-end;">
+              <div class="oj-typography-body-sm">
+                Total: <strong><oj-bind-text value="[[calcSumaBienesStr]]"></oj-bind-text></strong>
+                &nbsp;/&nbsp;
+                Monto sin impuestos: <strong><oj-bind-text value="[[calcMontoSinImpuestosStr]]"></oj-bind-text></strong>
+              </div>
+              <oj-bind-if test="[[calcBienesExceden()]]">
+                <div class="oj-typography-body-sm" style="color: #D97706; margin-top: 2px;">
+                  ⚠ El total excede el monto sin impuestos por <strong><oj-bind-text value="[[calcDiferenciaBienesStr]]"></oj-bind-text></strong>
+                </div>
+              </oj-bind-if>
+              <oj-bind-if test="[[calcBienesFaltan()]]">
+                <div class="oj-typography-body-sm" style="color: #D97706; margin-top: 2px;">
+                  ⚠ Falta por cubrir <strong><oj-bind-text value="[[calcDiferenciaBienesStr]]"></oj-bind-text></strong>
+                </div>
+              </oj-bind-if>
+            </div>
           </div>
 
-          <oj-bind-if test="[[calcHayBienes()]]">
-            <div class="oj-sm-margin-6x-top">
-              <div class="oj-flex oj-sm-margin-4x-bottom" style="gap: 12px;">
-                <h2 class="oj-typography-subheading-xs">Listado de Bienes</h2>
-                <span class="oj-badge oj-badge-subtle"><oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text> Total</span>
-                <oj-bind-if test="[[calcBienesNuevos() > 0]]">
-                  <span class="oj-badge oj-badge-subtle oj-badge-success"><oj-bind-text value="[[calcBienesNuevos]]"></oj-bind-text> Nuevos</span>
-                </oj-bind-if>
-                <oj-bind-if test="[[calcBienesExistentes() > 0]]">
-                  <span class="oj-badge oj-badge-subtle oj-badge-info"><oj-bind-text value="[[calcBienesExistentes]]"></oj-bind-text> Guardados</span>
-                </oj-bind-if>
-              </div>
-              <oj-c-list-view aria-label="Listado de Bienes" data="[[dpListBienes]]" gridlines.item="visible" gridlines.bottom="visible">
-                <template slot="itemTemplate" data-oj-as="item">
-                  <oj-c-list-item-layout>
-                    <div slot="overline">Lote <oj-bind-text value="[[item.data.lote]]"></oj-bind-text> · Partida <oj-bind-text value="[[item.data.partida]]"></oj-bind-text></div>
-                    <div><oj-bind-text value="[[item.data.descripcionCorta]]"></oj-bind-text></div>
-                    <div slot="secondary">
-                      <oj-bind-text value="[[item.data.cantidad + ' ' + item.data.unidadMedida]]"></oj-bind-text>
-                      · <oj-bind-text value="[['$ ' + item.data.precioUnitario.toLocaleString('es-MX') + ' c/u']]"></oj-bind-text>
-                      · <oj-bind-text value="[['Subtotal: $ ' + item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
-                    </div>
-                    <div slot="action" class="oj-flex oj-sm-align-items-center">
-                      <oj-c-button label="Editar" chroming="borderless" disabled="[[calcHayBienEnEdicion]]" on-oj-action="[[() => cmdEditarBien(item.data)]]"></oj-c-button>
-                      <oj-c-button label="Ver descripción" chroming="borderless" on-oj-action="[[() => cmdVerDescripcionBien(item.data)]]"></oj-c-button>
-                      <oj-c-button label="Quitar" chroming="danger" size="sm" on-oj-action="[[() => cmdEliminarBien(item.data)]]"></oj-c-button>
-                    </div>
-                  </oj-c-list-item-layout>
-                </template>
-              </oj-c-list-view>
+
+          <!-- Tabla de bienes -->
+          <div class="oj-panel oj-panel-shadow-sm cf-bienes-captura-tabla-wrap">
+
+            <!-- Header de columnas -->
+            <div class="cf-bienes-captura-tabla-header">
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">Lote</div>
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">Partida</div>
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">Cant.</div>
+              <div class="cf-bienes-captura-tabla-cell">Descripción</div>
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">U.M.</div>
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--num">P. Unitario</div>
+              <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--num">Subtotal</div>
+              <div class="cf-bienes-captura-tabla-cell"></div>
             </div>
-          </oj-bind-if>
+
+            <!-- Estado vacío -->
+            <oj-bind-if test="[[!calcHayBienes()]]">
+              <div class="cf-bienes-captura-tabla-empty">
+                Sin bienes capturados. Usa el botón "Agregar Bien" para comenzar.
+              </div>
+            </oj-bind-if>
+
+            <!-- Filas de datos -->
+            <oj-bind-for-each data="[[dpListBienes]]">
+              <template data-oj-as="item">
+                <div class="cf-bienes-captura-tabla-row">
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">
+                    <oj-bind-text value="[[item.data.lote]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">
+                    <oj-bind-text value="[[item.data.partida]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">
+                    <oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell">
+                    <oj-bind-if test="[[!!item.data.descripcionCorta]]">
+                      <span><oj-bind-text value="[[item.data.descripcionCorta]]"></oj-bind-text></span>
+                    </oj-bind-if>
+                    <oj-bind-if test="[[!item.data.descripcionCorta]]">
+                      <span style="color: #D97706; white-space: nowrap;">⚠ Sin descripción técnica</span>
+                    </oj-bind-if>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--center">
+                    <oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--num">
+                    <oj-bind-text value="[['$ ' + item.data.precioUnitario.toLocaleString('es-MX')]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--num">
+                    <oj-bind-text value="[['$ ' + item.data.subtotal.toLocaleString('es-MX')]]"></oj-bind-text>
+                  </div>
+                  <div class="cf-bienes-captura-tabla-cell cf-bienes-captura-tabla-cell--actions">
+                    <oj-c-button
+                      label="Editar"
+                      chroming="borderless"
+                      display="icons"
+                      on-oj-action="[[() => cmdEditarBien(item.data)]]">
+                      <span slot="startIcon" class="oj-ux-ico-edit"></span>
+                    </oj-c-button>
+                    <oj-c-button
+                      label="Quitar"
+                      chroming="borderless"
+                      display="icons"
+                      on-oj-action="[[() => cmdEliminarBien(item.data)]]">
+                      <span slot="startIcon" class="oj-ux-ico-trash"></span>
+                    </oj-c-button>
+                  </div>
+                </div>
+              </template>
+            </oj-bind-for-each>
+
+          </div>
         </oj-bind-if>
 
       </div>
@@ -571,6 +681,41 @@
     </div> <!-- /cf-layout-body -->
 
   </div> <!-- /cf-layout -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       DIALOG — Agregar / Editar bien
+  ════════════════════════════════════════════════════════ -->
+  <oj-c-dialog
+    opened="{{uiBienDialogOpen}}"
+    id="bien-form-dialog"
+    dialog-title="[[calcTituloDialogBien]]"
+    min-width="980px"
+    cancel-behavior="none">
+    <div slot="body">
+      <oj-c-form-layout columns="4" label-edge="top" user-assistance-density="compact">
+        <oj-c-input-number label-hint="Lote" value="{{frmBienLote}}" min="1"></oj-c-input-number>
+        <oj-c-input-number label-hint="Partida" value="{{frmBienPartida}}" min="1"></oj-c-input-number>
+        <oj-c-input-number label-hint="Cantidad" value="{{frmBienCantidad}}" min="1"></oj-c-input-number>
+        <oj-c-select-single label-hint="Unidad de Medida" placeholder="Seleccione" item-text="label" value="{{frmBienIdUnidadMedida}}" data="[[dpCatUnidadesMedida]]"></oj-c-select-single>
+        <oj-c-input-number label-hint="Precio Unitario" input-prefix="$" value="{{frmBienPrecioUnitario}}" min="0" column-span="2"></oj-c-input-number>
+        <oj-c-input-number label-hint="Subtotal" input-prefix="$" value="[[calcBienSubtotal]]" readonly="true" column-span="2" help-hints.definition="Calculado por sistema"></oj-c-input-number>
+      </oj-c-form-layout>
+      <div class="oj-sm-margin-6x-top">
+        <label class="oj-label" style="font-size: 12px; color: var(--oj-core-text-color-secondary, #767676);">
+          Descripción Técnica (Características Mínimas)
+        </label>
+        <quill-editor
+          placeholder="Describe la descripción técnica del bien..."
+          value="{{frmBienDescripcionHtml}}"
+          on-value-changed="[[onQuillChanged]]">
+        </quill-editor>
+      </div>
+    </div>
+    <div slot="footer" class="oj-flex" style="gap: 8px; justify-content: flex-end;">
+      <oj-c-button label="Cancelar" chroming="outlined" on-oj-action="[[cmdCancelarEditarBien]]"></oj-c-button>
+      <oj-c-button label="[[calcLabelBtnBien]]" chroming="callToAction" on-oj-action="[[cmdAgregarBien]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
 
   <!-- ═══════════════════════════════════════════════════════
        DIALOG — Descripción del bien (renderiza HTML de Quill)

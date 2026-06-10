@@ -1593,16 +1593,13 @@
 .cf-layout {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--oj-core-border-color-subtle, #ddd);
-  border-radius: 4px;
   overflow: hidden;
-  min-height: calc(100vh - 300px);
+  min-height: calc(100vh - 450px);
 }
 
 .cf-layout-top {
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid var(--oj-core-divider-color, #e0e0e0);
 }
 
 .cf-sidebar-spacer {
@@ -1690,6 +1687,7 @@
   gap: 24px;
   padding: 16px 24px;
   background: var(--oj-core-bg-color-primary, #ffffff);
+  border-bottom: 1px solid var(--oj-core-divider-color, #e0e0e0);
 }
 
 .cf-workspace-hint {
@@ -1718,4 +1716,90 @@
 
 .cf-ctx-item--wide {
   min-width: 200px;
+}
+
+/* ── Bienes captura — tabla ── */
+.cf-bienes-captura-tabla-wrap {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cf-bienes-captura-tabla-header,
+.cf-bienes-captura-tabla-row,
+.cf-bienes-captura-tabla-footer {
+  display: grid;
+  grid-template-columns: 55px 65px 70px 1fr 100px 100px 100px 100px;
+  align-items: center;
+}
+
+.cf-bienes-captura-tabla-header {
+  font-size: 11px;
+  color: var(--oj-core-text-color-secondary, #767676);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--oj-core-divider-color, #e0e0e0);
+  background: var(--oj-core-bg-color-primary, #ffffff);
+}
+
+.cf-bienes-captura-tabla-row {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--oj-core-divider-color-subtle, #f0f0f0);
+  font-size: 13px;
+  background: var(--oj-core-bg-color-primary, #ffffff);
+}
+
+.cf-bienes-captura-tabla-row:last-child {
+  border-bottom: none;
+}
+
+.cf-bienes-captura-tabla-footer {
+  padding: 10px 12px;
+  border-top: 2px solid var(--oj-core-divider-color, #e0e0e0);
+  background: var(--oj-core-bg-color-secondary, #f5f5f5);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cf-bienes-captura-tabla-footer-label {
+  grid-column: 1 / span 6;
+  text-align: right;
+  padding-right: 8px;
+  color: var(--oj-core-text-color-secondary, #767676);
+  font-weight: 400;
+}
+
+.cf-bienes-captura-tabla-footer-value {
+  text-align: right;
+  padding: 0 4px;
+}
+
+.cf-bienes-captura-tabla-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.cf-bienes-captura-tabla-cell--num {
+  text-align: right;
+}
+
+.cf-bienes-captura-tabla-cell--center {
+  text-align: center;
+}
+
+.cf-bienes-captura-tabla-cell--actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.cf-bienes-captura-tabla-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--oj-core-text-color-secondary, #767676);
+  font-size: 13px;
+  background: var(--oj-core-bg-color-primary, #ffffff);
 }

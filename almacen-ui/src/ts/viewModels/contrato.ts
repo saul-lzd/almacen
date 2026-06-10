@@ -61,9 +61,9 @@ type FuncionarioOption = {
 
 type ClavePresupuestalItem = {
   idLocal:           number;
-  claveId:           ko.Observable<string | null>;
-  partidaEspecifica: ko.PureComputed<string>;
-  montoAsignado:     ko.Observable<number | 0>;
+  claveId:           string | null;
+  partidaEspecifica: string;
+  montoAsignado:     number | null;
 };
 
 type BienContratoItem = {
@@ -189,14 +189,15 @@ class NuevoContratoViewModel {
   public uiEstatusContrato           = ko.observable<string>("En captura");
   public uiEstatusRaw                = ko.observable<string>("CAPTURA");
   public uiBienDescripcionDialogOpen = ko.observable<boolean>(false);
+  public uiBienDialogOpen            = ko.observable<boolean>(false);
   public uiInfoExpanded              = ko.observable<boolean>(false);
   public uiEditandoFuncionarios      = ko.observable<boolean>(false);
 
   // ── Navegación de secciones ──
   public readonly listSecciones = [
-    { id: "general",       label: "Datos generales",        hint: "Número de contrato, objeto de adquisición y fecha tentativa de llegada." },
-    { id: "partes",        label: "Partes",                 hint: "Datos del proveedor y los funcionarios responsables del contrato." },
-    { id: "pagos",         label: "Información financiera", hint: "Montos del contrato y distribución por claves presupuestales." },
+    { id: "general",       label: "Datos generales",        hint: "Número de contrato, objeto del contrato y fecha tentativa de llegada." },
+    { id: "partes",        label: "Partes",                 hint: "Datos del proveedor y funcionarios responsables del contrato." },
+    { id: "pagos",         label: "Información financiera", hint: "Montos del contrato y asignación de claves presupuestales." },
     { id: "beneficiarios", label: "Beneficiarios",          hint: "Municipios o dependencias que recibirán los bienes de esta adquisición." },
     { id: "bienes",        label: "Adquisición",            hint: "Bienes contratados: lote, partida, cantidad, precio y descripción técnica." },
   ];
@@ -235,6 +236,12 @@ class NuevoContratoViewModel {
 
   public calcProveedorHeader = ko.pureComputed(() =>
     this.frmProveedorRazonSocial() || "Sin capturar"
+  );
+
+  public calcMontoSinImpuestosHeader = ko.pureComputed(() =>
+    Number(this.frmMontoSinImpuestos() || 0) > 0
+      ? Number(this.frmMontoSinImpuestos()).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+      : "Sin capturar"
   );
 
   // ----------------------------------------------------------------
@@ -310,21 +317,52 @@ class NuevoContratoViewModel {
   private seqClave = 1;
 
   private makeClaveItem(idLocal: number, claveIdVal: string | null = null, montoVal: number | null = null): ClavePresupuestalItem {
-    const claveId = ko.observable<string | null>(claveIdVal);
-    const partidaEspecifica = ko.pureComputed(() => {
-      const found = this.catClaves().find(c => c.value === claveId());
-      return (found?.metadata?.partida_especifica as string) || "";
-    });
+    const found = this.catClaves().find(c => c.value === claveIdVal);
     return {
       idLocal,
-      claveId,
-      partidaEspecifica,
-      montoAsignado: ko.observable<number | null>(montoVal),
+      claveId: claveIdVal,
+      partidaEspecifica: (found?.metadata?.partida_especifica as string) || "",
+      montoAsignado: montoVal ?? 0,
     };
   }
 
   public calcHayClaves = ko.pureComputed(() =>
     this.listClaves().length > 0
+  );
+
+  public calcPuedeIngresarClaves = ko.pureComputed(() =>
+    Number(this.frmMontoSinImpuestos() || 0) > 0
+  );
+
+  public calcSumaClaves = ko.pureComputed(() =>
+    this.listClaves().reduce((sum, c) => sum + Number(c.montoAsignado || 0), 0)
+  );
+
+  public calcFaltaAsignar = ko.pureComputed(() =>
+    Math.max(0, this.calcMontoTotal() - this.calcSumaClaves())
+  );
+
+  public calcClavesIncompletas = ko.pureComputed(() =>
+    this.calcFaltaAsignar() > 0
+  );
+  public calcClavesExceden = ko.pureComputed(() =>
+    this.calcSumaClaves() > this.calcMontoTotal() + 0.01
+  );
+  public calcSobranteClavesStr = ko.pureComputed(() =>
+    (this.calcSumaClaves() - this.calcMontoTotal())
+      .toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+
+  public calcSumaClavesStr = ko.pureComputed(() =>
+    this.calcSumaClaves().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+
+  public calcFaltaAsignarStr = ko.pureComputed(() =>
+    this.calcFaltaAsignar().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+
+  public calcMontoTotalClavesStr = ko.pureComputed(() =>
+    this.calcMontoTotal().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
   );
 
   // ----------------------------------------------------------------
@@ -364,10 +402,13 @@ class NuevoContratoViewModel {
 
   private seqBien = 1;
 
-  public uiBienEnEdicion       = ko.observable<BienContratoItem | null>(null);
-  public calcHayBienEnEdicion  = ko.pureComputed(() => this.uiBienEnEdicion() !== null);
-  public calcLabelBtnBien      = ko.pureComputed(() =>
+  public uiBienEnEdicion        = ko.observable<BienContratoItem | null>(null);
+  public calcHayBienEnEdicion   = ko.pureComputed(() => this.uiBienEnEdicion() !== null);
+  public calcLabelBtnBien       = ko.pureComputed(() =>
     this.uiBienEnEdicion() ? "Guardar Cambios" : "Agregar Bien"
+  );
+  public calcTituloDialogBien   = ko.pureComputed(() =>
+    this.uiBienEnEdicion() ? "Editar Bien" : "Agregar Bien"
   );
 
   public calcHayBienes = ko.pureComputed(() =>
@@ -375,8 +416,58 @@ class NuevoContratoViewModel {
   );
 
   public calcTotalBienes    = ko.pureComputed(() => this.listBienes().length);
+  public calcSumaBienes     = ko.pureComputed(() =>
+    this.listBienes().reduce((sum, b) => sum + Number(b.subtotal || 0), 0)
+  );
+  public calcSumaBienesStr  = ko.pureComputed(() =>
+    this.calcSumaBienes().toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+  public calcMontoSinImpuestosStr = ko.pureComputed(() =>
+    Number(this.frmMontoSinImpuestos() || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+  public calcBienesIncompletos = ko.pureComputed(() =>
+    Math.abs(this.calcSumaBienes() - Number(this.frmMontoSinImpuestos() || 0)) > 0.01
+  );
+  public calcBienesExceden = ko.pureComputed(() =>
+    this.calcSumaBienes() > Number(this.frmMontoSinImpuestos() || 0) + 0.01
+  );
+  public calcBienesFaltan = ko.pureComputed(() =>
+    this.calcSumaBienes() < Number(this.frmMontoSinImpuestos() || 0) - 0.01
+  );
+  public calcDiferenciaBienesStr = ko.pureComputed(() =>
+    Math.abs(this.calcSumaBienes() - Number(this.frmMontoSinImpuestos() || 0))
+      .toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
   public calcBienesNuevos   = ko.pureComputed(() => this.listBienes().filter(b => b.idContratoBien === null).length);
   public calcBienesExistentes = ko.pureComputed(() => this.listBienes().filter(b => b.idContratoBien !== null).length);
+
+  // ── Estado de secciones (para badges del sidebar) ──
+  public calcSeccionGeneralDone = ko.pureComputed(() =>
+    !!this.contratoId() &&
+    !!this.frmNumeroContrato() &&
+    !!this.frmFechaTentativaLlegada() &&
+    !!this.frmAdquisicion()
+  );
+  public calcSeccionPartesDone = ko.pureComputed(() =>
+    !!this.contratoId() &&
+    !!this.frmCompradorId() &&
+    !!this.frmAdministradorId() &&
+    !!this.frmProveedorRazonSocial() &&
+    !!this.frmProveedorDomicilioFiscal() &&
+    !!this.frmProveedorRepresentante() &&
+    !!this.frmProveedorCaracter()
+  );
+  public calcSeccionFinancieraDone = ko.pureComputed(() =>
+    !!this.contratoId() &&
+    Number(this.frmMontoSinImpuestos() || 0) > 0 &&
+    this.calcClavesExceden()
+  );
+  public calcSeccionBeneficiariosDone = ko.pureComputed(() =>
+    this.frmBeneficiariosTexto().trim().length > 0
+  );
+  public calcSeccionBienesDone = ko.pureComputed(() =>
+    this.calcHayBienes() && !this.calcBienesIncompletos()
+  );
 
   public calcBeneficiariosChips = ko.pureComputed(() =>
     this.frmBeneficiariosTexto()
@@ -580,6 +671,27 @@ class NuevoContratoViewModel {
     this.listClaves.remove(item);
   };
 
+  public cmdSetClaveId = (item: ClavePresupuestalItem, ev: CustomEvent): void => {
+    const detail = ev.detail as any;
+    if (detail?.updatedFrom === "external") return;
+    const newClaveId: string | null = detail?.value ?? null;
+    const found = this.catClaves().find(c => c.value === newClaveId);
+    const newPartida = (found?.metadata?.partida_especifica as string) || "";
+    const idx = this.listClaves().indexOf(item);
+    if (idx >= 0) {
+      this.listClaves.splice(idx, 1, { idLocal: item.idLocal, claveId: newClaveId, partidaEspecifica: newPartida, montoAsignado: item.montoAsignado });
+    }
+  };
+
+  public cmdSetMonto = (item: ClavePresupuestalItem, ev: CustomEvent): void => {
+    const detail = ev.detail as any;
+    if (detail?.updatedFrom === "external") return;
+    const idx = this.listClaves().indexOf(item);
+    if (idx >= 0) {
+      this.listClaves.splice(idx, 1, { ...item, montoAsignado: detail?.value ?? null });
+    }
+  };
+
 
   // ================================================================
   // COMMANDS — BIENES
@@ -591,6 +703,12 @@ class NuevoContratoViewModel {
    * que debe ser actualizado por el editor Quill antes de llamar este método.
    * Ver contrato.html para la integración con Quill.
    */
+  public cmdAbrirNuevoBien = (): void => {
+    this.uiBienEnEdicion(null);
+    this.clearFrmBien();
+    this.uiBienDialogOpen(true);
+  };
+
   public cmdAgregarBien = (): void => {
     const idUnidad = this.frmBienIdUnidadMedida();
     const unidad   = this.catUnidadesMedida().find(u => Number(u.value) === Number(idUnidad));
@@ -611,8 +729,7 @@ class NuevoContratoViewModel {
     }
 
     const enEdicion = this.uiBienEnEdicion();
-
-    this.listBienes.push({
+    const newBien: BienContratoItem = {
       idLocal:            enEdicion ? enEdicion.idLocal : this.seqBien++,
       idContratoBien:     enEdicion ? enEdicion.idContratoBien : null,
       lote:               Number(this.frmBienLote()),
@@ -624,10 +741,22 @@ class NuevoContratoViewModel {
       cantidad:           Number(this.frmBienCantidad()),
       precioUnitario:     Number(this.frmBienPrecioUnitario()),
       subtotal:           Number(this.calcBienSubtotal())
-    });
+    };
+
+    if (enEdicion) {
+      const idx = this.listBienes().indexOf(enEdicion);
+      if (idx >= 0) {
+        this.listBienes.splice(idx, 1, newBien);
+      } else {
+        this.listBienes.push(newBien);
+      }
+    } else {
+      this.listBienes.push(newBien);
+    }
 
     this.uiBienEnEdicion(null);
     this.clearFrmBien();
+    this.uiBienDialogOpen(false);
   };
 
   public cmdEliminarBien = (bien: BienContratoItem): void => {
@@ -646,23 +775,19 @@ class NuevoContratoViewModel {
 
   public cmdEditarBien = (bien: BienContratoItem): void => {
     this.uiBienEnEdicion(bien);
-    this.listBienes.remove(bien);
-
     this.frmBienLote(bien.lote);
     this.frmBienPartida(bien.partida);
     this.frmBienIdUnidadMedida(String(bien.idUnidadMedida));
     this.frmBienDescripcionHtml(bien.descripcionTecnica);
     this.frmBienCantidad(bien.cantidad);
     this.frmBienPrecioUnitario(bien.precioUnitario);
+    this.uiBienDialogOpen(true);
   };
 
   public cmdCancelarEditarBien = (): void => {
-    const enEdicion = this.uiBienEnEdicion();
-    if (enEdicion) {
-      this.listBienes.push(enEdicion);
-    }
     this.uiBienEnEdicion(null);
     this.clearFrmBien();
+    this.uiBienDialogOpen(false);
   };
 
   public cmdCerrarDescripcionDialog = (): void => {
@@ -763,22 +888,26 @@ class NuevoContratoViewModel {
 
       beneficiarios: this.frmBeneficiariosTexto(),
 
-      clavesPresupuestales: this.listClaves().map(c => ({
-        clave:             c.claveId() ?? "",
-        partidaEspecifica: c.partidaEspecifica(),
-        montoAsignado:     c.montoAsignado() ?? 0
-      })),
+      clavesPresupuestales: this.listClaves()
+        .filter(c => !!c.claveId)
+        .map(c => ({
+          clave:             c.claveId!,
+          partidaEspecifica: c.partidaEspecifica,
+          montoAsignado:     c.montoAsignado ?? 0
+        })),
 
-      bienes: this.listBienes().map(b => ({
-        idContratoBien:    b.idContratoBien,
-        lote:              b.lote,
-        partida:           b.partida,
-        descripcionTecnica: b.descripcionTecnica,
-        idUnidadMedida:    b.idUnidadMedida,
-        cantidad:          b.cantidad,
-        precioUnitario:    b.precioUnitario,
-        subtotal:          b.subtotal
-      }))
+      bienes: this.listBienes()
+        .filter(b => !!b.idUnidadMedida)
+        .map(b => ({
+          idContratoBien:    b.idContratoBien,
+          lote:              b.lote,
+          partida:           b.partida,
+          descripcionTecnica: b.descripcionTecnica,
+          idUnidadMedida:    b.idUnidadMedida,
+          cantidad:          b.cantidad,
+          precioUnitario:    b.precioUnitario,
+          subtotal:          b.subtotal
+        }))
     };
   }
 
