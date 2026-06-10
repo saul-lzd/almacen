@@ -60,10 +60,10 @@ type FuncionarioOption = {
 };
 
 type ClavePresupuestalItem = {
-  idLocal: number;
-  clave: string;
-  partidaEspecifica: string;
-  montoAsignado: number;
+  idLocal:           number;
+  claveId:           ko.Observable<string | null>;
+  partidaEspecifica: ko.PureComputed<string>;
+  montoAsignado:     ko.Observable<number | 0>;
 };
 
 type BienContratoItem = {
@@ -194,12 +194,11 @@ class NuevoContratoViewModel {
 
   // ── Navegación de secciones ──
   public readonly listSecciones = [
-    { id: "general",       label: "Datos generales",           hint: "Número de contrato, objeto de adquisición y fecha tentativa de llegada." },
-    { id: "funcionarios",  label: "Comprador y administrador", hint: "Titular de la dependencia y administrador del contrato asignado al expediente." },
-    { id: "proveedor",     label: "Proveedor",                 hint: "Datos de la empresa proveedora y su representante legal." },
-    { id: "pagos",         label: "Pagos y claves",            hint: "Montos del contrato y distribución por claves presupuestales." },
-    { id: "beneficiarios", label: "Beneficiarios",             hint: "Municipios o dependencias que recibirán los bienes de esta adquisición." },
-    { id: "bienes",        label: "Adquisición",               hint: "Bienes contratados: lote, partida, cantidad, precio y descripción técnica." },
+    { id: "general",       label: "Datos generales",        hint: "Número de contrato, objeto de adquisición y fecha tentativa de llegada." },
+    { id: "partes",        label: "Partes",                 hint: "Datos del proveedor y los funcionarios responsables del contrato." },
+    { id: "pagos",         label: "Información financiera", hint: "Montos del contrato y distribución por claves presupuestales." },
+    { id: "beneficiarios", label: "Beneficiarios",          hint: "Municipios o dependencias que recibirán los bienes de esta adquisición." },
+    { id: "bienes",        label: "Adquisición",            hint: "Bienes contratados: lote, partida, cantidad, precio y descripción técnica." },
   ];
 
   public uiSeccionActiva = ko.observable<string>("general");
@@ -298,21 +297,31 @@ class NuevoContratoViewModel {
   // CLAVES PRESUPUESTALES
   // ----------------------------------------------------------------
 
-  public frmClaveValue              = ko.observable<string | null>(null);
-  public frmClavePartidaEspecifica  = ko.observable<string>("");
-  public frmClaveMontoAsignado      = ko.observable<number>(0);
-
-  public listClaves                 = ko.observableArray<ClavePresupuestalItem>([]);
-  public dpListClaves               = new ArrayDataProvider(this.listClaves, {
+  public listClaves = ko.observableArray<ClavePresupuestalItem>([]);
+  public dpListClaves = new ArrayDataProvider(this.listClaves, {
     keyAttributes: "idLocal"
   });
 
-  public catClaves                  = ko.observableArray<CatalogoOption>([]);
-  public dpCatClaves                = new ArrayDataProvider(this.catClaves, {
+  public catClaves = ko.observableArray<CatalogoOption>([]);
+  public dpCatClaves = new ArrayDataProvider(this.catClaves, {
     keyAttributes: "value"
   });
 
   private seqClave = 1;
+
+  private makeClaveItem(idLocal: number, claveIdVal: string | null = null, montoVal: number | null = null): ClavePresupuestalItem {
+    const claveId = ko.observable<string | null>(claveIdVal);
+    const partidaEspecifica = ko.pureComputed(() => {
+      const found = this.catClaves().find(c => c.value === claveId());
+      return (found?.metadata?.partida_especifica as string) || "";
+    });
+    return {
+      idLocal,
+      claveId,
+      partidaEspecifica,
+      montoAsignado: ko.observable<number | null>(montoVal),
+    };
+  }
 
   public calcHayClaves = ko.pureComputed(() =>
     this.listClaves().length > 0
@@ -391,6 +400,10 @@ class NuevoContratoViewModel {
     this.router = params?.router;
 
     this.frmFechaTentativaLlegada(this.calcDiasHabiles(10)); // fecha tentativa por defecto: 10 días hábiles a partir de hoy
+
+    // Row vacío inicial en claves presupuestales
+    this.listClaves([this.makeClaveItem(1)]);
+    this.seqClave = 2;
 
     const idParam = params?.routerState?.params?.id;
     if (idParam) {
@@ -530,17 +543,6 @@ class NuevoContratoViewModel {
     this.uiAdministradorCaracter(funcionario?.caracter || "");
   };
 
-  /**
-   * Al seleccionar una clave presupuestal, autocompleta la partida específica.
-   */
-  public onClaveChanged = (event: CustomEvent): void => {
-    if (event.detail.updatedFrom === "external") return;
-
-    const clave = this.catClaves().find(c => c.value === event.detail.value);
-    this.frmClavePartidaEspecifica(
-      (clave?.metadata?.partida_especifica as string) || ""
-    );
-  };
 
   // ================================================================
   // COMMANDS — NAVEGACIÓN
@@ -571,39 +573,13 @@ class NuevoContratoViewModel {
   // ================================================================
 
   public cmdAgregarClave = (): void => {
-    const clave = this.catClaves().find(c => c.value === this.frmClaveValue());
-
-    if (!clave || this.frmClaveMontoAsignado() < 1) {
-      alert("Selecciona una clave presupuestal y asigna un monto mayor a 0.");
-      return;
-    }
-
-    // Verificar que la clave no esté ya en la lista
-    const yaExiste = this.listClaves().some(c => c.clave === clave.value);
-    if (yaExiste) {
-      alert("Esta clave presupuestal ya fue agregada.");
-      return;
-    }
-
-    this.listClaves.push({
-      idLocal: this.seqClave++,
-      clave: clave.value,
-      partidaEspecifica: this.frmClavePartidaEspecifica(),
-      montoAsignado: Number(this.frmClaveMontoAsignado())
-    });
-
-    this.clearFrmClave();
+    this.listClaves.push(this.makeClaveItem(this.seqClave++));
   };
 
   public cmdEliminarClave = (item: ClavePresupuestalItem): void => {
     this.listClaves.remove(item);
   };
 
-  private clearFrmClave(): void {
-    this.frmClaveValue(null);
-    this.frmClavePartidaEspecifica("");
-    this.frmClaveMontoAsignado(0);
-  }
 
   // ================================================================
   // COMMANDS — BIENES
@@ -788,9 +764,9 @@ class NuevoContratoViewModel {
       beneficiarios: this.frmBeneficiariosTexto(),
 
       clavesPresupuestales: this.listClaves().map(c => ({
-        clave:            c.clave,
-        partidaEspecifica: c.partidaEspecifica,
-        montoAsignado:    c.montoAsignado
+        clave:             c.claveId() ?? "",
+        partidaEspecifica: c.partidaEspecifica(),
+        montoAsignado:     c.montoAsignado() ?? 0
       })),
 
       bienes: this.listBienes().map(b => ({
@@ -854,12 +830,9 @@ class NuevoContratoViewModel {
 
     // Claves presupuestales
     this.listClaves(
-      data.clavesPresupuestales.map((c, i) => ({
-        idLocal:           i + 1,
-        clave:             c.clave,
-        partidaEspecifica: c.partidaEspecifica,
-        montoAsignado:     c.montoAsignado
-      }))
+      data.clavesPresupuestales.map((c, i) =>
+        this.makeClaveItem(i + 1, c.clave, c.montoAsignado)
+      )
     );
     this.seqClave = data.clavesPresupuestales?.length + 1;
 
