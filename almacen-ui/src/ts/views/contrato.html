@@ -110,78 +110,73 @@
   <!-- ═══════════════════════════════════════════════════════
        HEADER — contexto del contrato + acciones
   ════════════════════════════════════════════════════════ -->
-  <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-6x-top oj-sm-padding-4x-vertical oj-sm-padding-6x-horizontal">
-    <div class="oj-flex-bar oj-sm-align-items-center">
+  <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-6x-top cf-ctx-bar">
 
-      <!-- Info items -->
-      <div class="oj-flex-bar-start">
-        <div class="oj-flex oj-sm-flex-wrap-nowrap oj-sm-align-items-stretch">
+    <!-- Info items -->
+    <div class="cf-ctx-bar-items">
 
-          <div class="cf-ctx-item">
-            <div class="oj-typography-body-xs oj-text-color-secondary">CONTRATO</div>
-            <div class="oj-typography-body-md oj-typography-semi-bold font-mono">
-              <oj-bind-text value="[[calcNumeroContratoHeader]]"></oj-bind-text>
-            </div>
-          </div>
+      <div class="ctx-item fixed">
+        <span class="ctx-label">Contrato</span>
+        <span class="ctx-val mono">
+          <oj-bind-text value="[[calcNumeroContratoHeader]]"></oj-bind-text>
+        </span>
+      </div>
 
-          <div class="cf-ctx-item cf-ctx-item--wide">
-            <div class="oj-typography-body-xs oj-text-color-secondary">ADQUISICIÓN</div>
-            <div class="oj-typography-body-md oj-line-clamp-1">
-              <oj-bind-text value="[[calcAdquisicionHeader]]"></oj-bind-text>
-            </div>
-          </div>
+      <div class="ctx-item grow" style="max-width:300px">
+        <span class="ctx-label">Adquisición</span>
+        <span class="ctx-val" :title="[[calcAdquisicionHeader]]">
+          <oj-bind-text value="[[calcAdquisicionHeader]]"></oj-bind-text>
+        </span>
+      </div>
 
-          <div class="cf-ctx-item">
-            <div class="oj-typography-body-xs oj-text-color-secondary">PROVEEDOR</div>
-            <div class="oj-typography-body-md oj-line-clamp-1">
-              <oj-bind-text value="[[calcProveedorHeader]]"></oj-bind-text>
-            </div>
-          </div>
+      <div class="ctx-item grow" style="max-width:220px">
+        <span class="ctx-label">Proveedor</span>
+        <span class="ctx-val" :title="[[calcProveedorHeader]]">
+          <oj-bind-text value="[[calcProveedorHeader]]"></oj-bind-text>
+        </span>
+      </div>
 
-          <div class="cf-ctx-item">
-            <div class="oj-typography-body-xs oj-text-color-secondary">BIENES CAPTURADOS</div>
-            <div class="oj-typography-body-md oj-typography-semi-bold">
-              <oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text>
-            </div>
-          </div>
+      <div class="ctx-item fixed">
+        <span class="ctx-label">Bienes capturados</span>
+        <span class="ctx-val">
+          <oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text>
+        </span>
+      </div>
 
-          <oj-bind-if test="[[calcEsAdmin()]]">
-            <div class="cf-ctx-item">
-              <div class="oj-typography-body-xs oj-text-color-secondary">MONTO SIN IMPUESTOS</div>
-              <div class="oj-typography-body-md oj-typography-semi-bold">
-                <oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text>
-              </div>
-            </div>
-          </oj-bind-if>
-
+      <oj-bind-if test="[[calcEsAdmin()]]">
+        <div class="ctx-item fixed">
+          <span class="ctx-label">Monto sin impuestos</span>
+          <span class="ctx-val">
+            <oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text>
+          </span>
         </div>
-      </div>
-
-      <!-- Acciones -->
-      <div class="oj-flex-bar-end">
-        <oj-bind-if test="[[calcEsAdmin()]]">
-          <div class="oj-flex oj-sm-flex-wrap-nowrap oj-sm-align-items-center">
-            <oj-c-button
-              chroming="solid"
-              label="Guardar"
-              disabled="[[uiGuardando()]]"
-              on-oj-action="[[cmdGuardarBorrador]]">
-              <span slot="startIcon" class="oj-ux-ico-save"></span>
-            </oj-c-button>
-            <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura']]">
-              <oj-c-button
-                class="oj-sm-margin-2x-start"
-                chroming="callToAction"
-                label="Enviar a Almacén"
-                on-oj-action="[[cmdEnviarAlmacen]]">
-                <span slot="startIcon" class="oj-ux-ico-send"></span>
-              </oj-c-button>
-            </oj-bind-if>
-          </div>
-        </oj-bind-if>
-      </div>
+      </oj-bind-if>
 
     </div>
+
+    <!-- Acciones -->
+    <oj-bind-if test="[[calcEsAdmin()]]">
+      <div class="cf-ctx-bar-actions">
+        <oj-c-button
+          chroming="solid"
+          label="Guardar"
+          size="sm"
+          disabled="[[uiGuardando()]]"
+          on-oj-action="[[cmdGuardarBorrador]]">
+          <span slot="startIcon" class="oj-ux-ico-save"></span>
+        </oj-c-button>
+        <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura']]">
+          <oj-c-button
+            chroming="callToAction"
+            size="sm"
+            label="Enviar a Almacén"
+            on-oj-action="[[cmdEnviarAlmacen]]">
+            <span slot="startIcon" class="oj-ux-ico-send"></span>
+          </oj-c-button>
+        </oj-bind-if>
+      </div>
+    </oj-bind-if>
+
   </div>
 
   <!-- ═══════════════════════════════════════════════════════

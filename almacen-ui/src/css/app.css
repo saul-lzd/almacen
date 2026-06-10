@@ -1704,18 +1704,71 @@
 }
 
 /* ── Context bar del formulario de contrato ── */
-.cf-ctx-item {
-  padding: 0 20px;
-  border-right: 1px solid var(--oj-core-divider-color, #e0e0e0);
+/* ── Context bar — header del formulario de contrato ── */
+
+.cf-ctx-bar.oj-panel {
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.cf-ctx-bar-items {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
   min-width: 0;
 }
 
-.cf-ctx-item:first-child {
-  padding-left: 0;
+.cf-ctx-bar-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
 }
 
-.cf-ctx-item--wide {
-  min-width: 200px;
+.ctx-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 20px;
+  border-right: 1px solid #e0e0e0;
+  flex: 0 0 auto;
+}
+
+.ctx-item.fixed {
+  white-space: nowrap;
+}
+
+.ctx-item.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ctx-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.ctx-val {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ctx-val.mono {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  letter-spacing: .01em;
 }
 
 /* ── Bienes captura — tabla ── */

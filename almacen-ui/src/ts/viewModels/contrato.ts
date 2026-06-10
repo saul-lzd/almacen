@@ -552,6 +552,21 @@ class NuevoContratoViewModel {
     const data: ContratoResponsePayload = await contratosApi.obtenerPorId(id);
     console.log("=== JSON CRUDO DEL BACKEND ===", JSON.stringify(data, null, 2));
     this.mapResponseToUI(data);
+    this.navegarPrimerSeccionIncompleta();
+  }
+
+  private navegarPrimerSeccionIncompleta(): void {
+    const secciones = [
+      { id: "general",       done: this.calcSeccionGeneralDone },
+      { id: "partes",        done: this.calcSeccionPartesDone },
+      { id: "pagos",         done: this.calcSeccionFinancieraDone },
+      { id: "beneficiarios", done: this.calcSeccionBeneficiariosDone },
+      { id: "bienes",        done: this.calcSeccionBienesDone },
+    ];
+    const primera = secciones.find(s => !s.done());
+    if (primera) {
+      this.uiSeccionActiva(primera.id);
+    }
   }
 
   private async loadCatalogoClaves(): Promise<void> {
@@ -958,12 +973,13 @@ class NuevoContratoViewModel {
     this.frmBeneficiariosTexto(data.beneficiarios || "");
 
     // Claves presupuestales
-    this.listClaves(
-      data.clavesPresupuestales.map((c, i) =>
-        this.makeClaveItem(i + 1, c.clave, c.montoAsignado)
-      )
+    const clavesFromApi = (data.clavesPresupuestales ?? []).map((c, i) =>
+      this.makeClaveItem(i + 1, c.clave, c.montoAsignado)
     );
-    this.seqClave = data.clavesPresupuestales?.length + 1;
+    this.seqClave = clavesFromApi.length + 1;
+    this.listClaves(
+      clavesFromApi.length > 0 ? clavesFromApi : [this.makeClaveItem(this.seqClave++)]
+    );
 
     // Bienes — incluyen idContratoBien para que el PUT pueda hacer upsert
     this.listBienes(
