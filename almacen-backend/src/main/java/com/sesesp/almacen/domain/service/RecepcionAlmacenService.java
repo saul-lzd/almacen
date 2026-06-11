@@ -4,6 +4,7 @@ import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto.BienRecepcionDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
+import com.sesesp.almacen.domain.dto.RecepcionDetalleDto;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.ContratoBienEntity;
@@ -189,7 +190,65 @@ public class RecepcionAlmacenService {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // GET — recepción de un contrato
+    // GET — lista de todas las recepciones de un contrato
+    // ─────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<RecepcionDetalleDto> listarRecepciones(Integer idContrato) {
+        return recepcionAlmacenRepository.findByContratoIdContratoAndActivoTrue(idContrato)
+                .stream()
+                .sorted(java.util.Comparator.comparing(RecepcionAlmacenEntity::getFechaRecepcion).reversed())
+                .map(this::mapToDetalle)
+                .collect(Collectors.toList());
+    }
+
+    private RecepcionDetalleDto mapToDetalle(RecepcionAlmacenEntity r) {
+        List<RecepcionDetalleDto.BienDetalleDto> bienes = r.getBienes().stream()
+                .map(b -> {
+                    ContratoBienEntity cb = b.getContratoBien();
+                    return new RecepcionDetalleDto.BienDetalleDto(
+                            cb.getIdContratoBien(),
+                            cb.getLote(),
+                            cb.getPartida(),
+                            descripcionCorta(cb.getDescripcionTecnica()),
+                            cb.getUnidadMedida().getNombre(),
+                            cb.getCantidad(),
+                            b.getCantidadRecibida(),
+                            b.getCantidadRechazada(),
+                            b.getComentarios()
+                    );
+                })
+                .collect(Collectors.toList());
+
+        int totalBienes = (int) almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndActivoTrue(r.getIdRecepcionAlmacen());
+        int totalProcesados = (int) almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                        r.getIdRecepcionAlmacen(),
+                        List.of(EstatusBien.PROCESADO, EstatusBien.LISTO_PARA_ENTREGAR, EstatusBien.ENTREGADO));
+
+        return new RecepcionDetalleDto(
+                r.getIdRecepcionAlmacen(),
+                r.getFolioEntradaAlmacen(),
+                r.getFechaRecepcion(),
+                r.getNombreEntrega(),
+                r.getNombreRecibe(),
+                r.getObservaciones(),
+                r.getEstatus().name(),
+                totalBienes,
+                totalProcesados,
+                bienes
+        );
+    }
+
+    private static String descripcionCorta(String html) {
+        if (html == null || html.isBlank()) return "";
+        String stripped = html.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").strip();
+        return stripped.length() > 100 ? stripped.substring(0, 97) + "..." : stripped;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET — recepción de un contrato (legado — devuelve la más reciente)
     // ─────────────────────────────────────────────────────────────
 
     public RecepcionAlmacenResponseDto findByContrato(Integer idContrato) {

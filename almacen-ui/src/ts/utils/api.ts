@@ -87,6 +87,10 @@ export const contratosApi = {
     autorizarEntrega: (id: number): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/autorizar-entrega`, jsonInit("PATCH")).then(r => handleResponse(r)),
 
+    // GET   /api/contratos/:id/recepciones — lista todas las recepciones del contrato (más reciente primero)
+    listarRecepciones: (id: number): Promise<any[]> =>
+        fetch(`${BASE_URL}/api/contratos/${id}/recepciones`, getInit()).then(r => handleResponse(r)),
+
     // GET   /api/contratos/:id/recepcion — recupera la recepción guardada si existe
     obtenerRecepcion: (id: number): Promise<any> =>
         fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, getInit()).then(r => handleResponse(r)),

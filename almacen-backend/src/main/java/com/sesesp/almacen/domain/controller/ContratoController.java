@@ -7,6 +7,7 @@ import com.sesesp.almacen.domain.dto.ContratoDto;
 import com.sesesp.almacen.domain.dto.EntregaRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
+import com.sesesp.almacen.domain.dto.RecepcionDetalleDto;
 import com.sesesp.almacen.domain.service.AlmacenBienService;
 import com.sesesp.almacen.domain.service.ContratoService;
 import com.sesesp.almacen.domain.service.RecepcionAlmacenService;
@@ -92,6 +93,16 @@ public class ContratoController {
     public ResponseEntity<?> autorizarEntrega(@PathVariable Integer idContrato) {
         contratoService.autorizarEntrega(idContrato);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Devuelve la lista completa de recepciones de un contrato, ordenadas de más reciente a más antigua.
+     * Cada recepción incluye su folio, fechas, transportista, almacenista, observaciones, estatus y bienes recibidos.
+     */
+    @GetMapping("/{idContrato}/recepciones")
+    public ResponseEntity<List<RecepcionDetalleDto>> listarRecepciones(
+            @PathVariable Integer idContrato) {
+        return ResponseEntity.ok(recepcionAlmacenService.listarRecepciones(idContrato));
     }
 
     /**

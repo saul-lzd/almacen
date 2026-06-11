@@ -37,23 +37,6 @@ type BienContrato = {
     cantidadEntregadaTotal: number;
 };
 
-type RecepcionItem = {
-    idRecepcionAlmacen: number;
-    folio: string;
-    numero: number;
-    titulo: string;
-    fechaRecepcion: string;
-    transportista: string;
-    almacenista: string;
-    estatus: string;
-    estatusLabel: string;
-    estatusDot: string;
-    totalBienes: number;
-    totalProcesados: number;
-    progresoPct: number;
-    progresoLabel: string;
-};
-
 type BienDialogo = {
     idContratoBien: number;
     lote: number | null;
@@ -98,9 +81,7 @@ class ContratoDetalleViewModel {
     public uiAccion     = ko.observable<boolean>(false);
 
     // ── Datos ───────────────────────────────────────────────────
-    public contrato         = ko.observable<Contrato | null>(null);
-    public listRecepciones  = ko.observableArray<RecepcionItem>([]);
-    public uiCargandoRecepciones = ko.observable<boolean>(false);
+    public contrato     = ko.observable<Contrato | null>(null);
 
     // ── Fecha tentativa editable ─────────────────────────────────
     public frmFecha        = ko.observable<string>("");
@@ -143,15 +124,17 @@ class ContratoDetalleViewModel {
 
     public calcPuedeProcesar = ko.pureComputed(() => {
         if (!this.calcEsAlmacenista()) return false;
-        return (this.contrato()?.resumenBienes?.enProceso ?? 0) > 0;
+        const e = this.contrato()?.estatus;
+        return e === "EN_ALMACEN" || e === "RECEPCION_PARCIAL";
     });
 
     // Autorizar entrega → sólo ADMIN
     public calcPuedeAutorizar = ko.pureComputed(() => {
         if (!this.calcEsAdmin()) return false;
         const r = this.contrato()?.resumenBienes;
+        const e = this.contrato()?.estatus;
         if (!r) return false;
-        return r.procesados > 0 && this.contrato()?.estatus === "POR_RECIBIR";
+        return r.procesados > 0 && (e === "EN_ALMACEN" || e === "RECEPCION_PARCIAL");
     });
 
     // Entregar bienes → sólo ALMACEN
@@ -178,7 +161,6 @@ class ContratoDetalleViewModel {
         document.title = "Detalle — Gestión de Almacén";
         if (this.contratoId) {
             void this.loadContrato(this.contratoId);
-            void this.loadRecepciones(this.contratoId);
         } else {
             this.uiError("No se especificó un contrato.");
         }
@@ -251,10 +233,7 @@ class ContratoDetalleViewModel {
     };
 
     public cmdActualizar = (): void => {
-        if (this.contratoId) {
-            void this.loadContrato(this.contratoId);
-            void this.loadRecepciones(this.contratoId);
-        }
+        if (this.contratoId) void this.loadContrato(this.contratoId);
     };
 
     public cmdEditarContrato = (): void => {
@@ -377,59 +356,12 @@ class ContratoDetalleViewModel {
             this.uiDialogoRecepcion(false);
             this.uiExito("Recepción registrada correctamente.");
             await this.loadContrato(this.contratoId);
-            void this.loadRecepciones(this.contratoId);
         } catch (err: any) {
             console.error("Error al registrar recepción:", err);
             this.uiErrorDialogo(err.message || "No se pudo registrar la recepción.");
         } finally {
             this.uiGuardandoRecepcion(false);
         }
-    };
-
-    // ================================================================
-    // LOAD — Recepciones
-    // ================================================================
-    private async loadRecepciones(id: number): Promise<void> {
-        this.uiCargandoRecepciones(true);
-        try {
-            const data: any[] = await contratosApi.listarRecepciones(id);
-            const items: RecepcionItem[] = data.map((r, idx) => {
-                const num = data.length - idx;
-                const dot = this.estatusToDot(r.estatus);
-                const pct = r.totalBienes > 0
-                    ? Math.round(r.totalProcesados / r.totalBienes * 100)
-                    : 0;
-                return {
-                    idRecepcionAlmacen: r.idRecepcionAlmacen,
-                    folio:              r.folio,
-                    numero:             num,
-                    titulo:             `Recepción ${num} — ${r.totalBienes} bien${r.totalBienes !== 1 ? "es" : ""}`,
-                    fechaRecepcion:     this.formatFecha(r.fechaRecepcion),
-                    transportista:      r.transportista || "—",
-                    almacenista:        r.almacenista || "—",
-                    estatus:            r.estatus,
-                    estatusLabel:       this.estatusRecepcionToLabel(r.estatus),
-                    estatusDot:         dot,
-                    totalBienes:        r.totalBienes,
-                    totalProcesados:    r.totalProcesados,
-                    progresoPct:        pct,
-                    progresoLabel:      `${r.totalProcesados} / ${r.totalBienes} procesados`,
-                };
-            });
-            this.listRecepciones(items);
-        } catch (err: any) {
-            console.error("Error al cargar recepciones:", err);
-            this.uiError("No se pudieron cargar las recepciones: " + (err.message || "error desconocido"));
-        } finally {
-            this.uiCargandoRecepciones(false);
-        }
-    }
-
-    // ================================================================
-    // COMMANDS — Recepciones
-    // ================================================================
-    public cmdVerDetallesRecepcion = (_recepcion: RecepcionItem): void => {
-        // stub — navigation or detail dialog to be implemented
     };
 
     // ================================================================
@@ -440,25 +372,6 @@ class ContratoDetalleViewModel {
         const d = new Date(val);
         if (isNaN(d.getTime())) return val;
         return d.toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
-    }
-
-    private estatusToDot(estatus: string): string {
-        switch (estatus) {
-            case "PROCESADA":  return "green";
-            case "ENTREGADA":  return "blue";
-            case "EN_PROCESO": return "amber";
-            default:           return "gray";
-        }
-    }
-
-    private estatusRecepcionToLabel(estatus: string): string {
-        switch (estatus) {
-            case "INICIADA":   return "Iniciada";
-            case "EN_PROCESO": return "En proceso";
-            case "PROCESADA":  return "Procesada";
-            case "ENTREGADA":  return "Entregada";
-            default:           return estatus;
-        }
     }
 
     private formatMonto(val: number | null | undefined): string {

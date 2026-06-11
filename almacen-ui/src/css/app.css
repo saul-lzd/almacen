@@ -1230,6 +1230,119 @@
 
   /* ── DETALLE DEL CONTRATO ── */
 
+  /* -- Header de página -- */
+
+  .cd-page-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 0 16px;
+  }
+
+  .cd-page-acciones {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cd-panel-numero-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px 10px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .cd-numero-acciones { display: flex; align-items: center; gap: 8px; }
+
+  .cd-numero {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: .02em;
+  }
+
+  /* -- Panel 1: datos generales -- */
+
+  .cd-panel-general.oj-panel {
+    padding: 0;
+  }
+
+  .cd-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 32px;
+    padding: 16px 20px 14px;
+  }
+
+  .cd-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 0 0 auto;
+  }
+
+  .cd-info-item--grow {
+    flex: 1;
+  }
+
+  .cd-info-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    white-space: nowrap;
+  }
+
+  .cd-info-val {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* -- Panel 1: KPIs -- */
+
+  .cd-kpis {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 0 20px 20px;
+  }
+
+  .cd-kpi-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+  }
+
+  .cd-kpi-label {
+    font-size: 10px;
+    color: #9ca3af;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 6px;
+  }
+
+  .cd-kpi-num {
+    font-size: 22px;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .cd-kpi-num--blue   { color: #1d4ed8; }
+  .cd-kpi-num--green  { color: #166534; }
+  .cd-kpi-num--amber  { color: #92400e; }
+
   .detalle-view {
     max-width: 1100px;
     margin: 0 auto;
@@ -1856,3 +1969,83 @@
   font-size: 13px;
   background: var(--oj-core-bg-color-primary, #ffffff);
 }
+
+/* ================================================================
+   Panel 2 — Recepciones (contrato-detalle)
+================================================================ */
+.cd-panel-recepciones.oj-panel { padding: 0; }
+
+.cd-rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.cd-rec-header-left { display: flex; align-items: center; gap: 10px; }
+.cd-rec-titulo { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+.cd-rec-count-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+.cd-rec-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; }
+.cd-rec-empty { font-size: 13px; color: #9ca3af; text-align: center; padding: 24px 0; }
+
+.cd-rec-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; }
+.cd-rec-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cd-rec-card-header-left { display: flex; align-items: center; gap: 8px; }
+.cd-rec-card-header-right { display: flex; align-items: center; gap: 6px; }
+
+.cd-rec-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.cd-rec-dot--gray  { background: #9ca3af; }
+.cd-rec-dot--amber { background: #d97706; }
+.cd-rec-dot--green { background: #16a34a; }
+.cd-rec-dot--blue  { background: #1d4ed8; }
+
+.cd-rec-card-titulo { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+
+.cd-rec-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px; }
+.cd-rec-badge--gray  { background: #f3f4f6; color: #6b7280; }
+.cd-rec-badge--amber { background: #fef3c7; color: #92400e; }
+.cd-rec-badge--green { background: #dcfce7; color: #166534; }
+.cd-rec-badge--blue  { background: #dbeafe; color: #1d4ed8; }
+
+.cd-rec-info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 24px;
+  align-items: center;
+}
+.cd-rec-info-col--accion { justify-self: end; }
+.cd-rec-info-col { display: flex; flex-direction: column; gap: 4px; }
+.cd-rec-info-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.cd-rec-info-val { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+
+.cd-rec-progreso-bar {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.cd-rec-progreso-fill { height: 100%; border-radius: 99px; transition: width .3s ease; }
+.cd-rec-progreso-fill--gray  { background: #9ca3af; }
+.cd-rec-progreso-fill--amber { background: #d97706; }
+.cd-rec-progreso-fill--green { background: #16a34a; }
+.cd-rec-progreso-fill--blue  { background: #1d4ed8; }
