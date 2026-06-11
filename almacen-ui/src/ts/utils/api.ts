@@ -100,8 +100,12 @@ export const contratosApi = {
         fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, jsonInit("POST", payload)).then(r => handleResponse(r)),
 
     // GET  /api/contratos/:id/almacen-bienes — bienes con su estado en almacén (para vista de recepción)
-    obtenerBienesAlmacen: (id: number): Promise<any[]> =>
-        fetch(`${BASE_URL}/api/contratos/${id}/almacen-bienes`, getInit()).then(r => handleResponse(r)),
+    obtenerBienesAlmacen: (id: number, recepcionId?: number): Promise<any[]> => {
+        const url = recepcionId != null
+            ? `${BASE_URL}/api/contratos/${id}/almacen-bienes?recepcionId=${recepcionId}`
+            : `${BASE_URL}/api/contratos/${id}/almacen-bienes`;
+        return fetch(url, getInit()).then(r => handleResponse(r));
+    },
 
     // GET  /api/contratos/:id/bienes-entrega — bienes listos para entrega al beneficiario
     obtenerBienesEntrega: (id: number): Promise<any[]> =>

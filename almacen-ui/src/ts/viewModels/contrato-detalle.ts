@@ -63,6 +63,7 @@ type BienDialogo = {
     cantidadEsperada: number;
     cantidadRecibida: ko.Observable<number | null>;
     calcDiferencia: ko.PureComputed<number | null>;
+    todoRecibido: ko.Observable<boolean>;
 };
 
 type Contrato = {
@@ -263,9 +264,9 @@ class ContratoDetalleViewModel {
         this.router?.go({ path: "contrato", params: { id: this.contratoId } });
     };
 
-    public cmdProcesarBienes = (): void => {
+    public cmdProcesarBienes = (recepcion: { idRecepcionAlmacen: number }): void => {
         if (!this.contratoId) return;
-        this.router?.go({ path: "procesamiento", params: { id: this.contratoId } });
+        this.router?.go({ path: "procesamiento", params: { id: this.contratoId, recepcionId: recepcion.idRecepcionAlmacen } });
     };
 
     public cmdEntregarBienes = (): void => {
@@ -330,6 +331,10 @@ class ContratoDetalleViewModel {
                     ? b.cantidad - b.cantidadRecibidaTotal
                     : b.cantidad;
                 const cantidadRecibida = ko.observable<number | null>(null);
+                const todoRecibido = ko.observable<boolean>(false);
+                todoRecibido.subscribe((checked: boolean) => {
+                    cantidadRecibida(checked ? pendiente : null);
+                });
                 return {
                     idContratoBien:  b.idContratoBien,
                     lote:            b.lote,
@@ -342,6 +347,7 @@ class ContratoDetalleViewModel {
                         const rec = cantidadRecibida();
                         return rec === null ? null : rec - pendiente;
                     }),
+                    todoRecibido,
                 };
             });
 

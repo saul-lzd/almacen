@@ -50,6 +50,16 @@ public class AlmacenBienService {
     }
 
     @Transactional(readOnly = true)
+    public List<AlmacenBienGrupoDto> getBienesAgrupadosPorRecepcion(Integer idContrato, Integer idRecepcion) {
+        contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
+
+        return agrupar(almacenBienRepository.findByContratoAndRecepcionWithFetch(
+                idContrato, idRecepcion,
+                List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO, EstatusBien.PROCESADO)));
+    }
+
+    @Transactional(readOnly = true)
     public List<AlmacenBienGrupoDto> getBienesListosParaEntregar(Integer idContrato) {
         contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));

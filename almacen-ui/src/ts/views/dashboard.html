@@ -9,15 +9,6 @@
       <p class="oj-text-color-secondary oj-typography-body-sm">Administra contratos, recepciones y entregas</p>
     </div>
     <div style="display: flex; gap: 8px;">
-      <oj-bind-if test="[[calcEsAlmacenista()]]">
-        <oj-c-button
-          label="Actualizar"
-          chroming="outlined"
-          disabled="[[uiCargando()]]"
-          on-oj-action="[[cmdActualizar]]">
-          <span slot="startIcon" class="oj-ux-ico-refresh"></span>
-        </oj-c-button>
-      </oj-bind-if>
       <oj-bind-if test="[[calcEsAdmin()]]">
         <oj-c-button
           label="+ Nuevo Contrato"

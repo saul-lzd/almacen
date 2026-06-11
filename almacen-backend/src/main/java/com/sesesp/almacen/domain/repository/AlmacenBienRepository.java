@@ -65,4 +65,18 @@ public interface AlmacenBienRepository extends JpaRepository<AlmacenBienEntity, 
     List<AlmacenBienEntity> findByContratoWithFetch(
             @Param("idContrato") Integer idContrato,
             @Param("estatuses") List<EstatusBien> estatuses);
+
+    @Query("SELECT ab FROM AlmacenBienEntity ab " +
+           "JOIN FETCH ab.contratoBien cb " +
+           "JOIN FETCH cb.unidadMedida " +
+           "JOIN FETCH ab.recepcionAlmacenBien rab " +
+           "JOIN FETCH rab.recepcionAlmacen ra " +
+           "WHERE ab.contrato.idContrato = :idContrato " +
+           "AND ra.idRecepcionAlmacen = :idRecepcion " +
+           "AND ab.activo = true " +
+           "AND ab.estatus IN :estatuses")
+    List<AlmacenBienEntity> findByContratoAndRecepcionWithFetch(
+            @Param("idContrato") Integer idContrato,
+            @Param("idRecepcion") Integer idRecepcion,
+            @Param("estatuses") List<EstatusBien> estatuses);
 }

@@ -66,11 +66,6 @@
               <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
             </oj-c-button>
           </oj-bind-if>
-          <oj-c-button label="Actualizar" chroming="outlined" size="sm"
-            :disabled="[[uiCargando()]]"
-            on-oj-action="[[cmdActualizar]]">
-            <span slot="startIcon" class="oj-ux-ico-refresh"></span>
-          </oj-c-button>
         </div>
       </div>
 
@@ -171,7 +166,7 @@
           </span>
         </div>
         <oj-bind-if test="[[calcPuedeRecibirNuevo()]]">
-          <oj-c-button label="Recibir" chroming="callToAction" size="sm"
+          <oj-c-button label="Nueva recepción" chroming="callToAction" size="sm"
             on-oj-action="[[cmdAbrirRecepcion]]">
             <span slot="startIcon" class="oj-ux-ico-download"></span>
           </oj-c-button>
@@ -201,6 +196,12 @@
                     <oj-bind-text value="[[rec.data.estatusLabel]]"></oj-bind-text>
                   </span>
                 </div>
+                <oj-bind-if test="[[calcPuedeProcesar() && (rec.data.estatus === 'INICIADA' || rec.data.estatus === 'EN_PROCESO')]]">
+                  <oj-c-button label="Procesar" chroming="solid" size="sm"
+                    on-oj-action="[[() => cmdProcesarBienes(rec.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-scan-barcode"></span>
+                  </oj-c-button>
+                </oj-bind-if>
               </div>
 
               <!-- Info row: Fecha | Transportista | Almacenista | Progreso -->
@@ -239,14 +240,6 @@
                   </div>
                 </div>
 
-                <div class="cd-rec-info-col cd-rec-info-col--accion">
-                  <oj-bind-if test="[[calcPuedeProcesar() && (rec.data.estatus === 'INICIADA' || rec.data.estatus === 'EN_PROCESO')]]">
-                    <oj-c-button label="Procesar bienes" chroming="outlined" size="sm"
-                      on-oj-action="[[cmdProcesarBienes]]">
-                      <span slot="startIcon" class="oj-ux-ico-scan-barcode"></span>
-                    </oj-c-button>
-                  </oj-bind-if>
-                </div>
 
               </div>
 
@@ -260,8 +253,109 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         PANEL 3 — Tabla de bienes recibidos (próximo)
+         PANEL 3 — Tabla de bienes
     ════════════════════════════════════════════════════════════ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom">
+
+      <!-- Header del panel -->
+      <div class="cd-rec-header">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Bienes en almacén</span>
+          <span class="cd-rec-count-badge">
+            <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos + ' recibidos de ' + contrato().resumenBienes.totalContratados + ' adquiridos']]"></oj-bind-text>
+          </span>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="cd-bienes-tabla">
+
+        <!-- Header -->
+        <div class="cd-bienes-row cd-bienes-row--header">
+          <div class="cd-bienes-col-partida">Lote / Partida</div>
+          <div class="cd-bienes-col-desc">Descripción</div>
+          <div class="cd-bienes-col-um">U. Medida</div>
+          <div class="cd-bienes-col-num">Contratados</div>
+          <div class="cd-bienes-col-num cd-bienes-col-num--blue">Recibidos</div>
+          <div class="cd-bienes-col-num cd-bienes-col-num--green">Procesados</div>
+          <div class="cd-bienes-col-num cd-bienes-col-num--amber">Entregados</div>
+          <div class="cd-bienes-col-estado">Estado</div>
+        </div>
+
+        <!-- Filas -->
+        <oj-bind-if test="[[contrato().bienes.length === 0]]">
+          <div class="cd-rec-empty">Sin bienes registrados en este contrato</div>
+        </oj-bind-if>
+
+        <oj-bind-for-each data="[[contrato().bienes]]">
+          <template data-oj-as="bien">
+            <div :class="[[{
+              'cd-bienes-row': true,
+              'cd-bienes-row--pendiente': bien.data.cantidadRecibidaTotal === 0
+            }]]">
+
+              <div class="cd-bienes-col-partida">
+                <oj-bind-if test="[[bien.data.lote !== null || bien.data.partida !== null]]">
+                  <span class="recepcion-partida-tag">
+                    <oj-bind-text value="[['L' + (bien.data.lote ?? '?') + ' · P' + (bien.data.partida ?? '?')]]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.lote === null && bien.data.partida === null]]">
+                  <span class="oj-text-color-secondary">—</span>
+                </oj-bind-if>
+              </div>
+
+              <div class="cd-bienes-col-desc">
+                <span class="cd-bienes-desc-text oj-line-clamp-2">
+                  <oj-bind-text value="[[bien.data.descripcionCorta]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <div class="cd-bienes-col-um">
+                <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
+              </div>
+
+              <div class="cd-bienes-col-num">
+                <oj-bind-text value="[[bien.data.cantidad]]"></oj-bind-text>
+              </div>
+
+              <div class="cd-bienes-col-num">
+                <span :class="[[bien.data.cantidadRecibidaTotal > 0 ? 'cd-bienes-num--blue' : 'cd-bienes-num--muted']]">
+                  <oj-bind-text value="[[bien.data.cantidadRecibidaTotal]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <div class="cd-bienes-col-num">
+                <span :class="[[bien.data.cantidadProcesadaTotal > 0 ? 'cd-bienes-num--green' : 'cd-bienes-num--muted']]">
+                  <oj-bind-text value="[[bien.data.cantidadProcesadaTotal]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <div class="cd-bienes-col-num">
+                <span :class="[[bien.data.cantidadEntregadaTotal > 0 ? 'cd-bienes-num--amber' : 'cd-bienes-num--muted']]">
+                  <oj-bind-text value="[[bien.data.cantidadEntregadaTotal]]"></oj-bind-text>
+                </span>
+              </div>
+
+              <div class="cd-bienes-col-estado">
+                <oj-bind-if test="[[bien.data.cantidadRecibidaTotal === 0]]">
+                  <span class="cd-rec-badge cd-rec-badge--gray">Por recibir</span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.cantidadRecibidaTotal > 0 && bien.data.cantidadEntregadaTotal < bien.data.cantidad]]">
+                  <span class="cd-rec-badge cd-rec-badge--blue">En almacén</span>
+                </oj-bind-if>
+                <oj-bind-if test="[[bien.data.cantidadEntregadaTotal >= bien.data.cantidad && bien.data.cantidad > 0]]">
+                  <span class="cd-rec-badge cd-rec-badge--green">Entregado</span>
+                </oj-bind-if>
+              </div>
+
+            </div>
+          </template>
+        </oj-bind-for-each>
+
+      </div>
+
+    </div>
 
   </oj-bind-if>
 
@@ -297,7 +391,7 @@
           required="true">
         </oj-c-input-text>
         <oj-c-text-area
-          label-hint="Observaciones (opcional)"
+          label-hint="Observaciones"
           value="{{frmObservaciones}}"
           :disabled="[[uiGuardandoRecepcion()]]"
           rows="2"
@@ -310,31 +404,25 @@
         <div class="recepcion-tabla">
 
           <div class="recepcion-tabla-header">
-            <div class="recepcion-col-partida">Lote / Partida</div>
+            <div class="recepcion-col-check"></div>
             <div class="recepcion-col-desc">Descripción</div>
-            <div class="recepcion-col-um">U.M.</div>
-            <div class="recepcion-col-numero recepcion-col-numero--center">Cant. Esperada</div>
-            <div class="recepcion-col-numero recepcion-col-numero--center">Cant. Recibida</div>
-            <div class="recepcion-col-diff" style="justify-content: center">Faltante</div>
+            <div class="recepcion-col-um">U. Medida</div>
+            <div class="recepcion-col-cantidad">Cant. Recibida</div>
           </div>
 
           <oj-bind-for-each data="[[listaBienesDialogo()]]">
             <template data-oj-as="bien">
               <div class="recepcion-tabla-fila"
                 :class="[[{
-                  'recepcion-fila--diferencia': bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0,
-                  'recepcion-fila--completo':   bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() >= 0
+                  'recepcion-fila--diferencia':  !bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0,
+                  'recepcion-fila--completo':     bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() >= 0,
+                  'recepcion-fila--advertencia':  bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0
                 }]]">
 
-                <div class="recepcion-col-partida">
-                  <oj-bind-if test="[[bien.data.lote !== null || bien.data.partida !== null]]">
-                    <span class="recepcion-partida-tag">
-                      <oj-bind-text value="[['L' + (bien.data.lote ?? '?') + ' · P' + (bien.data.partida ?? '?')]]"></oj-bind-text>
-                    </span>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[bien.data.lote === null && bien.data.partida === null]]">
-                    <span class="oj-text-color-secondary">—</span>
-                  </oj-bind-if>
+                <div class="recepcion-col-check">
+                  <input type="checkbox"
+                    class="recepcion-check"
+                    data-bind="checked: bien.data.todoRecibido, disable: uiGuardandoRecepcion()">
                 </div>
 
                 <div class="recepcion-col-desc oj-typography-body-sm">
@@ -345,33 +433,14 @@
                   <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
                 </div>
 
-                <div class="recepcion-col-numero recepcion-col-numero--center oj-typography-body-sm">
-                  <oj-bind-text value="[[bien.data.cantidadEsperada]]"></oj-bind-text>
-                </div>
-
-                <div class="recepcion-col-numero recepcion-col-numero--center">
+                <div class="recepcion-col-cantidad">
                   <oj-c-input-number
-                    label-edge="inside"
+                    label-edge="none"
                     value="{{bien.data.cantidadRecibida}}"
                     min="0"
                     :max="[[bien.data.cantidadEsperada]]"
-                    :disabled="[[uiGuardandoRecepcion()]]"
-                    style="min-width: 100px">
+                    :disabled="[[uiGuardandoRecepcion()]]">
                   </oj-c-input-number>
-                </div>
-
-                <div class="recepcion-col-diff" style="justify-content: center">
-                  <oj-bind-if test="[[bien.data.calcDiferencia() === null]]">
-                    <span class="oj-text-color-disabled">—</span>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0]]">
-                    <span class="recepcion-diff--negativa">
-                      -<oj-bind-text value="[[Math.abs(bien.data.calcDiferencia())]]"></oj-bind-text>
-                    </span>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() >= 0]]">
-                    <span class="recepcion-diff--ok">✓</span>
-                  </oj-bind-if>
                 </div>
 
               </div>

@@ -134,7 +134,11 @@ public class ContratoController {
      */
     @GetMapping("/{idContrato}/almacen-bienes")
     public ResponseEntity<List<AlmacenBienGrupoDto>> getAlmacenBienes(
-            @PathVariable Integer idContrato) {
+            @PathVariable Integer idContrato,
+            @RequestParam(required = false) Integer recepcionId) {
+        if (recepcionId != null) {
+            return ResponseEntity.ok(almacenBienService.getBienesAgrupadosPorRecepcion(idContrato, recepcionId));
+        }
         return ResponseEntity.ok(almacenBienService.getBienesAgrupados(idContrato));
     }
 

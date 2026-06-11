@@ -112,6 +112,7 @@ public class ContratoMapper {
                 .cantidad(entity.getCantidad())
                 .precioUnitario(entity.getPrecioUnitario())
                 .subtotal(entity.getSubtotal())
+                .cantidadRecibidaTotal(entity.getCantidadRecibidaTotal() != null ? new java.math.BigDecimal(entity.getCantidadRecibidaTotal()) : java.math.BigDecimal.ZERO)
                 .cantidadProcesadaTotal(entity.getCantidadProcesadaTotal() != null ? entity.getCantidadProcesadaTotal() : 0L)
                 .cantidadEntregadaTotal(entity.getCantidadEntregadaTotal() != null ? entity.getCantidadEntregadaTotal() : 0L)
                 .build();

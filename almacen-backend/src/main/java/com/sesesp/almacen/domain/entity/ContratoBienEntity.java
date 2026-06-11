@@ -65,6 +65,10 @@ public class ContratoBienEntity extends AuditoriaEntity {
     @Column(name = "subtotal", nullable = false, precision = 15, scale = 2)
     private BigDecimal subtotal;
 
+    /** Unidades individuales ya recibidas en almacén (cualquier estatus activo). */
+    @Formula("(SELECT COUNT(*) FROM almacen_bien ab WHERE ab.id_contrato_bien = id_contrato_bien AND ab.activo = true)")
+    private Long cantidadRecibidaTotal;
+
     /** Unidades individuales que ya fueron procesadas (PROCESADO, LISTO_PARA_ENTREGAR o ENTREGADO). */
     @Formula("(SELECT COUNT(*) FROM almacen_bien ab WHERE ab.id_contrato_bien = id_contrato_bien" +
              " AND ab.estatus IN ('PROCESADO', 'LISTO_PARA_ENTREGAR', 'ENTREGADO'))")

@@ -66,6 +66,7 @@ class ProcesamientoViewModel {
 
     private router: any;
     private contratoId: number | null = null;
+    private recepcionId: number | null = null;
 
     public uiCargando  = ko.observable<boolean>(false);
     public uiError     = ko.observable<string>("");
@@ -87,8 +88,12 @@ class ProcesamientoViewModel {
     constructor(params: any) {
         this.router = params?.router;
         const idParam = params?.routerState?.params?.id;
+        const recepcionParam = params?.routerState?.params?.recepcionId;
         if (idParam) {
             this.contratoId = Number(idParam);
+        }
+        if (recepcionParam) {
+            this.recepcionId = Number(recepcionParam);
         }
     }
 
@@ -115,7 +120,7 @@ class ProcesamientoViewModel {
         try {
             const [dataContrato, dataGrupos] = await Promise.all([
                 contratosApi.obtenerPorId(id),
-                contratosApi.obtenerBienesAlmacen(id)
+                contratosApi.obtenerBienesAlmacen(id, this.recepcionId ?? undefined)
             ]);
 
             this.contrato({
