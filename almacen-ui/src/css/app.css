@@ -1825,8 +1825,20 @@
 .cf-ctx-bar.oj-panel {
   padding: 0;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
   overflow: hidden;
+}
+
+.cf-ctx-bar-row1 {
+  display: flex;
+  align-items: stretch;
+}
+
+.cf-ctx-bar-row2 {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--oj-panel-border-color, #e5e7eb);
+  background: var(--oj-panel-bg-color-alt, #f8f9fa);
 }
 
 .cf-ctx-bar-items {
@@ -1885,6 +1897,12 @@
   font-family: 'SF Mono', 'Fira Code', monospace;
   font-size: 12px;
   letter-spacing: .01em;
+}
+.ctx-val-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
 }
 
 /* ── Bienes captura — tabla ── */
@@ -2063,6 +2081,9 @@
   padding: 8px 16px;
   border-bottom: 1px solid #e5e7eb;
 }
+.cd-bienes-row--admin {
+  grid-template-columns: 110px 1fr 70px 90px 100px 100px 90px 90px 90px 90px;
+}
 .cd-bienes-row:last-child { border-bottom: none; }
 .cd-bienes-row--pendiente { background: #f9fafb; }
 
@@ -2085,7 +2106,9 @@
 .cd-bienes-col-desc    { min-width: 0; }
 .cd-bienes-col-um      { font-size: 12px; color: #6b7280; }
 .cd-bienes-col-num     { text-align: center; font-size: 13px; font-weight: 500; color: #1a1a1a; }
+.cd-bienes-col-monto   { text-align: right; font-size: 13px; font-weight: 500; color: var(--oj-core-text-color-primary); }
 .cd-bienes-col-estado  { display: flex; align-items: center; justify-content: center; }
+.cd-bienes-row--header .cd-bienes-col-monto { text-align: right; }
 .cd-bienes-col-num--blue  { color: #1d4ed8; }
 .cd-bienes-col-num--green { color: #16a34a; }
 .cd-bienes-col-num--amber { color: #d97706; }
@@ -2096,3 +2119,87 @@
 .cd-bienes-num--green { font-weight: 600; color: #16a34a; }
 .cd-bienes-num--amber { font-weight: 600; color: #d97706; }
 .cd-bienes-num--muted { color: #d1d5db; }
+
+/* ── Diálogos de info admin (financiero / beneficiarios) ─────── */
+.cf-info-dialog-body { padding: 4px 0; }
+
+.cf-info-financial-rows { margin-bottom: 24px; }
+.cf-info-financial-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+.cf-info-financial-row:last-child { border-bottom: none; }
+.cf-info-financial-row:has(+ .cf-info-financial-row--total) { border-bottom: none; }
+.cf-info-financial-row--total {
+  font-weight: 600;
+  border-top: 2px solid #e5e7eb;
+  border-bottom: none;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+.cf-info-financial-row--total .cf-info-financial-val { font-size: 15px; }
+.cf-info-financial-label { color: var(--oj-core-text-color-secondary); }
+.cf-info-financial-val   { font-weight: 500; }
+
+.cf-info-claves-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--oj-core-text-color-secondary);
+  margin-bottom: 8px;
+}
+.cf-info-claves-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+  align-items: center;
+}
+.cf-info-claves-row:last-child { border-bottom: none; }
+.cf-info-claves-row--header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--oj-core-text-color-secondary);
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 6px;
+}
+.cf-info-claves-row--total {
+  font-weight: 600;
+  border-top: 2px solid #e5e7eb;
+  border-bottom: none;
+  color: var(--oj-core-text-color-primary);
+}
+.cf-info-claves-monto { text-align: right; }
+
+.cf-beneficiarios-lista {
+  display: grid;
+  grid-template-rows: repeat(10, auto);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px 20px;
+}
+.cf-beneficiario-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.cf-beneficiario-idx {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--oj-core-text-color-secondary);
+  min-width: 20px;
+}

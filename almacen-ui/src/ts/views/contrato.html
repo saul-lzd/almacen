@@ -101,7 +101,8 @@
 
   <!-- MENSAJE DE ERROR GLOBAL -->
   <oj-bind-if test="[[uiError()]]">
-    <div class="oj-messagebanner-section-error oj-sm-margin-4x-bottom oj-sm-padding-4x">
+    <div class="recepcion-banner recepcion-banner--error oj-sm-margin-4x-bottom">
+      <span class="oj-ux-ico-warning-s"></span>
       <oj-bind-text value="[[uiError]]"></oj-bind-text>
     </div>
   </oj-bind-if>
@@ -119,6 +120,7 @@
   ════════════════════════════════════════════════════════ -->
   <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
 
+    <div class="cf-ctx-bar-row1">
     <!-- Info items -->
     <div class="cf-ctx-bar-items">
 
@@ -150,14 +152,6 @@
         </div>
       </div>
 
-      <oj-bind-if test="[[calcEsAdmin()]]">
-        <div class="ctx-item fixed">
-          <div class="ctx-label">Monto sin impuestos</div>
-          <div class="ctx-val">
-            <oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text>
-          </div>
-        </div>
-      </oj-bind-if>
 
     </div>
 
@@ -165,14 +159,14 @@
     <oj-bind-if test="[[calcEsAdmin()]]">
       <div class="cf-ctx-bar-actions">
         <oj-c-button
-          chroming="solid"
+          chroming="callToAction"
           label="Guardar"
           size="sm"
           disabled="[[uiGuardando()]]"
           on-oj-action="[[cmdGuardarBorrador]]">
           <span slot="startIcon" class="oj-ux-ico-save"></span>
         </oj-c-button>
-        <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura']]">
+        <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura' && calcTodasSeccionesDone()]]">
           <oj-c-button
             chroming="callToAction"
             size="sm"
@@ -181,6 +175,33 @@
             <span slot="startIcon" class="oj-ux-ico-send"></span>
           </oj-c-button>
         </oj-bind-if>
+      </div>
+    </oj-bind-if>
+    </div>
+    <oj-bind-if test="[[calcEsAdmin()]]">
+      <div class="cf-ctx-bar-row2">
+        <div class="ctx-item fixed">
+          <div class="ctx-label">Información Financiera</div>
+          <div class="ctx-val">
+            <div class="ctx-val-row">
+              <span><oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text></span>
+              <oj-c-button label="Ver detalle" chroming="borderless" size="sm"
+                on-oj-action="[[cmdVerFinanciero]]">
+              </oj-c-button>
+            </div>
+          </div>
+        </div>
+        <div class="ctx-item fixed">
+          <div class="ctx-label">Beneficiarios</div>
+          <div class="ctx-val">
+            <div class="ctx-val-row">
+              <span><oj-bind-text value="[[calcBeneficiariosChips().length + ' registrado' + (calcBeneficiariosChips().length !== 1 ? 's' : '')]]"></oj-bind-text></span>
+              <oj-c-button label="Ver todos" chroming="borderless" size="sm"
+                on-oj-action="[[cmdVerBeneficiarios]]">
+              </oj-c-button>
+            </div>
+          </div>
+        </div>
       </div>
     </oj-bind-if>
 
@@ -740,6 +761,69 @@
         El innerHTML se asigna desde el script al abrir el dialog.
       -->
       <!-- <div id="descripcion-bien-render" class="descripcion-bien-render"></div> -->
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Información Financiera ══════════════════════ -->
+  <oj-c-dialog dialog-title="Información Financiera" opened="{{uiDialogoFinanciero}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-info-claves-title">Montos</div>
+      <div class="cf-info-financial-rows">
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Monto sin impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[calcMontoSinImpuestosStr()]]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[calcImpuestosStr()]]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row cf-info-financial-row--total">
+          <span class="cf-info-financial-label">Total</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[calcMontoTotalClavesStr()]]"></oj-bind-text></span>
+        </div>
+      </div>
+      <div class="cf-info-claves-title">Claves Presupuestales</div>
+      <div class="cf-info-claves-row cf-info-claves-row--header">
+        <span>Clave</span><span>Partida Específica</span><span class="cf-info-claves-monto">Monto</span>
+      </div>
+      <oj-bind-for-each data="[[listClaves()]]">
+        <template data-oj-as="clave">
+          <oj-bind-if test="[[!!clave.data.claveId]]">
+            <div class="cf-info-claves-row">
+              <span><oj-bind-text value="[[clave.data.claveId]]"></oj-bind-text></span>
+              <span class="oj-text-color-secondary"><oj-bind-text value="[[clave.data.partidaEspecifica]]"></oj-bind-text></span>
+              <span class="cf-info-claves-monto"><oj-bind-text value="[[Number(clave.data.montoAsignado || 0).toLocaleString('es-MX', {style:'currency', currency:'MXN'})]]"></oj-bind-text></span>
+            </div>
+          </oj-bind-if>
+        </template>
+      </oj-bind-for-each>
+      <div class="cf-info-claves-row cf-info-claves-row--total">
+        <span>Total claves</span>
+        <span></span>
+        <span class="cf-info-claves-monto"><oj-bind-text value="[[calcSumaClavesStr()]]"></oj-bind-text></span>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoFinanciero(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Beneficiarios ═══════════════════════════════ -->
+  <oj-c-dialog dialog-title="Beneficiarios" opened="{{uiDialogoBeneficiarios}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-beneficiarios-lista">
+        <oj-bind-for-each data="[[calcBeneficiariosChips()]]">
+          <template data-oj-as="item">
+            <div class="cf-beneficiario-item">
+              <span class="cf-beneficiario-idx"><oj-bind-text value="[[($index() + 1) + '.']]"></oj-bind-text></span>
+              <span><oj-bind-text value="[[item.data]]"></oj-bind-text></span>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoBeneficiarios(false)]]"></oj-c-button>
     </div>
   </oj-c-dialog>
 

@@ -28,6 +28,7 @@
 
     <!-- ═══ BANNER / HEADER ════════════════════════════════════════ -->
     <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+      <div class="cf-ctx-bar-row1">
       <div class="cf-ctx-bar-items">
 
         <div class="ctx-item fixed">
@@ -61,7 +62,35 @@
           </div>
         </oj-bind-if>
 
+
       </div>
+      </div>
+      <oj-bind-if test="[[calcEsAdmin() && contrato()]]">
+        <div class="cf-ctx-bar-row2">
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Información Financiera</div>
+            <div class="ctx-val">
+              <div class="ctx-val-row">
+                <span><oj-bind-text value="[[contrato().montoSinImpuestos]]"></oj-bind-text></span>
+                <oj-c-button label="Ver detalle" chroming="borderless" size="sm"
+                  on-oj-action="[[cmdVerFinanciero]]">
+                </oj-c-button>
+              </div>
+            </div>
+          </div>
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Beneficiarios</div>
+            <div class="ctx-val">
+              <div class="ctx-val-row">
+                <span><oj-bind-text value="[[calcBeneficiariosLista().length + ' registrado' + (calcBeneficiariosLista().length !== 1 ? 's' : '')]]"></oj-bind-text></span>
+                <oj-c-button label="Ver todos" chroming="borderless" size="sm"
+                  on-oj-action="[[cmdVerBeneficiarios]]">
+                </oj-c-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </oj-bind-if>
     </div>
 
     <!-- ═══ WORK AREA ══════════════════════════════════════════════ -->
@@ -242,5 +271,66 @@
     </div><!-- /proc-work-area -->
 
   </oj-bind-if>
+
+  <!-- ═══ DIÁLOGO: Información Financiera ══════════════════════ -->
+  <oj-c-dialog dialog-title="Información Financiera" opened="{{uiDialogoFinanciero}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-info-claves-title">Montos</div>
+      <div class="cf-info-financial-rows">
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Monto sin impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().montoSinImpuestos : '']]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().impuestos : '']]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row cf-info-financial-row--total">
+          <span class="cf-info-financial-label">Total</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().montoTotal : '']]"></oj-bind-text></span>
+        </div>
+      </div>
+      <div class="cf-info-claves-title">Claves Presupuestales</div>
+      <div class="cf-info-claves-row cf-info-claves-row--header">
+        <span>Clave</span><span>Partida Específica</span><span class="cf-info-claves-monto">Monto</span>
+      </div>
+      <oj-bind-for-each data="[[contrato() ? contrato().clavesPresupuestales : []]]">
+        <template data-oj-as="clave">
+          <div class="cf-info-claves-row">
+            <span><oj-bind-text value="[[clave.data.clave]]"></oj-bind-text></span>
+            <span class="oj-text-color-secondary"><oj-bind-text value="[[clave.data.partidaEspecifica]]"></oj-bind-text></span>
+            <span class="cf-info-claves-monto"><oj-bind-text value="[[clave.data.montoAsignado]]"></oj-bind-text></span>
+          </div>
+        </template>
+      </oj-bind-for-each>
+      <div class="cf-info-claves-row cf-info-claves-row--total">
+        <span>Total claves</span>
+        <span></span>
+        <span class="cf-info-claves-monto"><oj-bind-text value="[[calcTotalClaves()]]"></oj-bind-text></span>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoFinanciero(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Beneficiarios ═══════════════════════════════ -->
+  <oj-c-dialog dialog-title="Beneficiarios" opened="{{uiDialogoBeneficiarios}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-beneficiarios-lista">
+        <oj-bind-for-each data="[[calcBeneficiariosLista()]]">
+          <template data-oj-as="item">
+            <div class="cf-beneficiario-item">
+              <span class="cf-beneficiario-idx"><oj-bind-text value="[[(item.index + 1) + '.']]"></oj-bind-text></span>
+              <span><oj-bind-text value="[[item.data]]"></oj-bind-text></span>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoBeneficiarios(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
 
 </div>

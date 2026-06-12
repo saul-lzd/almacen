@@ -38,6 +38,7 @@
 
     <!-- ═══ BANNER ══════════════════════════════════════════════════ -->
     <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+      <div class="cf-ctx-bar-row1">
       <div class="cf-ctx-bar-items">
 
         <div class="ctx-item fixed">
@@ -70,7 +71,7 @@
                   <oj-bind-text value="[[contrato().fechaTentativaLlegada]]"></oj-bind-text>
                 </span>
                 <oj-bind-if test="[[calcFechaEditable()]]">
-                  <oj-c-button label="Editar" chroming="borderless" size="sm"
+                  <oj-c-button label="Editar" chroming="borderless" size="sm" display="icons"
                     on-oj-action="[[() => uiEditandoFecha(true)]]">
                     <span slot="startIcon" class="oj-ux-ico-edit"></span>
                   </oj-c-button>
@@ -80,22 +81,25 @@
             <oj-bind-if test="[[calcFechaEditable() && uiEditandoFecha()]]">
               <div class="detalle-fecha-editar">
                 <input type="date" class="detalle-fecha-input" data-bind="value: frmFecha">
-                <oj-c-button label="Guardar" chroming="callToAction" size="sm"
+                <oj-c-button label="Guardar" chroming="callToAction" size="sm" display="icons"
                   :disabled="[[uiAccion()]]"
                   on-oj-action="[[cmdGuardarFecha]]">
+                  <span slot="startIcon" class="oj-ux-ico-save"></span>
                 </oj-c-button>
-                <oj-c-button label="Cancelar" chroming="borderless" size="sm"
+                <oj-c-button label="Cancelar" chroming="borderless" size="sm" display="icons"
                   on-oj-action="[[() => uiEditandoFecha(false)]]">
+                  <span slot="startIcon" class="oj-ux-ico-close"></span>
                 </oj-c-button>
               </div>
             </oj-bind-if>
           </div>
         </div>
 
+
       </div>
       <div class="cf-ctx-bar-actions">
         <oj-bind-if test="[[calcEsAdmin() && contrato().estatus === 'CAPTURA']]">
-          <oj-c-button label="Editar contrato" chroming="outlined" size="sm"
+          <oj-c-button label="Editar contrato" chroming="callToAction" size="sm"
             on-oj-action="[[cmdEditarContrato]]">
             <span slot="startIcon" class="oj-ux-ico-edit"></span>
           </oj-c-button>
@@ -114,6 +118,33 @@
           </oj-c-button>
         </oj-bind-if>
       </div>
+      </div>
+      <oj-bind-if test="[[calcEsAdmin() && contrato()]]">
+        <div class="cf-ctx-bar-row2">
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Información Financiera</div>
+            <div class="ctx-val">
+              <div class="ctx-val-row">
+                <span><oj-bind-text value="[[contrato().montoSinImpuestos]]"></oj-bind-text></span>
+                <oj-c-button label="Ver detalle" chroming="borderless" size="sm"
+                  on-oj-action="[[cmdVerFinanciero]]">
+                </oj-c-button>
+              </div>
+            </div>
+          </div>
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Beneficiarios</div>
+            <div class="ctx-val">
+              <div class="ctx-val-row">
+                <span><oj-bind-text value="[[calcBeneficiariosLista().length + ' registrado' + (calcBeneficiariosLista().length !== 1 ? 's' : '')]]"></oj-bind-text></span>
+                <oj-c-button label="Ver todos" chroming="borderless" size="sm"
+                  on-oj-action="[[cmdVerBeneficiarios]]">
+                </oj-c-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </oj-bind-if>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
@@ -271,11 +302,15 @@
       <div class="cd-bienes-tabla">
 
         <!-- Header -->
-        <div class="cd-bienes-row cd-bienes-row--header">
+        <div :class="[['cd-bienes-row cd-bienes-row--header' + (calcEsAdmin() ? ' cd-bienes-row--admin' : '')]]">
           <div class="cd-bienes-col-partida">Lote / Partida</div>
           <div class="cd-bienes-col-desc">Descripción</div>
           <div class="cd-bienes-col-um">U. Medida</div>
           <div class="cd-bienes-col-num">Contratados</div>
+          <oj-bind-if test="[[calcEsAdmin()]]">
+            <div class="cd-bienes-col-monto">P. Unitario</div>
+            <div class="cd-bienes-col-monto">Subtotal</div>
+          </oj-bind-if>
           <div class="cd-bienes-col-num cd-bienes-col-num--blue">Recibidos</div>
           <div class="cd-bienes-col-num cd-bienes-col-num--green">Procesados</div>
           <div class="cd-bienes-col-num cd-bienes-col-num--amber">Entregados</div>
@@ -291,6 +326,7 @@
           <template data-oj-as="bien">
             <div :class="[[{
               'cd-bienes-row': true,
+              'cd-bienes-row--admin': calcEsAdmin(),
               'cd-bienes-row--pendiente': bien.data.cantidadRecibidaTotal === 0
             }]]">
 
@@ -318,6 +354,15 @@
               <div class="cd-bienes-col-num">
                 <oj-bind-text value="[[bien.data.cantidad]]"></oj-bind-text>
               </div>
+
+              <oj-bind-if test="[[calcEsAdmin()]]">
+                <div class="cd-bienes-col-monto">
+                  <oj-bind-text value="[[bien.data.precioUnitario]]"></oj-bind-text>
+                </div>
+                <div class="cd-bienes-col-monto">
+                  <oj-bind-text value="[[bien.data.subtotal]]"></oj-bind-text>
+                </div>
+              </oj-bind-if>
 
               <div class="cd-bienes-col-num">
                 <span :class="[[bien.data.cantidadRecibidaTotal > 0 ? 'cd-bienes-num--blue' : 'cd-bienes-num--muted']]">
@@ -466,6 +511,70 @@
       </oj-c-button>
     </div>
 
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Información Financiera ══════════════════════ -->
+  <oj-c-dialog dialog-title="Información Financiera" opened="{{uiDialogoFinanciero}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-info-claves-title">Montos</div>
+      <div class="cf-info-financial-rows">
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Monto sin impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().montoSinImpuestos : '']]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row">
+          <span class="cf-info-financial-label">Impuestos</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().impuestos : '']]"></oj-bind-text></span>
+        </div>
+        <div class="cf-info-financial-row cf-info-financial-row--total">
+          <span class="cf-info-financial-label">Total</span>
+          <span class="cf-info-financial-val"><oj-bind-text value="[[contrato() ? contrato().montoTotal : '']]"></oj-bind-text></span>
+        </div>
+      </div>
+
+      <div class="cf-info-claves-title">Claves Presupuestales</div>
+      <div class="cf-info-claves-row cf-info-claves-row--header">
+        <span>Clave</span>
+        <span>Partida Específica</span>
+        <span class="cf-info-claves-monto">Monto</span>
+      </div>
+      <oj-bind-for-each data="[[contrato() ? contrato().clavesPresupuestales : []]]">
+        <template data-oj-as="clave">
+          <div class="cf-info-claves-row">
+            <span><oj-bind-text value="[[clave.data.clave]]"></oj-bind-text></span>
+            <span class="oj-text-color-secondary"><oj-bind-text value="[[clave.data.partidaEspecifica]]"></oj-bind-text></span>
+            <span class="cf-info-claves-monto"><oj-bind-text value="[[clave.data.montoAsignado]]"></oj-bind-text></span>
+          </div>
+        </template>
+      </oj-bind-for-each>
+      <div class="cf-info-claves-row cf-info-claves-row--total">
+        <span>Total claves</span>
+        <span></span>
+        <span class="cf-info-claves-monto"><oj-bind-text value="[[calcTotalClaves()]]"></oj-bind-text></span>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoFinanciero(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Beneficiarios ═══════════════════════════════ -->
+  <oj-c-dialog dialog-title="Beneficiarios" opened="{{uiDialogoBeneficiarios}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-beneficiarios-lista">
+        <oj-bind-for-each data="[[calcBeneficiariosLista()]]">
+          <template data-oj-as="item">
+            <div class="cf-beneficiario-item">
+              <span class="cf-beneficiario-idx"><oj-bind-text value="[[(item.index + 1) + '.']]"></oj-bind-text></span>
+              <span><oj-bind-text value="[[item.data]]"></oj-bind-text></span>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoBeneficiarios(false)]]"></oj-c-button>
+    </div>
   </oj-c-dialog>
 
 </div>

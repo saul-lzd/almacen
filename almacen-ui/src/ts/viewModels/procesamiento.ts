@@ -1,7 +1,9 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
+import { getRole } from "../utils/auth";
 import { contratosApi, almacenBienesApi } from "../utils/api";
+import "oj-c/dialog";
 
 import "oj-c/form-layout";
 import "oj-c/input-text";
@@ -38,6 +40,13 @@ type GrupoProcesamiento = {
     uiGuardandoGrupo: ko.Observable<boolean>;
 };
 
+type ClavePresupuestal = {
+    clave: string;
+    partidaEspecifica: string;
+    montoAsignado: string;
+    montoAsignadoNum: number;
+};
+
 type ContratoResumen = {
     idContrato: number;
     numeroContrato: string;
@@ -47,6 +56,10 @@ type ContratoResumen = {
     estatusBadge: string;
     proveedor: string;
     beneficiarios: string;
+    montoSinImpuestos: string;
+    impuestos: string;
+    montoTotal: string;
+    clavesPresupuestales: ClavePresupuestal[];
 };
 
 type RecepcionInfo = {
@@ -70,11 +83,32 @@ class ProcesamientoViewModel {
     public uiError     = ko.observable<string>("");
     public uiExito     = ko.observable<string>("");
 
+    private readonly userRole: string = getRole() ?? "ALMACEN";
+    public calcEsAdmin = ko.pureComputed(() => this.userRole === "ADMINISTRADOR");
+
     public contrato      = ko.observable<ContratoResumen | null>(null);
     public recepcionInfo = ko.observable<RecepcionInfo | null>(null);
     public listaGrupos   = ko.observableArray<GrupoProcesamiento>([]);
 
     public kpiTotalBienes = ko.observable<number>(0);
+
+    // ── Diálogos de info admin ────────────────────────────────────
+    public uiDialogoFinanciero    = ko.observable<boolean>(false);
+    public uiDialogoBeneficiarios = ko.observable<boolean>(false);
+
+    public calcBeneficiariosLista = ko.pureComputed(() =>
+        (this.contrato()?.beneficiarios || "")
+            .split(",").map(s => s.trim()).filter(s => s.length > 0)
+    );
+
+    public calcTotalClaves = ko.pureComputed(() => {
+        const total = (this.contrato()?.clavesPresupuestales ?? [])
+            .reduce((sum, c) => sum + c.montoAsignadoNum, 0);
+        return this.formatMonto(total);
+    });
+
+    public cmdVerFinanciero    = (): void => { this.uiDialogoFinanciero(true); };
+    public cmdVerBeneficiarios = (): void => { this.uiDialogoBeneficiarios(true); };
 
     public calcBienesRecepcion = ko.pureComputed(() =>
         this.recepcionInfo()?.totalBienes ?? 0
@@ -144,6 +178,15 @@ class ProcesamientoViewModel {
                 estatusBadge:   mapEstatusToBadge(dataContrato.estatus),
                 proveedor:      dataContrato.proveedor?.razonSocial || "Sin proveedor asignado",
                 beneficiarios:  dataContrato.beneficiarios || "",
+                montoSinImpuestos: this.formatMonto(dataContrato.montoSinImpuestos),
+                impuestos:         this.formatMonto(dataContrato.impuestos),
+                montoTotal:        this.formatMonto(dataContrato.montoTotal),
+                clavesPresupuestales: (dataContrato.clavesPresupuestales ?? []).map((cl: any) => ({
+                    clave:             cl.clave || "—",
+                    partidaEspecifica: cl.partidaEspecifica || "—",
+                    montoAsignadoNum:  parseFloat(cl.montoAsignado) || 0,
+                    montoAsignado:     this.formatMonto(cl.montoAsignado),
+                })),
             });
 
             this.kpiTotalBienes(
@@ -298,6 +341,12 @@ class ProcesamientoViewModel {
     // ================================================================
     // HELPERS
     // ================================================================
+    private formatMonto(val: any): string {
+        const n = parseFloat(val);
+        if (isNaN(n)) return "—";
+        return n.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+    }
+
     public formatFecha(fecha: string | null): string {
         if (!fecha) return "—";
         const [year, month, day] = fecha.split("-");

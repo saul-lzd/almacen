@@ -7,7 +7,6 @@
  */
 import * as ko from "knockout";
 import * as ModuleUtils from "ojs/ojmodule-element-utils";
-import * as ResponsiveUtils from "ojs/ojresponsiveutils";
 import * as  ResponsiveKnockoutUtils from "ojs/ojresponsiveknockoututils";
 import CoreRouter = require("ojs/ojcorerouter");
 import ModuleRouterAdapter = require("ojs/ojmodulerouter-adapter");
@@ -51,10 +50,7 @@ class RootViewModel {
     globalBodyElement.addEventListener("announce", this.announcementHandler, false);
 
     // media queries for responsive layouts
-    let smQuery: string | null = ResponsiveUtils.getFrameworkQuery("sm-only");
-    if (smQuery){
-      this.smScreen = ResponsiveKnockoutUtils.createMediaQueryObservable(smQuery);
-    }
+    this.smScreen = ResponsiveKnockoutUtils.createMediaQueryObservable("screen and (max-width: 767px)");
 
     // Todas las rutas registradas en el router (incluyendo sub-rutas sin nav)
     const allRoutes = [

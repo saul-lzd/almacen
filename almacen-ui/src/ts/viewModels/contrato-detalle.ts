@@ -66,6 +66,13 @@ type BienDialogo = {
     todoRecibido: ko.Observable<boolean>;
 };
 
+type ClavePresupuestal = {
+    clave: string;
+    partidaEspecifica: string;
+    montoAsignado: string;
+    montoAsignadoNum: number;
+};
+
 type Contrato = {
     idContrato: number;
     numeroContrato: string;
@@ -79,6 +86,7 @@ type Contrato = {
     montoSinImpuestos: string;
     impuestos: string;
     montoTotal: string;
+    clavesPresupuestales: ClavePresupuestal[];
     resumenBienes: ResumenBienes;
     bienes: BienContrato[];
 };
@@ -106,6 +114,24 @@ class ContratoDetalleViewModel {
     // ── Fecha tentativa editable ─────────────────────────────────
     public frmFecha        = ko.observable<string>("");
     public uiEditandoFecha = ko.observable<boolean>(false);
+
+    // ── Diálogos de info admin ────────────────────────────────────
+    public uiDialogoFinanciero    = ko.observable<boolean>(false);
+    public uiDialogoBeneficiarios = ko.observable<boolean>(false);
+
+    public calcBeneficiariosLista = ko.pureComputed(() =>
+        (this.contrato()?.beneficiarios || "")
+            .split(",").map(s => s.trim()).filter(s => s.length > 0)
+    );
+
+    public calcTotalClaves = ko.pureComputed(() => {
+        const total = (this.contrato()?.clavesPresupuestales ?? [])
+            .reduce((sum, c) => sum + c.montoAsignadoNum, 0);
+        return this.formatMonto(total);
+    });
+
+    public cmdVerFinanciero    = (): void => { this.uiDialogoFinanciero(true); };
+    public cmdVerBeneficiarios = (): void => { this.uiDialogoBeneficiarios(true); };
 
     // ── Diálogo de recepción ────────────────────────────────────
     public uiDialogoRecepcion  = ko.observable<boolean>(false);
@@ -139,7 +165,10 @@ class ContratoDetalleViewModel {
     public calcPuedeRecibirNuevo = ko.pureComputed(() => {
         if (!this.calcEsAlmacenista()) return false;
         const e = this.contrato()?.estatus;
-        return e === "POR_RECIBIR" || e === "RECEPCION_PARCIAL";
+        if (e !== "POR_RECIBIR" && e !== "RECEPCION_PARCIAL") return false;
+        const r = this.contrato()?.resumenBienes;
+        if (r && r.totalRecibidos >= r.totalContratados && r.totalContratados > 0) return false;
+        return true;
     });
 
     public calcPuedeProcesar = ko.pureComputed(() => {
@@ -162,7 +191,9 @@ class ContratoDetalleViewModel {
     });
 
     public calcFechaEditable = ko.pureComputed(() =>
-        this.calcEsAdmin() && this.contrato()?.estatus === "POR_RECIBIR"
+        this.calcEsAdmin() &&
+        this.contrato()?.estatus !== "CAPTURA" &&
+        this.listRecepciones().length === 0
     );
 
     // ================================================================
@@ -215,6 +246,12 @@ class ContratoDetalleViewModel {
                 montoSinImpuestos: this.formatMonto(c.montoSinImpuestos),
                 impuestos:        this.formatMonto(c.impuestos),
                 montoTotal:       this.formatMonto(c.montoTotal),
+                clavesPresupuestales: (c.clavesPresupuestales ?? []).map((cl: any) => ({
+                    clave:             cl.clave || "—",
+                    partidaEspecifica: cl.partidaEspecifica || "—",
+                    montoAsignadoNum:  parseFloat(cl.montoAsignado) || 0,
+                    montoAsignado:     this.formatMonto(cl.montoAsignado),
+                })),
                 resumenBienes:    r,
                 bienes: (c.bienes ?? []).map((b: any) => ({
                     idContratoBien:       b.idContratoBien,

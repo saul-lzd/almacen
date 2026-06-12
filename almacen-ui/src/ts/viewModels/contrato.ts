@@ -425,6 +425,15 @@ class NuevoContratoViewModel {
   public calcMontoSinImpuestosStr = ko.pureComputed(() =>
     Number(this.frmMontoSinImpuestos() || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
   );
+  public calcImpuestosStr = ko.pureComputed(() =>
+    Number(this.frmImpuestos() || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })
+  );
+
+  // ── Diálogos de info admin ──────────────────────────────────────
+  public uiDialogoFinanciero    = ko.observable<boolean>(false);
+  public uiDialogoBeneficiarios = ko.observable<boolean>(false);
+  public cmdVerFinanciero    = (): void => { this.uiDialogoFinanciero(true); };
+  public cmdVerBeneficiarios = (): void => { this.uiDialogoBeneficiarios(true); };
   public calcBienesIncompletos = ko.pureComputed(() =>
     Math.abs(this.calcSumaBienes() - Number(this.frmMontoSinImpuestos() || 0)) > 0.01
   );
@@ -467,6 +476,14 @@ class NuevoContratoViewModel {
   );
   public calcSeccionBienesDone = ko.pureComputed(() =>
     this.calcHayBienes() && !this.calcBienesIncompletos()
+  );
+
+  public calcTodasSeccionesDone = ko.pureComputed(() =>
+    this.calcSeccionGeneralDone() &&
+    this.calcSeccionPartesDone() &&
+    this.calcSeccionFinancieraDone() &&
+    this.calcSeccionBeneficiariosDone() &&
+    this.calcSeccionBienesDone()
   );
 
   public calcBeneficiariosChips = ko.pureComputed(() =>
