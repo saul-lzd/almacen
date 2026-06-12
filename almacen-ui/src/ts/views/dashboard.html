@@ -130,7 +130,7 @@
               </div>
 
               <div class="dash-lista-num dash-lista-num--green">
-                <oj-bind-text value="[[item.data.resumenBienes.procesados]]"></oj-bind-text>
+                <oj-bind-text value="[[item.data.totalProcesadosAcum]]"></oj-bind-text>
               </div>
 
               <div class="dash-lista-num dash-lista-num--amber">
@@ -215,7 +215,7 @@
                   <div class="dash-card-dato">
                     <span class="dash-card-dato-label">Procesados</span>
                     <span class="dash-card-dato-valor dash-card-dato-valor--green">
-                      <oj-bind-text value="[[item.data.resumenBienes.procesados + ' / ' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                      <oj-bind-text value="[[item.data.totalProcesadosAcum + ' / ' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
                     </span>
                   </div>
                   <div class="dash-card-dato">

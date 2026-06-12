@@ -18,10 +18,10 @@ import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
 import { contratosApi } from "../utils/api";
 
+import "oj-c/dialog";
 import "oj-c/form-layout";
 import "oj-c/input-text";
 import "oj-c/select-single";
-import "oj-c/checkbox";
 import "oj-c/text-area";
 import "oj-c/button";
 
@@ -98,17 +98,20 @@ class EntregaViewModel {
     // ----------------------------------------------------------------
     // FORMULARIO
     // ----------------------------------------------------------------
-    public frmIdBeneficiario          = ko.observable<number | null>(null);
-    public frmNombreEntregaAlmacen    = ko.observable<string>("");
+    public frmIdBeneficiario           = ko.observable<number | null>(null);
+    public frmNombreEntregaAlmacen     = ko.observable<string>("");
     public frmNombreRecibeBeneficiario = ko.observable<string>("");
-    public frmBeneficiarioFirma       = ko.observable<boolean>(false);
-    public frmObservaciones           = ko.observable<string>("");
+    public frmObservaciones            = ko.observable<string>("");
 
     // ----------------------------------------------------------------
     // COMPUTED
     // ----------------------------------------------------------------
     public calcGruposSeleccionados = ko.pureComputed(() =>
         this.listaGrupos().filter(g => g.uiSeleccionado())
+    );
+
+    public calcTotalBienes = ko.pureComputed(() =>
+        this.listaGrupos().reduce((sum, g) => sum + g.totalUnidades, 0)
     );
 
     public calcTotalBienesSeleccionados = ko.pureComputed(() =>
@@ -126,6 +129,9 @@ class EntregaViewModel {
     public calcTituloContrato = ko.pureComputed(() =>
         this.contrato()?.numeroContrato ?? "Cargando..."
     );
+
+    public uiDialogoBeneficiarios = ko.observable<boolean>(false);
+    public cmdVerBeneficiarios    = (): void => { this.uiDialogoBeneficiarios(true); };
 
     // ----------------------------------------------------------------
     // CONSTRUCTOR / LIFECYCLE
@@ -222,11 +228,10 @@ class EntregaViewModel {
             .flatMap(g => g.unidades.map(u => u.idAlmacenBien));
 
         const payload = {
-            idBeneficiario:             this.frmIdBeneficiario(),
-            nombreEntregaAlmacen:       this.frmNombreEntregaAlmacen().trim(),
-            nombreRecibeBeneficiario:   this.frmNombreRecibeBeneficiario().trim(),
-            beneficiarioFirma:          this.frmBeneficiarioFirma(),
-            observaciones:              this.frmObservaciones().trim() || null,
+            idBeneficiario:           this.frmIdBeneficiario(),
+            nombreEntregaAlmacen:     this.frmNombreEntregaAlmacen().trim(),
+            nombreRecibeBeneficiario: this.frmNombreRecibeBeneficiario().trim(),
+            observaciones:            this.frmObservaciones().trim() || null,
             idsAlmacenBien,
         };
 

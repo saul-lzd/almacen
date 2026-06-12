@@ -299,6 +299,8 @@ class ProcesamientoViewModel {
                     u.uiEstatus("EN_PROCESO");
                 });
             }));
+            this.uiExito("Datos guardados correctamente.");
+            setTimeout(() => this.uiExito(""), 3000);
         } catch (err: any) {
             console.error("Error al guardar grupo:", err);
             this.uiError(err.message || "No se pudieron guardar los datos.");
@@ -319,17 +321,11 @@ class ProcesamientoViewModel {
         const modelo = grupo.frmModelo().trim();
 
         try {
-            await Promise.all(pendientes.map(u => {
-                const payload: any = {};
-                if (marca)  payload.marca  = marca;
-                if (modelo) payload.modelo = modelo;
-                if (grupo.uiRequiereNumeroSerie() && u.frmNumeroSerie().trim()) {
-                    payload.numeroSerie = u.frmNumeroSerie().trim();
-                }
-                return almacenBienesApi.procesarUnidad(u.idAlmacenBien, payload).then(() => {
-                    u.uiEstatus("PROCESADO");
-                });
-            }));
+            const payload: any = { ids: pendientes.map(u => u.idAlmacenBien) };
+            if (marca)  payload.marca  = marca;
+            if (modelo) payload.modelo = modelo;
+            await almacenBienesApi.procesarBloque(payload);
+            pendientes.forEach(u => u.uiEstatus("PROCESADO"));
         } catch (err: any) {
             console.error("Error al confirmar grupo:", err);
             this.uiError(err.message || "No se pudo confirmar el procesamiento.");

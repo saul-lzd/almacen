@@ -1,230 +1,291 @@
 <!--
   View: Entrega de Bienes a Beneficiario
-  El almacenista selecciona los grupos a entregar, captura receptor y confirma la salida.
 -->
 
 <div class="oj-hybrid-padding procesamiento-view">
 
   <!-- BREADCRUMB -->
-  <div class="recepcion-breadcrumb">
-    <oj-c-button
-      label="Regresar a detalles"
-      chroming="borderless"
-      size="sm"
-      on-oj-action="[[cmdRegresar]]">
+  <div class="vista-nav">
+    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
-    <span class="recepcion-breadcrumb-sep">/</span>
-    <span class="recepcion-breadcrumb-titulo">
-      <strong><oj-bind-text value="[['Entregar bienes: ' + calcTituloContrato()]]"></oj-bind-text></strong>
-    </span>
+    <div class="vista-nav-sep"></div>
+    <div class="vista-breadcrumb">
+      <span class="vista-breadcrumb-seg">Contratos</span>
+      <span class="vista-breadcrumb-gt">›</span>
+      <span class="vista-breadcrumb-seg--active">Entregar Bienes</span>
+    </div>
   </div>
 
-  <!-- BANNER ÉXITO -->
-  <oj-bind-if test="[[uiExito()]]">
-    <div class="recepcion-banner recepcion-banner--exito">
-      <span class="oj-ux-ico-check-circle-s"></span>
-      <oj-bind-text value="[[uiExito]]"></oj-bind-text>
-    </div>
-  </oj-bind-if>
-
-  <!-- BANNER ERROR -->
-  <oj-bind-if test="[[uiError()]]">
-    <div class="recepcion-banner recepcion-banner--error">
-      <span class="oj-ux-ico-warning-s"></span>
-      <oj-bind-text value="[[uiError]]"></oj-bind-text>
-    </div>
-  </oj-bind-if>
-
   <!-- CARGANDO -->
-  <oj-bind-if test="[[uiCargando]]">
-    <div class="recepcion-cargando">Cargando bienes del contrato...</div>
+  <oj-bind-if test="[[uiCargando()]]">
+    <div class="recepcion-cargando">Cargando información...</div>
   </oj-bind-if>
 
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
-    <!-- ════════════════════════════════════════
-         BLOQUE 1: INFO DEL CONTRATO
-    ════════════════════════════════════════ -->
-    <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
-      <div class="recepcion-seccion-titulo">Información del Contrato</div>
-      <div class="recepcion-info-grid">
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Número de Contrato</div>
-          <div class="recepcion-info-valor font-mono">
-            <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
+    <!-- ═══ CONTEXT BAR ════════════════════════════════════════════ -->
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+      <div class="cf-ctx-bar-row1">
+        <div class="cf-ctx-bar-items">
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Contrato</div>
+            <div class="ctx-val mono">
+              <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
+            </div>
           </div>
-        </div>
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Estatus</div>
-          <div class="recepcion-info-valor">
-            <span class="oj-badge oj-badge-subtle oj-badge-success">
-              <oj-bind-text value="[[contrato().estatusLabel]]"></oj-bind-text>
-            </span>
+
+          <div class="ctx-item grow">
+            <div class="ctx-label">Adquisición</div>
+            <div class="ctx-val">
+              <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+            </div>
           </div>
-        </div>
-        <div class="recepcion-info-item recepcion-info-item--full">
-          <div class="recepcion-info-label">Adquisición</div>
-          <div class="recepcion-info-valor">
-            <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Proveedor</div>
+            <div class="ctx-val">
+              <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
+            </div>
           </div>
-        </div>
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Proveedor</div>
-          <div class="recepcion-info-valor">
-            <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Beneficiarios</div>
+            <div class="ctx-val">
+              <div class="ctx-val-row">
+                <span>
+                  <oj-bind-text value="[[listaBeneficiarios().length + ' registrado' + (listaBeneficiarios().length !== 1 ? 's' : '')]]"></oj-bind-text>
+                </span>
+                <oj-c-button label="Ver todos" chroming="borderless" size="sm"
+                  on-oj-action="[[cmdVerBeneficiarios]]">
+                </oj-c-button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="recepcion-info-item">
-          <div class="recepcion-info-label">Beneficiarios</div>
-          <div class="recepcion-info-valor">
-            <oj-bind-text value="[[contrato().beneficiarios || '—']]"></oj-bind-text>
-          </div>
+
         </div>
       </div>
     </div>
 
-    <!-- Sin bienes pendientes -->
-    <oj-bind-if test="[[listaGrupos().length === 0]]">
-      <div class="recepcion-banner recepcion-banner--exito">
-        <span class="oj-ux-ico-check-circle-s"></span>
-        Todos los bienes de este contrato han sido entregados.
-      </div>
-    </oj-bind-if>
+    <!-- ═══ WORK AREA ═══════════════════════════════════════════════ -->
+    <div class="oj-panel oj-panel-shadow-sm proc-work-area">
 
-    <oj-bind-if test="[[listaGrupos().length > 0]]">
+      <div class="cd-panel-section-title">Entrega de Bienes</div>
 
-      <!-- ════════════════════════════════════════
-           BLOQUE 2: DATOS DE LA ENTREGA
-      ════════════════════════════════════════ -->
-      <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
-        <div class="recepcion-seccion-titulo">Datos de la Entrega</div>
-
-        <oj-c-form-layout label-edge="inside" columns="2" full-width="true" style="margin-top: 12px">
-
-          <!-- Beneficiario -->
-          <oj-c-select-single
-            label-hint="Beneficiario que recibe"
-            item-text="nombre"
-            data="[[dpBeneficiarios()]]"
-            value="{{frmIdBeneficiario}}">
-          </oj-c-select-single>
-
-          <!-- Placeholder para alinear el grid -->
-          <div></div>
-
-          <!-- Nombre entrega almacén -->
-          <oj-c-input-text
-            label-hint="Nombre de quien entrega (almacén)"
-            value="{{frmNombreEntregaAlmacen}}">
-          </oj-c-input-text>
-
-          <!-- Nombre recibe beneficiario -->
-          <oj-c-input-text
-            label-hint="Nombre de quien recibe (beneficiario)"
-            value="{{frmNombreRecibeBeneficiario}}">
-          </oj-c-input-text>
-
-        </oj-c-form-layout>
-
-        <!-- Firma y observaciones en fila aparte -->
-        <div style="margin-top: 12px; display: flex; align-items: flex-start; gap: 24px">
-          <oj-c-checkbox
-            label-hint="El beneficiario firma de recibido"
-            value="{{frmBeneficiarioFirma}}">
-          </oj-c-checkbox>
+      <!-- KPIs -->
+      <div class="proc-kpis">
+        <div class="cd-kpi-card">
+          <div class="cd-kpi-label">Listos para entregar</div>
+          <div class="cd-kpi-num cd-kpi-num--green">
+            <oj-bind-text value="[[calcTotalBienes()]]"></oj-bind-text>
+          </div>
         </div>
-
-        <oj-c-form-layout label-edge="inside" columns="1" full-width="true" style="margin-top: 12px">
-          <oj-c-input-text
-            label-hint="Observaciones (opcional)"
-            value="{{frmObservaciones}}">
-          </oj-c-input-text>
-        </oj-c-form-layout>
-
+        <div class="cd-kpi-card">
+          <div class="cd-kpi-label">Seleccionados</div>
+          <div class="cd-kpi-num cd-kpi-num--blue">
+            <oj-bind-text value="[[calcTotalBienesSeleccionados()]]"></oj-bind-text>
+          </div>
+        </div>
       </div>
 
-      <!-- ════════════════════════════════════════
-           BLOQUE 3: SELECCIÓN DE BIENES
-      ════════════════════════════════════════ -->
-      <div class="oj-panel oj-sm-margin-6x-bottom oj-panel-shadow-md oj-sm-padding-6x">
-        <div class="recepcion-seccion-header">
-          <div class="recepcion-seccion-titulo">Bienes a Entregar</div>
-          <span class="procesamiento-pill" style="font-size: 12px">
-            <oj-bind-text value="[[calcTotalBienesSeleccionados() + ' bienes seleccionados']]"></oj-bind-text>
-          </span>
+      <!-- Banners -->
+      <oj-bind-if test="[[uiExito()]]">
+        <div class="recepcion-banner recepcion-banner--exito">
+          <span class="oj-ux-ico-check-circle-s"></span>
+          <oj-bind-text value="[[uiExito]]"></oj-bind-text>
+        </div>
+      </oj-bind-if>
+
+      <oj-bind-if test="[[uiError()]]">
+        <div class="recepcion-banner recepcion-banner--error">
+          <span class="oj-ux-ico-warning-s"></span>
+          <oj-bind-text value="[[uiError]]"></oj-bind-text>
+        </div>
+      </oj-bind-if>
+
+      <!-- Sin bienes pendientes -->
+      <oj-bind-if test="[[listaGrupos().length === 0]]">
+        <div class="recepcion-banner recepcion-banner--exito">
+          <span class="oj-ux-ico-check-circle-s"></span>
+          Todos los bienes de este contrato han sido entregados.
+        </div>
+      </oj-bind-if>
+
+      <oj-bind-if test="[[listaGrupos().length > 0]]">
+
+        <!-- ── DATOS DE LA ENTREGA ── (sin card, sin border) -->
+        <div class="oj-sm-margin-6x-bottom">
+          <oj-c-form-layout label-edge="top" columns="2" full-width="true">
+
+            <oj-c-select-single
+              label-hint="Beneficiario que recibe"
+              item-text="nombre"
+              data="[[dpBeneficiarios()]]"
+              value="{{frmIdBeneficiario}}">
+            </oj-c-select-single>
+
+            <div></div>
+
+            <oj-c-input-text
+              label-hint="Nombre de quien entrega (almacén)"
+              value="{{frmNombreEntregaAlmacen}}">
+            </oj-c-input-text>
+
+            <oj-c-input-text
+              label-hint="Nombre de quien recibe (beneficiario)"
+              value="{{frmNombreRecibeBeneficiario}}">
+            </oj-c-input-text>
+
+            <oj-c-input-text
+              label-hint="Observaciones (opcional)"
+              value="{{frmObservaciones}}">
+            </oj-c-input-text>
+
+          </oj-c-form-layout>
         </div>
 
-        <oj-bind-for-each data="[[listaGrupos()]]">
-          <template data-oj-as="grupo">
-            <div class="entrega-grupo" :class="[[{'entrega-grupo--excluido': !grupo.data.uiSeleccionado()}]]">
+        <!-- ── BIENES A ENTREGAR ── -->
+        <div class="cd-rec-header oj-sm-margin-3x-bottom">
+          <div class="cd-rec-header-left">
+            <span class="cd-rec-titulo">Bienes a entregar</span>
+            <span class="cd-rec-count-badge">
+              <oj-bind-text value="[[calcTotalBienesSeleccionados() + ' de ' + calcTotalBienes() + ' seleccionados']]"></oj-bind-text>
+            </span>
+          </div>
+        </div>
 
-              <div class="entrega-grupo-header">
-                <oj-c-checkbox
-                  value="{{grupo.data.uiSeleccionado}}"
-                  label-hint="">
-                </oj-c-checkbox>
-                <div class="entrega-grupo-info">
-                  <span class="oj-typography-body-md">
-                    <oj-bind-text value="[['L' + (grupo.data.lote ?? '?') + ' · P' + (grupo.data.partida ?? '?')]]"></oj-bind-text>
-                  </span>
-                  <span class="oj-typography-body-sm oj-text-color-secondary" style="margin-left: 8px">
+        <div class="cd-bienes-tabla">
+
+          <!-- Header -->
+          <div class="cd-bienes-row cd-bienes-row--header">
+            <div class="recepcion-col-check"></div>
+            <div class="cd-bienes-col-partida">Lote / Partida</div>
+            <div class="cd-bienes-col-desc">Descripción</div>
+            <div class="cd-bienes-col-um">U. Medida</div>
+            <div class="cd-bienes-col-num">Bienes</div>
+          </div>
+
+          <oj-bind-for-each data="[[listaGrupos()]]">
+            <template data-oj-as="grupo">
+
+              <!-- Fila principal -->
+              <div class="cd-bienes-row"
+                :class="[[{'cd-bienes-row--pendiente': !grupo.data.uiSeleccionado()}]]">
+
+                <div class="recepcion-col-check">
+                  <input type="checkbox"
+                    class="recepcion-check"
+                    data-bind="checked: grupo.data.uiSeleccionado">
+                </div>
+
+                <div class="cd-bienes-col-partida">
+                  <oj-bind-if test="[[grupo.data.lote !== null || grupo.data.partida !== null]]">
+                    <span class="recepcion-partida-tag">
+                      <oj-bind-text value="[['L' + (grupo.data.lote ?? '?') + ' · P' + (grupo.data.partida ?? '?')]]"></oj-bind-text>
+                    </span>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[grupo.data.lote === null && grupo.data.partida === null]]">
+                    <span class="oj-text-color-secondary">—</span>
+                  </oj-bind-if>
+                </div>
+
+                <div class="cd-bienes-col-desc">
+                  <span class="cd-bienes-desc-text oj-line-clamp-2">
                     <oj-bind-text value="[[grupo.data.descripcion]]"></oj-bind-text>
                   </span>
                 </div>
-                <span class="procesamiento-pill" :class="[[{'procesamiento-pill--completo': grupo.data.uiSeleccionado()}]]">
-                  <oj-bind-text value="[[grupo.data.totalUnidades + ' ' + grupo.data.unidadMedida]]"></oj-bind-text>
-                </span>
-              </div>
 
-              <!-- Sin número de serie: solo cantidad -->
-              <oj-bind-if test="[[grupo.data.uiSeleccionado() && !calcGrupoTieneSerie(grupo.data)]]">
-                <div class="entrega-unidades">
-                  <span class="oj-typography-body-sm oj-text-color-secondary">
-                    <oj-bind-text value="[[grupo.data.totalUnidades + ' ' + grupo.data.unidadMedida + ' a entregar']]"></oj-bind-text>
+                <div class="cd-bienes-col-um">
+                  <oj-bind-text value="[[grupo.data.unidadMedida]]"></oj-bind-text>
+                </div>
+
+                <div class="cd-bienes-col-num">
+                  <span class="cd-bienes-num--green">
+                    <oj-bind-text value="[[grupo.data.totalUnidades]]"></oj-bind-text>
                   </span>
                 </div>
-              </oj-bind-if>
 
-              <!-- Con número de serie: listado -->
+              </div>
+
+              <!-- Sub-fila: números de serie (solo si está seleccionado y tiene serie) -->
               <oj-bind-if test="[[grupo.data.uiSeleccionado() && calcGrupoTieneSerie(grupo.data)]]">
-                <div class="entrega-unidades">
-                  <oj-bind-for-each data="[[grupo.data.unidades]]">
-                    <template data-oj-as="unidad">
-                      <div class="entrega-unidad-fila">
-                        <span class="oj-typography-body-sm oj-text-color-secondary">
-                          S/N: <oj-bind-text value="[[unidad.data.numeroSerie]]"></oj-bind-text>
-                        </span>
-                      </div>
-                    </template>
-                  </oj-bind-for-each>
+                <div class="cd-bienes-row cd-bienes-row--sub">
+                  <div class="recepcion-col-check"></div>
+                  <div class="cd-bienes-col-full">
+                    <div class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Números de serie</div>
+                    <div class="proc-serie-grid3">
+                      <oj-bind-for-each data="[[grupo.data.unidades]]">
+                        <template data-oj-as="unidad">
+                          <div class="proc-serie-fila">
+                            <div class="proc-serie-label oj-typography-body-sm oj-text-color-secondary">
+                              <oj-bind-text value="[[unidad.data.codigoInterno]]"></oj-bind-text>
+                            </div>
+                            <div class="proc-serie-label oj-typography-body-sm">
+                              <oj-bind-text value="[[unidad.data.numeroSerie || '—']]"></oj-bind-text>
+                            </div>
+                          </div>
+                        </template>
+                      </oj-bind-for-each>
+                    </div>
+                  </div>
                 </div>
               </oj-bind-if>
 
+            </template>
+          </oj-bind-for-each>
+
+        </div><!-- /cd-bienes-tabla -->
+
+        <!-- ACCIONES -->
+        <div class="oj-flex-bar oj-sm-margin-6x-top oj-sm-margin-4x-bottom">
+          <div class="oj-flex-bar-end">
+            <oj-c-button
+              label="Cancelar"
+              chroming="outlined"
+              on-oj-action="[[cmdRegresar]]">
+            </oj-c-button>
+            <oj-c-button
+              label="Confirmar entrega"
+              chroming="callToAction"
+              class="oj-sm-margin-2x-start"
+              :disabled="[[!calcPuedeConfirmar() || uiGuardando()]]"
+              on-oj-action="[[cmdConfirmarEntrega]]">
+              <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
+            </oj-c-button>
+          </div>
+        </div>
+
+      </oj-bind-if>
+
+    </div><!-- /proc-work-area -->
+
+  </oj-bind-if>
+
+  <!-- ═══ DIÁLOGO: Beneficiarios ═══════════════════════════════ -->
+  <oj-c-dialog dialog-title="Beneficiarios" opened="{{uiDialogoBeneficiarios}}" min-width="60rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="cf-beneficiarios-lista">
+        <oj-bind-for-each data="[[listaBeneficiarios()]]">
+          <template data-oj-as="item">
+            <div class="cf-beneficiario-item">
+              <span class="cf-beneficiario-idx">
+                <oj-bind-text value="[[(item.index + 1) + '.']]"></oj-bind-text>
+              </span>
+              <span><oj-bind-text value="[[item.data.nombre]]"></oj-bind-text></span>
             </div>
           </template>
         </oj-bind-for-each>
-
+        <oj-bind-if test="[[listaBeneficiarios().length === 0]]">
+          <div class="oj-text-color-secondary oj-typography-body-sm">Sin beneficiarios registrados.</div>
+        </oj-bind-if>
       </div>
-
-      <!-- BOTÓN CONFIRMAR -->
-      <div style="display: flex; justify-content: flex-end; gap: 12px; margin-bottom: 32px">
-        <oj-c-button
-          label="Cancelar"
-          chroming="outlined"
-          on-oj-action="[[cmdRegresar]]">
-        </oj-c-button>
-        <oj-c-button
-          label="Confirmar entrega"
-          chroming="callToAction"
-          :disabled="[[!calcPuedeConfirmar() || uiGuardando()]]"
-          on-oj-action="[[cmdConfirmarEntrega]]">
-          <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
-        </oj-c-button>
-      </div>
-
-    </oj-bind-if>
-
-  </oj-bind-if>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined"
+        on-oj-action="[[() => uiDialogoBeneficiarios(false)]]">
+      </oj-c-button>
+    </div>
+  </oj-c-dialog>
 
 </div>

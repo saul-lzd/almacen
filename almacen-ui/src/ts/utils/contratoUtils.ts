@@ -12,6 +12,7 @@
 export type EstatusEfectivo =
     | "CAPTURA"
     | "EN_ALMACEN"
+    | "PROCESADO"
     | "LISTO_ENTREGAR"
     | "CERRADO";
 
@@ -21,6 +22,7 @@ export type ContratoCheckpoints = {
     primeraEntregaAutorizada:   boolean;
     todosLosBienesRecibidos:    boolean;
     contratoCerrado:            boolean;
+    todosBienesProcessados:     boolean;
 };
 
 /**
@@ -28,9 +30,10 @@ export type ContratoCheckpoints = {
  * Orden de prioridad descendente.
  */
 export function calcEstatusEfectivo(c: ContratoCheckpoints): EstatusEfectivo {
-    if (c.estatus === "CAPTURA")    return "CAPTURA";
-    if (c.contratoCerrado)          return "CERRADO";
-    if (c.primeraEntregaAutorizada) return "LISTO_ENTREGAR";
+    if (c.estatus === "CAPTURA")     return "CAPTURA";
+    if (c.contratoCerrado)           return "CERRADO";
+    if (c.primeraEntregaAutorizada)  return "LISTO_ENTREGAR";
+    if (c.todosBienesProcessados)    return "PROCESADO";
     return "EN_ALMACEN";
 }
 
@@ -41,6 +44,7 @@ export function calcEstatusEfectivo(c: ContratoCheckpoints): EstatusEfectivo {
 const ESTATUS_LABELS: Record<EstatusEfectivo, string> = {
     CAPTURA:        "En captura",
     EN_ALMACEN:     "En almacén",
+    PROCESADO:      "Procesado",
     LISTO_ENTREGAR: "Listo para entregar",
     CERRADO:        "Cerrado",
 };
@@ -48,6 +52,7 @@ const ESTATUS_LABELS: Record<EstatusEfectivo, string> = {
 const ESTATUS_BADGE: Record<EstatusEfectivo, string> = {
     CAPTURA:        "",
     EN_ALMACEN:     "oj-badge-info",
+    PROCESADO:      "oj-badge-procesado",
     LISTO_ENTREGAR: "oj-badge-warning",
     CERRADO:        "oj-badge-success",
 };

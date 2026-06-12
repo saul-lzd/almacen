@@ -106,7 +106,7 @@
         </oj-bind-if>
         <oj-bind-if test="[[calcPuedeAutorizar()]]">
           <oj-c-button label="Autorizar entrega" chroming="callToAction" size="sm"
-            :disabled="[[uiAccion()]]"
+            :disabled="[[calcAutorizarDisabled()]]"
             on-oj-action="[[cmdAutorizarEntrega]]">
             <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
           </oj-c-button>
@@ -452,7 +452,8 @@
             <div class="recepcion-col-check"></div>
             <div class="recepcion-col-desc">Descripción</div>
             <div class="recepcion-col-um">U. Medida</div>
-            <div class="recepcion-col-cantidad">Cant. Recibida</div>
+            <div class="recepcion-col-esperados">Faltantes</div>
+            <div class="recepcion-col-cantidad">Recibidos</div>
           </div>
 
           <oj-bind-for-each data="[[listaBienesDialogo()]]">
@@ -478,12 +479,16 @@
                   <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
                 </div>
 
+                <div class="recepcion-col-esperados oj-text-color-secondary oj-typography-body-sm">
+                  <oj-bind-text value="[[bien.data.cantidadFaltante]]"></oj-bind-text>
+                </div>
+
                 <div class="recepcion-col-cantidad">
                   <oj-c-input-number
                     label-edge="none"
                     value="{{bien.data.cantidadRecibida}}"
                     min="0"
-                    :max="[[bien.data.cantidadEsperada]]"
+                    :max="[[bien.data.cantidadFaltante]]"
                     :disabled="[[uiGuardandoRecepcion()]]">
                   </oj-c-input-number>
                 </div>

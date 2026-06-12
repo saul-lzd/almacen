@@ -564,7 +564,7 @@
           </oj-c-form-layout>
           <oj-bind-if test="[[calcBeneficiariosChips().length > 0]]">
             <div class="oj-flex oj-sm-flex-wrap-wrap oj-sm-margin-4x-top" style="gap: 6px;">
-              <oj-bind-for-each data="[[calcBeneficiariosChips]]">
+              <oj-bind-for-each data="[[calcBeneficiariosChips()]]">
                 <template>
                   <span class="oj-badge oj-badge-subtle" style="font-size: 0.85rem; padding: 4px 10px; border-radius: 16px;">
                     <oj-bind-text value="[[$current.data]]"></oj-bind-text>
@@ -815,7 +815,7 @@
         <oj-bind-for-each data="[[calcBeneficiariosChips()]]">
           <template data-oj-as="item">
             <div class="cf-beneficiario-item">
-              <span class="cf-beneficiario-idx"><oj-bind-text value="[[($index() + 1) + '.']]"></oj-bind-text></span>
+              <span class="cf-beneficiario-idx"><oj-bind-text value="[[(item.index + 1) + '.']]"></oj-bind-text></span>
               <span><oj-bind-text value="[[item.data]]"></oj-bind-text></span>
             </div>
           </template>

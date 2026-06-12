@@ -60,7 +60,7 @@ type BienDialogo = {
     partida: number | null;
     descripcion: string;
     unidadMedida: string;
-    cantidadEsperada: number;
+    cantidadFaltante: number;
     cantidadRecibida: ko.Observable<number | null>;
     calcDiferencia: ko.PureComputed<number | null>;
     todoRecibido: ko.Observable<boolean>;
@@ -89,6 +89,7 @@ type Contrato = {
     clavesPresupuestales: ClavePresupuestal[];
     resumenBienes: ResumenBienes;
     bienes: BienContrato[];
+    primeraEntregaAutorizada: boolean;
 };
 
 // ================================================================
@@ -151,7 +152,7 @@ class ContratoDetalleViewModel {
 
     public calcHayDiferencias = ko.pureComputed(() =>
         this.listaBienesDialogo().some(b =>
-            b.cantidadRecibida() !== null && b.cantidadRecibida()! < b.cantidadEsperada
+            b.cantidadRecibida() !== null && b.cantidadRecibida()! < b.cantidadFaltante
         )
     );
 
@@ -176,12 +177,21 @@ class ContratoDetalleViewModel {
         return (this.contrato()?.resumenBienes?.enProceso ?? 0) > 0;
     });
 
-    // Autorizar entrega → sólo ADMIN
+    // Autorizar entrega → sólo ADMIN; visible siempre que no sea CAPTURA
     public calcPuedeAutorizar = ko.pureComputed(() => {
         if (!this.calcEsAdmin()) return false;
-        const r = this.contrato()?.resumenBienes;
-        if (!r) return false;
-        return r.procesados > 0 && this.contrato()?.estatus === "POR_RECIBIR";
+        return this.contrato()?.estatus !== "CAPTURA" && this.contrato() !== null;
+    });
+
+    // Habilitado cuando hay al menos una recepción PROCESADA con bienes aún no autorizados.
+    // El backend no cambia el estatus de la recepción al autorizar, pero sí mueve
+    // los bienes de procesados → listos; por eso chequeamos totalProcesados > 0.
+    public calcAutorizarDisabled = ko.pureComputed(() => {
+        if (this.uiAccion()) return true;
+        if (!this.contrato()) return true;
+        return !this.listRecepciones().some(r =>
+            r.estatus === "PROCESADA" && r.totalProcesados > 0
+        );
     });
 
     // Entregar bienes → sólo ALMACEN
@@ -227,6 +237,11 @@ class ContratoDetalleViewModel {
         this.uiError("");
         try {
             const c = await contratosApi.obtenerPorId(id);
+            console.log("[contrato-detalle] API response:", JSON.stringify({
+                estatus: c.estatus,
+                primeraEntregaAutorizada: c.primeraEntregaAutorizada,
+                resumenBienes: c.resumenBienes,
+            }, null, 2));
 
             const r: ResumenBienes = c.resumenBienes ?? {
                 totalContratados: 0, totalRecibidos: 0,
@@ -252,7 +267,8 @@ class ContratoDetalleViewModel {
                     montoAsignadoNum:  parseFloat(cl.montoAsignado) || 0,
                     montoAsignado:     this.formatMonto(cl.montoAsignado),
                 })),
-                resumenBienes:    r,
+                resumenBienes:            r,
+                primeraEntregaAutorizada: c.primeraEntregaAutorizada ?? false,
                 bienes: (c.bienes ?? []).map((b: any) => ({
                     idContratoBien:       b.idContratoBien,
                     lote:                 b.lote,
@@ -322,7 +338,11 @@ class ContratoDetalleViewModel {
         try {
             await contratosApi.autorizarEntrega(this.contratoId);
             this.uiExito("Entrega autorizada. Los bienes están listos para ser entregados.");
-            await this.loadContrato(this.contratoId);
+            await Promise.all([
+                this.loadContrato(this.contratoId),
+                this.loadRecepciones(this.contratoId),
+            ]);
+            console.log("[autorizar] recepciones tras autorizar:", this.listRecepciones().map(r => ({ id: r.idRecepcionAlmacen, estatus: r.estatus, totalProcesados: r.totalProcesados, totalBienes: r.totalBienes })));
         } catch (err: any) {
             this.uiError(err.message || "No se pudo autorizar la entrega.");
         } finally {
@@ -355,7 +375,6 @@ class ContratoDetalleViewModel {
     public cmdAbrirRecepcion = (): void => {
         if (!this.contrato()) return;
         const c = this.contrato()!;
-        const esParcial = c.estatus === "RECEPCION_PARCIAL";
 
         // Solo muestra bienes con pendiente > 0
         const bienes: BienDialogo[] = c.bienes
@@ -364,9 +383,7 @@ class ContratoDetalleViewModel {
                 return pendiente > 0;
             })
             .map(b => {
-                const pendiente = esParcial
-                    ? b.cantidad - b.cantidadRecibidaTotal
-                    : b.cantidad;
+                const pendiente = b.cantidad - b.cantidadRecibidaTotal;
                 const cantidadRecibida = ko.observable<number | null>(null);
                 const todoRecibido = ko.observable<boolean>(false);
                 todoRecibido.subscribe((checked: boolean) => {
@@ -378,7 +395,7 @@ class ContratoDetalleViewModel {
                     partida:         b.partida,
                     descripcion:     b.descripcionCorta,
                     unidadMedida:    b.unidadMedida,
-                    cantidadEsperada: pendiente,
+                    cantidadFaltante: pendiente,
                     cantidadRecibida,
                     calcDiferencia: ko.pureComputed(() => {
                         const rec = cantidadRecibida();

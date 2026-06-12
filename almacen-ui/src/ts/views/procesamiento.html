@@ -149,6 +149,13 @@
         </div>
       </oj-bind-if>
 
+      <oj-bind-if test="[[uiExito()]]">
+        <div class="recepcion-banner recepcion-banner--exito">
+          <span class="oj-ux-ico-check-circle-s"></span>
+          <oj-bind-text value="[[uiExito]]"></oj-bind-text>
+        </div>
+      </oj-bind-if>
+
       <oj-bind-if test="[[uiError()]]">
         <div class="recepcion-banner recepcion-banner--error">
           <span class="oj-ux-ico-warning-s"></span>
@@ -244,21 +251,25 @@
               <oj-bind-if test="[[grupo.data.uiRequiereNumeroSerie()]]">
                 <div class="proc-serie-lista">
                   <div class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Número de Serie</div>
-                  <oj-bind-for-each data="[[grupo.data.unidades]]">
-                    <template data-oj-as="unidad">
-                      <div class="proc-serie-fila">
-                        <div class="proc-serie-label oj-typography-body-sm">
-                          <oj-bind-text value="[[unidad.data.displayLabel]]"></oj-bind-text>
+
+                  <div class="proc-serie-grid3">
+                    <oj-bind-for-each data="[[grupo.data.unidades]]">
+                      <template data-oj-as="unidad">
+                        <div class="proc-serie-fila">
+                          <div class="proc-serie-label oj-typography-body-sm">
+                            <oj-bind-text value="[[unidad.data.displayLabel]]"></oj-bind-text>
+                          </div>
+                          <div class="proc-serie-input">
+                            <oj-c-input-text
+                              label-hint=""
+                              value="{{unidad.data.frmNumeroSerie}}">
+                            </oj-c-input-text>
+                          </div>
                         </div>
-                        <div class="proc-serie-input">
-                          <oj-c-input-text
-                            label-hint=""
-                            value="{{unidad.data.frmNumeroSerie}}">
-                          </oj-c-input-text>
-                        </div>
-                      </div>
-                    </template>
-                  </oj-bind-for-each>
+                      </template>
+                    </oj-bind-for-each>
+                  </div>
+
                 </div>
               </oj-bind-if>
 

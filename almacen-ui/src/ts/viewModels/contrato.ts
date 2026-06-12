@@ -469,10 +469,10 @@ class NuevoContratoViewModel {
   public calcSeccionFinancieraDone = ko.pureComputed(() =>
     !!this.contratoId() &&
     Number(this.frmMontoSinImpuestos() || 0) > 0 &&
-    this.calcClavesExceden()
+    !this.calcClavesIncompletas()
   );
   public calcSeccionBeneficiariosDone = ko.pureComputed(() =>
-    this.frmBeneficiariosTexto().trim().length > 0
+    this.calcBeneficiariosChips().length > 0
   );
   public calcSeccionBienesDone = ko.pureComputed(() =>
     this.calcHayBienes() && !this.calcBienesIncompletos()
@@ -872,15 +872,15 @@ class NuevoContratoViewModel {
 
   public cmdEnviarAlmacen = async (): Promise<void> => {
     if (!this.contratoId()) {
-      alert("Guarda el contrato antes de enviarlo al almacén.");
+      this.uiError("Guarda el contrato antes de enviarlo al almacén.");
       return;
     }
 
     try {
       await contratosApi.enviarAlmacen(this.contratoId()!);
       this.uiEstatusContrato("Pendiente de recibir");
-      alert("Contrato enviado al almacén correctamente.");
-      this.router.go({ path: "dashboard" });
+      this.uiExito("Contrato enviado al almacén correctamente.");
+      setTimeout(() => this.router.go({ path: "dashboard" }), 1500);
     } catch (err: any) {
       console.error("Error al enviar al almacén:", err);
       this.uiError(err.message || "Error al enviar al almacén.");

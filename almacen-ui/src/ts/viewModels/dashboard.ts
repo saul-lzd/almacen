@@ -16,7 +16,7 @@ import "oj-c/buttonset-single";
 
 // Estatus efectivos visibles para el almacenista (excluye CAPTURA y CERRADO)
 const ESTATUS_ALMACEN: EstatusEfectivo[] = [
-    "EN_ALMACEN", "LISTO_ENTREGAR"
+    "EN_ALMACEN", "PROCESADO", "LISTO_ENTREGAR"
 ];
 
 type ResumenBienes = {
@@ -112,6 +112,7 @@ class DashboardViewModel {
             { key: "CAPTURA",        label: "En captura" },
         ] : []),
         { key: "EN_ALMACEN",         label: "En almacén" },
+        { key: "PROCESADO",          label: "Procesado" },
         { key: "LISTO_ENTREGAR",     label: "Listo para entregar" },
         ...(this.userRole === "ADMINISTRADOR" ? [
             { key: "CERRADO",        label: "Cerrado" },
@@ -161,7 +162,16 @@ class DashboardViewModel {
                 const fechaRaw: string | null = c.fechaTentativaLlegada
                     ? c.fechaTentativaLlegada.split("T")[0]
                     : null;
-                const efectivo = calcEstatusEfectivo(c);
+                const r = c.resumenBienes;
+                // listos = bienes ya autorizados para entrega; procesados = confirmados pero aún no autorizados
+                const hayListos = !!r && r.listos > 0;
+                const todosBienesProcessados = !!r && r.totalRecibidos > 0 &&
+                    (r.procesados + r.listos) >= r.totalRecibidos;
+                const efectivo = calcEstatusEfectivo({
+                    ...c,
+                    primeraEntregaAutorizada: c.primeraEntregaAutorizada || hayListos,
+                    todosBienesProcessados,
+                });
                 return {
                     idContrato:     c.idContrato,
                     numeroContrato: c.numeroContrato,
@@ -187,6 +197,11 @@ class DashboardViewModel {
                         totalContratados: 0, totalRecibidos: 0,
                         enProceso: 0, procesados: 0, listos: 0, entregados: 0,
                     },
+                    // Acumulado real: bienes que completaron el flujo de procesamiento
+                    // (independientemente de si ya fueron autorizados o entregados)
+                    totalProcesadosAcum: r
+                        ? (r.procesados + r.listos + r.entregados)
+                        : 0,
                     pctRecibido:    c.resumenBienes?.totalContratados
                         ? Math.round(c.resumenBienes.totalRecibidos / c.resumenBienes.totalContratados * 100) : 0,
                     pctEntregado:   c.resumenBienes?.totalContratados

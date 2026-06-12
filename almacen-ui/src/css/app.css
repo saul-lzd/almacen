@@ -215,7 +215,7 @@
 
   .recepcion-tabla-header {
     display: grid;
-    grid-template-columns: 44px 1fr 100px 130px;
+    grid-template-columns: 44px 1fr 100px 90px 130px;
     gap: 12px;
     padding: 8px 16px;
     background: #f9fafb;
@@ -229,7 +229,7 @@
 
   .recepcion-tabla-fila {
     display: grid;
-    grid-template-columns: 44px 1fr 100px 130px;
+    grid-template-columns: 44px 1fr 100px 90px 130px;
     gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid #e5e7eb;
@@ -451,6 +451,22 @@
   .proc-serie-input {
     flex: 1;
     max-width: 320px;
+  }
+
+  .proc-serie-grid3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0 24px;
+    margin-top: 4px;
+  }
+
+  .proc-serie-grid3 .proc-serie-input {
+    max-width: none;
+  }
+
+  .oj-badge.oj-badge-subtle.oj-badge-procesado {
+    background: #EDE9FE;
+    color: #5B21B6;
   }
 
   .procesamiento-pill {
