@@ -6,18 +6,18 @@
 
 <div class="oj-hybrid-padding procesamiento-view">
 
-  <!-- BREADCRUMB: visible solo mientras carga -->
-  <oj-bind-if test="[[uiCargando()]]">
-    <div class="recepcion-breadcrumb">
-      <oj-c-button
-        label="Regresar"
-        chroming="borderless"
-        size="sm"
-        on-oj-action="[[cmdRegresar]]">
-        <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
-      </oj-c-button>
+  <!-- BREADCRUMB -->
+  <div class="vista-nav">
+    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
+      <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
+    </oj-c-button>
+    <div class="vista-nav-sep"></div>
+    <div class="vista-breadcrumb">
+      <span class="vista-breadcrumb-seg">Contratos</span>
+      <span class="vista-breadcrumb-gt">›</span>
+      <span class="vista-breadcrumb-seg--active">Procesar Bienes</span>
     </div>
-  </oj-bind-if>
+  </div>
 
   <!-- CARGANDO -->
   <oj-bind-if test="[[uiCargando()]]">
@@ -27,7 +27,7 @@
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
     <!-- ═══ BANNER / HEADER ════════════════════════════════════════ -->
-    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm proc-header-bar">
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
       <div class="cf-ctx-bar-items">
 
         <div class="ctx-item fixed">
@@ -62,19 +62,13 @@
         </oj-bind-if>
 
       </div>
-      <div class="cf-ctx-bar-actions">
-        <oj-c-button
-          label="Regresar"
-          chroming="borderless"
-          size="sm"
-          on-oj-action="[[cmdRegresar]]">
-          <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
-        </oj-c-button>
-      </div>
     </div>
 
     <!-- ═══ WORK AREA ══════════════════════════════════════════════ -->
     <div class="oj-panel oj-panel-shadow-sm proc-work-area">
+
+      <!-- Título de sección -->
+      <div class="cd-panel-section-title">Procesamiento de Bienes</div>
 
       <!-- KPIs -->
       <div class="proc-kpis">
@@ -106,7 +100,7 @@
       <oj-bind-if test="[[recepcionInfo() && calcBienesRecepcion() > 0]]">
         <div class="proc-progreso">
           <div class="proc-progreso-header">
-            <span class="oj-typography-body-xs oj-text-color-secondary">Progreso de procesamiento</span>
+            <span class="oj-typography-body-xs oj-text-color-secondary">Procesamiento</span>
             <span class="oj-typography-body-xs oj-text-color-secondary">
               <oj-bind-text value="[[calcProcesadosTotal() + ' / ' + calcBienesRecepcion() + ' bienes']]"></oj-bind-text>
             </span>

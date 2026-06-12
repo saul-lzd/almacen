@@ -3,10 +3,16 @@
 <div class="oj-hybrid-padding">
 
   <!-- ═══ BREADCRUMB ══════════════════════════════════════════════ -->
-  <div class="recepcion-breadcrumb">
+  <div class="vista-nav">
     <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdGoBack]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
+    <div class="vista-nav-sep"></div>
+    <div class="vista-breadcrumb">
+      <span class="vista-breadcrumb-seg">Contratos</span>
+      <span class="vista-breadcrumb-gt">›</span>
+      <span class="vista-breadcrumb-seg--active">Detalles del Contrato</span>
+    </div>
   </div>
 
   <!-- ═══ BANNERS ══════════════════════════════════════════════════ -->
@@ -30,13 +36,75 @@
 
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
-    <!-- ═══ HEADER DE PÁGINA: acciones ════════════════════════ -->
-    <div class="cd-page-header">
-      <div class="cd-page-acciones">
+    <!-- ═══ BANNER ══════════════════════════════════════════════════ -->
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+      <div class="cf-ctx-bar-items">
+
+        <div class="ctx-item fixed">
+          <div class="ctx-label">Contrato</div>
+          <div class="ctx-val mono">
+            <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="ctx-item grow">
+          <div class="ctx-label">Adquisición</div>
+          <div class="ctx-val" :title="[[contrato().adquisicion]]">
+            <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="ctx-item fixed">
+          <div class="ctx-label">Proveedor</div>
+          <div class="ctx-val" :title="[[contrato().proveedor]]">
+            <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="ctx-item fixed">
+          <div class="ctx-label">Fecha de Entrega</div>
+          <div class="ctx-val">
+            <oj-bind-if test="[[!calcFechaEditable() || !uiEditandoFecha()]]">
+              <div style="display:flex; align-items:center; gap:4px;">
+                <span>
+                  <oj-bind-text value="[[contrato().fechaTentativaLlegada]]"></oj-bind-text>
+                </span>
+                <oj-bind-if test="[[calcFechaEditable()]]">
+                  <oj-c-button label="Editar" chroming="borderless" size="sm"
+                    on-oj-action="[[() => uiEditandoFecha(true)]]">
+                    <span slot="startIcon" class="oj-ux-ico-edit"></span>
+                  </oj-c-button>
+                </oj-bind-if>
+              </div>
+            </oj-bind-if>
+            <oj-bind-if test="[[calcFechaEditable() && uiEditandoFecha()]]">
+              <div class="detalle-fecha-editar">
+                <input type="date" class="detalle-fecha-input" data-bind="value: frmFecha">
+                <oj-c-button label="Guardar" chroming="callToAction" size="sm"
+                  :disabled="[[uiAccion()]]"
+                  on-oj-action="[[cmdGuardarFecha]]">
+                </oj-c-button>
+                <oj-c-button label="Cancelar" chroming="borderless" size="sm"
+                  on-oj-action="[[() => uiEditandoFecha(false)]]">
+                </oj-c-button>
+              </div>
+            </oj-bind-if>
+          </div>
+        </div>
+
+      </div>
+      <div class="cf-ctx-bar-actions">
         <oj-bind-if test="[[calcEsAdmin() && contrato().estatus === 'CAPTURA']]">
-          <oj-c-button label="Editar contrato" chroming="callToAction" size="sm"
+          <oj-c-button label="Editar contrato" chroming="outlined" size="sm"
             on-oj-action="[[cmdEditarContrato]]">
             <span slot="startIcon" class="oj-ux-ico-edit"></span>
+          </oj-c-button>
+        </oj-bind-if>
+        <oj-bind-if test="[[calcPuedeAutorizar()]]">
+          <oj-c-button label="Autorizar entrega" chroming="callToAction" size="sm"
+            :disabled="[[uiAccion()]]"
+            on-oj-action="[[cmdAutorizarEntrega]]">
+            <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
           </oj-c-button>
         </oj-bind-if>
         <oj-bind-if test="[[calcPuedeEntregar()]]">
@@ -49,76 +117,15 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         PANEL 1 — Datos generales + KPIs
+         PANEL — KPIs + Recepciones (fusionado)
     ════════════════════════════════════════════════════════════ -->
-    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom cd-panel-general">
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom cd-panel-recepciones">
 
-      <!-- Número de contrato -->
-      <div class="cd-panel-numero-row">
-        <span class="cd-numero">
-          <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
-        </span>
-        <div class="cd-numero-acciones">
-          <oj-bind-if test="[[calcPuedeAutorizar()]]">
-            <oj-c-button label="Autorizar entrega" chroming="callToAction" size="sm"
-              :disabled="[[uiAccion()]]"
-              on-oj-action="[[cmdAutorizarEntrega]]">
-              <span slot="startIcon" class="oj-ux-ico-check-circle-s"></span>
-            </oj-c-button>
-          </oj-bind-if>
-        </div>
-      </div>
+      <!-- Título de sección -->
+      <div class="cd-panel-section-title">Detalles del Contrato</div>
 
-      <!-- Fila de info -->
-      <div class="cd-info-row">
-
-        <div class="cd-info-item cd-info-item--grow">
-          <span class="cd-info-label">Adquisición</span>
-          <span class="cd-info-val" :title="[[contrato().adquisicion]]">
-            <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
-          </span>
-        </div>
-
-        <div class="cd-info-item">
-          <span class="cd-info-label">Proveedor</span>
-          <span class="cd-info-val" :title="[[contrato().proveedor]]">
-            <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
-          </span>
-        </div>
-
-        <div class="cd-info-item">
-          <span class="cd-info-label">Fecha Tentativa de Llegada</span>
-          <oj-bind-if test="[[!calcFechaEditable() || !uiEditandoFecha()]]">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span class="cd-info-val">
-                <oj-bind-text value="[[contrato().fechaTentativaLlegada]]"></oj-bind-text>
-              </span>
-              <oj-bind-if test="[[calcFechaEditable()]]">
-                <oj-c-button label="Editar" chroming="borderless" size="sm"
-                  on-oj-action="[[() => uiEditandoFecha(true)]]">
-                  <span slot="startIcon" class="oj-ux-ico-edit"></span>
-                </oj-c-button>
-              </oj-bind-if>
-            </div>
-          </oj-bind-if>
-          <oj-bind-if test="[[calcFechaEditable() && uiEditandoFecha()]]">
-            <div class="detalle-fecha-editar">
-              <input type="date" class="detalle-fecha-input" data-bind="value: frmFecha">
-              <oj-c-button label="Guardar" chroming="callToAction" size="sm"
-                :disabled="[[uiAccion()]]"
-                on-oj-action="[[cmdGuardarFecha]]">
-              </oj-c-button>
-              <oj-c-button label="Cancelar" chroming="borderless" size="sm"
-                on-oj-action="[[() => uiEditandoFecha(false)]]">
-              </oj-c-button>
-            </div>
-          </oj-bind-if>
-        </div>
-
-      </div>
-
-      <!-- KPIs — cada indicador en su propio contenedor -->
-      <div class="cd-kpis">
+      <!-- KPIs -->
+      <div class="proc-kpis">
 
         <div class="cd-kpi-card">
           <div class="cd-kpi-label">Total de Bienes</div>
@@ -150,14 +157,7 @@
 
       </div>
 
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════
-         PANEL 2 — Recepciones
-    ════════════════════════════════════════════════════════════ -->
-    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom cd-panel-recepciones">
-
-      <!-- Header del panel -->
+      <!-- Header de recepciones -->
       <div class="cd-rec-header">
         <div class="cd-rec-header-left">
           <span class="cd-rec-titulo">Recepciones</span>

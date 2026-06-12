@@ -81,16 +81,23 @@
 <div class="oj-hybrid-padding contrato-editor-page">
 
   <!-- NAVEGACIÓN -->
-  <oj-c-button
-    chroming="ghost"
-    :label="[[calcLabelRegresar()]]"
-    on-oj-action="[[cmdGoBack]]">
-    <span slot="startIcon" class="oj-ux-ico-arrow-left-alt"></span>
-  </oj-c-button>
-
-  <h1 class="oj-sm-margin-4x-top">
-    <oj-bind-text value="[[calcTituloPantalla]]"></oj-bind-text>
-  </h1>
+  <div class="vista-nav">
+    <oj-c-button
+      chroming="borderless"
+      :label="[[calcLabelRegresar()]]"
+      size="sm"
+      on-oj-action="[[cmdGoBack]]">
+      <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
+    </oj-c-button>
+    <div class="vista-nav-sep"></div>
+    <div class="vista-breadcrumb">
+      <span class="vista-breadcrumb-seg">Contratos</span>
+      <span class="vista-breadcrumb-gt">›</span>
+      <span class="vista-breadcrumb-seg--active">
+        <oj-bind-text value="[[calcTituloPantalla()]]"></oj-bind-text>
+      </span>
+    </div>
+  </div>
 
   <!-- MENSAJE DE ERROR GLOBAL -->
   <oj-bind-if test="[[uiError()]]">
@@ -110,45 +117,45 @@
   <!-- ═══════════════════════════════════════════════════════
        HEADER — contexto del contrato + acciones
   ════════════════════════════════════════════════════════ -->
-  <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-6x-top cf-ctx-bar">
+  <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
 
     <!-- Info items -->
     <div class="cf-ctx-bar-items">
 
       <div class="ctx-item fixed">
-        <span class="ctx-label">Contrato</span>
-        <span class="ctx-val mono">
+        <div class="ctx-label">Contrato</div>
+        <div class="ctx-val mono">
           <oj-bind-text value="[[calcNumeroContratoHeader]]"></oj-bind-text>
-        </span>
+        </div>
       </div>
 
-      <div class="ctx-item grow" style="max-width:300px">
-        <span class="ctx-label">Adquisición</span>
-        <span class="ctx-val" :title="[[calcAdquisicionHeader]]">
+      <div class="ctx-item grow">
+        <div class="ctx-label">Adquisición</div>
+        <div class="ctx-val" :title="[[calcAdquisicionHeader]]">
           <oj-bind-text value="[[calcAdquisicionHeader]]"></oj-bind-text>
-        </span>
+        </div>
       </div>
 
-      <div class="ctx-item grow" style="max-width:220px">
-        <span class="ctx-label">Proveedor</span>
-        <span class="ctx-val" :title="[[calcProveedorHeader]]">
+      <div class="ctx-item grow">
+        <div class="ctx-label">Proveedor</div>
+        <div class="ctx-val" :title="[[calcProveedorHeader]]">
           <oj-bind-text value="[[calcProveedorHeader]]"></oj-bind-text>
-        </span>
+        </div>
       </div>
 
       <div class="ctx-item fixed">
-        <span class="ctx-label">Bienes capturados</span>
-        <span class="ctx-val">
+        <div class="ctx-label">Bienes capturados</div>
+        <div class="ctx-val">
           <oj-bind-text value="[[calcTotalBienes]]"></oj-bind-text>
-        </span>
+        </div>
       </div>
 
       <oj-bind-if test="[[calcEsAdmin()]]">
         <div class="ctx-item fixed">
-          <span class="ctx-label">Monto sin impuestos</span>
-          <span class="ctx-val">
+          <div class="ctx-label">Monto sin impuestos</div>
+          <div class="ctx-val">
             <oj-bind-text value="[[calcMontoSinImpuestosHeader]]"></oj-bind-text>
-          </span>
+          </div>
         </div>
       </oj-bind-if>
 

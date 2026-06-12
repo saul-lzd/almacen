@@ -519,7 +519,7 @@
    VISTA: RECEPCIÓN
    ══════════════════════════════════════════════════════════ */
 
-  /* Breadcrumb de navegación */
+  /* Breadcrumb de navegación (legacy) */
   .recepcion-breadcrumb {
     display: flex;
     align-items: center;
@@ -535,6 +535,43 @@
   .recepcion-breadcrumb-titulo {
     font-size: 13px;
     color: var(--oj-core-text-color-secondary);
+  }
+
+  /* Barra de navegación estándar de vistas */
+  .vista-nav {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .vista-nav-sep {
+    width: 1px;
+    height: 18px;
+    background: #e5e7eb;
+    margin: 0 4px 0 8px;
+    flex-shrink: 0;
+  }
+
+  .vista-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding-left: 4px;
+  }
+
+  .vista-breadcrumb-seg {
+    color: var(--oj-core-text-color-secondary);
+  }
+
+  .vista-breadcrumb-seg--active {
+    color: var(--oj-core-text-color-primary);
+    font-weight: 500;
+  }
+
+  .vista-breadcrumb-gt {
+    color: #d1d5db;
+    font-size: 12px;
   }
 
   /* Banners */
@@ -757,7 +794,7 @@
 
   /* ── PROCESAMIENTO ── */
 
-  .proc-header-bar {
+  .ctx-bar-header {
     margin-bottom: 16px;
   }
 
@@ -778,9 +815,21 @@
     flex: 1;
   }
 
+  .cd-panel-section-title {
+    padding: 16px 20px 1px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--oj-core-text-color-primary);
+  }
+
   .proc-progreso {
     padding: 14px 20px 16px;
     border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Quita el borde inferior de los KPIs en procesamiento (se fusiona con la barra de progreso) */
+  .procesamiento-view .proc-kpis {
+    border-bottom: none;
   }
 
   .proc-progreso-header {
@@ -913,85 +962,6 @@
     color: #15803D;
   }
 
-  /* Tabla individual */
-  .procesamiento-tabla {
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-top: 12px;
-  }
-
-  .procesamiento-tabla-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 196px;
-    gap: 0 12px;
-    padding: 8px 16px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--oj-core-text-color-secondary);
-  }
-
-  .procesamiento-tabla-header--vehiculo {
-    grid-template-columns: 1fr 1fr 1fr 1fr 196px;
-  }
-
-  .procesamiento-tabla-fila {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 196px;
-    gap: 0 12px;
-    padding: 8px 16px;
-    border-bottom: 1px solid #e5e7eb;
-    align-items: center;
-    transition: background 0.1s;
-  }
-
-  .procesamiento-tabla-fila--vehiculo {
-    grid-template-columns: 1fr 1fr 1fr 1fr 196px;
-  }
-
-  .procesamiento-col-acciones {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-  }
-
-  .procesamiento-acciones-col {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: stretch;
-  }
-
-  .procesamiento-acciones-procesado {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-  }
-
-  .procesamiento-tabla-fila:last-child {
-    border-bottom: none;
-  }
-
-
-  .procesamiento-fila--procesado {
-    background: #F9FFFB;
-  }
-
-  .procesamiento-fila--en-proceso {
-    background: #FFFDF5;
-  }
-
-  .procesamiento-check {
-    font-size: 12px;
-    font-weight: 600;
-    color: #15803D;
-    white-space: nowrap;
-  }
   /* ── ENTREGA ── */
 
   .entrega-grupo {
@@ -1347,90 +1317,6 @@
   }
 
   /* ── DETALLE DEL CONTRATO ── */
-
-  /* -- Header de página -- */
-
-  .cd-page-header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 12px 0 16px;
-  }
-
-  .cd-page-acciones {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .cd-panel-numero-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px 10px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .cd-numero-acciones { display: flex; align-items: center; gap: 8px; }
-
-  .cd-numero {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-    font-family: 'SF Mono', 'Fira Code', monospace;
-    letter-spacing: .02em;
-  }
-
-  /* -- Panel 1: datos generales -- */
-
-  .cd-panel-general.oj-panel {
-    padding: 0;
-  }
-
-  .cd-info-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 32px;
-    padding: 16px 20px 14px;
-  }
-
-  .cd-info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    flex: 0 0 auto;
-  }
-
-  .cd-info-item--grow {
-    flex: 1;
-  }
-
-  .cd-info-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    white-space: nowrap;
-  }
-
-  .cd-info-val {
-    font-size: 13px;
-    font-weight: 500;
-    color: #1a1a1a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* -- Panel 1: KPIs -- */
-
-  .cd-kpis {
-    display: flex;
-    align-items: stretch;
-    gap: 12px;
-    padding: 0 20px 20px;
-  }
 
   .cd-kpi-card {
     flex: 1;
@@ -1934,8 +1820,7 @@
   background: var(--oj-core-bg-color-secondary, #f5f5f5);
 }
 
-/* ── Context bar del formulario de contrato ── */
-/* ── Context bar — header del formulario de contrato ── */
+/* ── Context bar — header ─────────────────────────────── */
 
 .cf-ctx-bar.oj-panel {
   padding: 0;
@@ -1981,7 +1866,7 @@
 .ctx-label {
   font-size: 10px;
   font-weight: 600;
-  color: #9ca3af;
+  color: var(--oj-core-text-color-secondary);
   text-transform: uppercase;
   letter-spacing: .06em;
   white-space: nowrap;
@@ -1990,7 +1875,7 @@
 .ctx-val {
   font-size: 13px;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--oj-core-text-color-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
