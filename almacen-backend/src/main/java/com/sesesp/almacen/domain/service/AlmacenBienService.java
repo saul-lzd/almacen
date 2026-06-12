@@ -46,7 +46,7 @@ public class AlmacenBienService {
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
 
         return agrupar(almacenBienRepository.findByContratoWithFetch(
-                idContrato, List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO, EstatusBien.PROCESADO)));
+                idContrato, List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO)));
     }
 
     @Transactional(readOnly = true)
@@ -56,7 +56,7 @@ public class AlmacenBienService {
 
         return agrupar(almacenBienRepository.findByContratoAndRecepcionWithFetch(
                 idContrato, idRecepcion,
-                List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO, EstatusBien.PROCESADO)));
+                List.of(EstatusBien.RECIBIDO, EstatusBien.EN_PROCESO)));
     }
 
     @Transactional(readOnly = true)
