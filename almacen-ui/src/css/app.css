@@ -681,7 +681,7 @@
 
   /* Tabla de bienes */
   .recepcion-tabla {
-    border: 1px solid var(--oj-core-border-color-subtle);
+    border: 1px solid #e5e7eb;
     border-radius: 6px;
     overflow: hidden;
     margin-bottom: 12px;
@@ -690,7 +690,7 @@
   .recepcion-tabla-header {
     display: grid;
     grid-template-columns: 44px 1fr 100px 130px;
-    gap: 0;
+    gap: 12px;
     padding: 8px 16px;
     background: #f9fafb;
     border-bottom: 1px solid #e5e7eb;
@@ -704,7 +704,7 @@
   .recepcion-tabla-fila {
     display: grid;
     grid-template-columns: 44px 1fr 100px 130px;
-    gap: 0;
+    gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid #e5e7eb;
     align-items: center;
@@ -718,16 +718,18 @@
   .recepcion-fila--diferencia  { background: #FFF9F9; }
   .recepcion-fila--completo    { background: #F9FFFB; }
   .recepcion-fila--advertencia { background: #FFFBEB; }
+  .recepcion-tabla-fila:not(.recepcion-fila--diferencia):not(.recepcion-fila--completo):not(.recepcion-fila--advertencia):hover {
+    background: #f9fafb;
+  }
 
   /* Columnas de la tabla */
-  .recepcion-col-check   { display: flex; align-items: center; justify-content: center; }
-  .recepcion-col-cantidad { padding-right: 12px; }
+  .recepcion-col-check    { display: flex; align-items: center; justify-content: center; }
+  .recepcion-col-cantidad { }
   .recepcion-col-desc {
-    padding-left: 12px;
-    color: var(--oj-core-text-color-secondary);
+    color: var(--oj-core-text-color-primary);
     line-height: 1.4;
   }
-  .recepcion-col-um { padding-left: 4px; }
+  .recepcion-col-um { }
 
   .recepcion-check {
     width: 16px;
@@ -1840,6 +1842,7 @@
   border-top: 1px solid var(--oj-panel-border-color, #e5e7eb);
   background: var(--oj-panel-bg-color-alt, #f8f9fa);
 }
+.cf-ctx-bar-row2 .ctx-item:last-child { border-right: none; }
 
 .cf-ctx-bar-items {
   display: flex;
@@ -1903,6 +1906,12 @@
   align-items: center;
   gap: 2px;
   overflow: hidden;
+}
+
+/* Row1 sin cf-ctx-bar-actions: quitar border-right del último item visible */
+.cf-ctx-bar-row1:not(:has(.cf-ctx-bar-actions)) .cf-ctx-bar-items > div:last-of-type,
+.cf-ctx-bar-row1:not(:has(.cf-ctx-bar-actions)) .cf-ctx-bar-items > oj-bind-if:last-child > div {
+  border-right: none;
 }
 
 /* ── Bienes captura — tabla ── */
@@ -2086,6 +2095,9 @@
 }
 .cd-bienes-row:last-child { border-bottom: none; }
 .cd-bienes-row--pendiente { background: #f9fafb; }
+.cd-bienes-row--pendiente .cd-bienes-desc-text,
+.cd-bienes-row--pendiente .cd-bienes-col-num,
+.cd-bienes-row--pendiente .cd-bienes-col-monto { color: var(--oj-core-text-color-secondary); }
 
 .cd-bienes-row--header {
   padding: 8px 16px;
@@ -2093,18 +2105,21 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
-.cd-bienes-row--header > div {
+.cd-bienes-row--header div {
   font-size: 11px;
   font-weight: 600;
   color: var(--oj-core-text-color-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.cd-bienes-row--header .cd-bienes-col-num { text-align: center; }
+.cd-bienes-row--header .cd-bienes-col-num         { text-align: center; }
+.cd-bienes-row--header .cd-bienes-col-num--blue   { color: #1d4ed8; }
+.cd-bienes-row--header .cd-bienes-col-num--green  { color: #16a34a; }
+.cd-bienes-row--header .cd-bienes-col-num--amber  { color: #d97706; }
 
 .cd-bienes-col-partida { display: flex; align-items: center; }
 .cd-bienes-col-desc    { min-width: 0; }
-.cd-bienes-col-um      { font-size: 12px; color: #6b7280; }
+.cd-bienes-col-um      { font-size: 12px; color: var(--oj-core-text-color-secondary); }
 .cd-bienes-col-num     { text-align: center; font-size: 13px; font-weight: 500; color: #1a1a1a; }
 .cd-bienes-col-monto   { text-align: right; font-size: 13px; font-weight: 500; color: var(--oj-core-text-color-primary); }
 .cd-bienes-col-estado  { display: flex; align-items: center; justify-content: center; }
@@ -2118,7 +2133,10 @@
 .cd-bienes-num--blue  { font-weight: 600; color: #1d4ed8; }
 .cd-bienes-num--green { font-weight: 600; color: #16a34a; }
 .cd-bienes-num--amber { font-weight: 600; color: #d97706; }
-.cd-bienes-num--muted { color: #d1d5db; }
+.cd-bienes-num--muted { color: #9ca3af; }
+
+.cd-bienes-row:not(.cd-bienes-row--header):not(.cd-bienes-row--pendiente):hover { background: #f8faff; }
+.cd-bienes-row--pendiente:hover { background: #f1f5f9; }
 
 /* ── Diálogos de info admin (financiero / beneficiarios) ─────── */
 .cf-info-dialog-body { padding: 4px 0; }
