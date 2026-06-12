@@ -195,7 +195,7 @@ class NuevoContratoViewModel {
 
   // ── Navegación de secciones ──
   public readonly listSecciones = [
-    { id: "general",       label: "Datos generales",        hint: "Número de contrato, objeto del contrato y fecha tentativa de llegada." },
+    { id: "general",       label: "Datos generales",        hint: "Número de contrato, objeto del contrato y fecha de llegada aproximada." },
     { id: "partes",        label: "Partes",                 hint: "Datos del proveedor y funcionarios responsables del contrato." },
     { id: "pagos",         label: "Información financiera", hint: "Montos del contrato y asignación de claves presupuestales." },
     { id: "beneficiarios", label: "Beneficiarios",          hint: "Municipios o dependencias que recibirán los bienes de esta adquisición." },

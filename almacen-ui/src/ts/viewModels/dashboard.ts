@@ -16,7 +16,7 @@ import "oj-c/buttonset-single";
 
 // Estatus efectivos visibles para el almacenista (excluye CAPTURA y CERRADO)
 const ESTATUS_ALMACEN: EstatusEfectivo[] = [
-    "POR_RECIBIR", "RECEPCION_PARCIAL", "RECIBIDO", "EN_ENTREGA"
+    "EN_ALMACEN", "LISTO_ENTREGAR"
 ];
 
 type ResumenBienes = {
@@ -41,9 +41,11 @@ type ContratoItem = {
     todosLosBienesRecibidos:    boolean;
     contratoCerrado:            boolean;
     beneficiarios: string;
+    numeroBeneficiarios: number;
     proveedor: string;
     fechaTentativaLlegada: string | null;
     fechaTentativaLlegadaFormateada: string;
+    montoSinImpuestos: string;
     montoTotal: string;
     resumenBienes: ResumenBienes;
     pctRecibido: number;
@@ -108,12 +110,12 @@ class DashboardViewModel {
         { key: "",                   label: "Todos" },
         ...(this.userRole === "ADMINISTRADOR" ? [
             { key: "CAPTURA",        label: "En captura" },
+        ] : []),
+        { key: "EN_ALMACEN",         label: "En almacén" },
+        { key: "LISTO_ENTREGAR",     label: "Listo para entregar" },
+        ...(this.userRole === "ADMINISTRADOR" ? [
             { key: "CERRADO",        label: "Cerrado" },
         ] : []),
-        { key: "POR_RECIBIR",        label: "Por recibir" },
-        { key: "RECEPCION_PARCIAL",  label: "Recepción parcial" },
-        { key: "RECIBIDO",           label: "Recibido" },
-        { key: "EN_ENTREGA",         label: "En entrega" },
     ];
 
     public calcLabelFiltroEstatus = ko.pureComputed(() => {
@@ -173,9 +175,13 @@ class DashboardViewModel {
                     todosLosBienesRecibidos:    c.todosLosBienesRecibidos    ?? false,
                     contratoCerrado:            c.contratoCerrado            ?? false,
                     beneficiarios:  c.beneficiarios || "—",
+                    numeroBeneficiarios: c.beneficiarios
+                        ? c.beneficiarios.split(",").map((b: string) => b.trim()).filter(Boolean).length
+                        : 0,
                     proveedor:      c.proveedor?.razonSocial || "Sin proveedor asignado",
                     fechaTentativaLlegada:          fechaRaw,
                     fechaTentativaLlegadaFormateada: this.formatFecha(fechaRaw),
+                    montoSinImpuestos: this.formatMonto(c.montoSinImpuestos),
                     montoTotal:     this.formatMonto(c.montoTotal),
                     resumenBienes:  c.resumenBienes ?? {
                         totalContratados: 0, totalRecibidos: 0,
@@ -200,6 +206,10 @@ class DashboardViewModel {
     // ================================================================
     public cmdVerDetalle = (contrato: ContratoItem): void => {
         this.router?.go({ path: "contrato-detalle", params: { id: contrato.idContrato } });
+    };
+
+    public cmdEditarContrato = (contrato: ContratoItem): void => {
+        this.router?.go({ path: "contrato", params: { id: contrato.idContrato } });
     };
 
     public cmdNuevoContrato = (): void => {

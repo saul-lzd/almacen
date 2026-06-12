@@ -93,8 +93,11 @@
         <!-- Encabezado -->
         <div class="dash-lista-header">
           <div>Contrato</div>
-          <div>Adquisición</div>
           <div>Estatus</div>
+          <div class="dash-lista-col-center">Beneficiarios</div>
+          <div class="dash-lista-col-center">Recibidos</div>
+          <div class="dash-lista-col-center">Procesados</div>
+          <div class="dash-lista-col-center">Entregados</div>
           <div></div>
         </div>
 
@@ -103,12 +106,13 @@
           <template data-oj-as="item">
             <div class="dash-lista-fila">
 
-              <div class="dash-lista-contrato font-mono">
-                <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-              </div>
-
-              <div class="dash-lista-adquisicion oj-text-color-secondary oj-typography-body-sm">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+              <div class="dash-lista-contrato">
+                <div class="dash-lista-contrato-num font-mono">
+                  <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                </div>
+                <div class="dash-lista-contrato-adq">
+                  <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+                </div>
               </div>
 
               <div>
@@ -117,13 +121,33 @@
                 </span>
               </div>
 
+              <div class="dash-lista-num">
+                <oj-bind-text value="[[item.data.numeroBeneficiarios]]"></oj-bind-text>
+              </div>
+
+              <div class="dash-lista-num dash-lista-num--blue">
+                <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos]]"></oj-bind-text>
+              </div>
+
+              <div class="dash-lista-num dash-lista-num--green">
+                <oj-bind-text value="[[item.data.resumenBienes.procesados]]"></oj-bind-text>
+              </div>
+
+              <div class="dash-lista-num dash-lista-num--amber">
+                <oj-bind-text value="[[item.data.resumenBienes.entregados]]"></oj-bind-text>
+              </div>
+
               <div class="dash-lista-accion">
-                <oj-c-button
-                  label="Ver detalle"
-                  chroming="outlined"
-                  size="sm"
-                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                </oj-c-button>
+                <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
+                  <oj-c-button label="Editar" chroming="outlined" size="sm"
+                    on-oj-action="[[() => cmdEditarContrato(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
+                <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
+                  <oj-c-button label="Ver detalles" chroming="outlined" size="sm"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
               </div>
 
             </div>
@@ -138,101 +162,94 @@
       <div class="dash-grid">
         <oj-bind-for-each data="[[calcFiltrados()]]">
           <template data-oj-as="item">
-            <div class="dash-card oj-panel oj-sm-padding-6x">
+            <div class="dash-card oj-panel">
 
-              <!-- Card header -->
+              <!-- ── Header ── -->
               <div class="dash-card-header">
-                <span class="dash-card-numero font-mono">
-                  <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
-                </span>
-                <span :class="[['oj-badge oj-badge-subtle ' + item.data.estatusBadge]]">
-                  <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
-                </span>
+                <div class="dash-card-header-top">
+                  <span class="dash-card-numero font-mono">
+                    <oj-bind-text value="[[item.data.numeroContrato]]"></oj-bind-text>
+                  </span>
+                  <span :class="[['oj-badge oj-badge-subtle ' + item.data.estatusBadge]]">
+                    <oj-bind-text value="[[item.data.estatusLabel]]"></oj-bind-text>
+                  </span>
+                </div>
+                <div class="dash-card-adquisicion">
+                  <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
+                </div>
               </div>
 
-              <!-- Adquisición -->
-              <div class="dash-card-adquisicion oj-text-color-secondary oj-typography-body-sm">
-                <oj-bind-text value="[[item.data.adquisicion]]"></oj-bind-text>
-              </div>
-
-              <!-- Meta: proveedor + fecha tentativa (almacenista) -->
-              <oj-bind-if test="[[calcEsAlmacenista()]]">
-                <div class="dash-card-meta">
-                  <div class="dash-card-meta-row">
-                    <span class="oj-ux-ico-truck" style="font-size:12px"></span>
-                    <span class="oj-text-color-secondary oj-typography-body-sm">
-                      <oj-bind-text value="[[item.data.proveedor]]"></oj-bind-text>
+              <!-- ── Content: En captura ── -->
+              <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
+                <div class="dash-card-content">
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Monto s/impuestos</span>
+                    <span class="dash-card-dato-valor">
+                      <oj-bind-text value="[[item.data.montoSinImpuestos]]"></oj-bind-text>
                     </span>
                   </div>
-                  <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
-                    <div class="dash-card-meta-row">
-                      <span class="oj-badge oj-badge-subtle oj-badge-warning">
-                        <span class="oj-ux-ico-calendar" style="font-size:11px"></span>
-                        <oj-bind-text value="[[item.data.fechaTentativaLlegadaFormateada]]"></oj-bind-text>
-                      </span>
-                    </div>
-                  </oj-bind-if>
-                </div>
-              </oj-bind-if>
-
-              <!-- Métricas (admin) -->
-              <oj-bind-if test="[[calcEsAdmin()]]">
-                <div class="dash-card-metricas">
-                  <div class="dash-metrica">
-                    <span class="dash-metrica-label">Bienes</span>
-                    <span class="dash-metrica-valor">
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Bienes capturados</span>
+                    <span class="dash-card-dato-valor">
                       <oj-bind-text value="[[item.data.resumenBienes.totalContratados]]"></oj-bind-text>
                     </span>
                   </div>
-                  <div class="dash-metrica">
-                    <span class="dash-metrica-label">Recibidos</span>
-                    <span class="dash-metrica-valor dash-metrica-valor--azul">
-                      <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                    </span>
-                  </div>
-                  <div class="dash-metrica">
-                    <span class="dash-metrica-label">Procesados</span>
-                    <span class="dash-metrica-valor dash-metrica-valor--naranja">
-                      <oj-bind-text value="[[item.data.resumenBienes.procesados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                    </span>
-                  </div>
-                  <div class="dash-metrica">
-                    <span class="dash-metrica-label">Entregados</span>
-                    <span class="dash-metrica-valor dash-metrica-valor--verde">
-                      <oj-bind-text value="[[item.data.resumenBienes.entregados + '/' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
-                    </span>
-                  </div>
-                  <div class="dash-metrica">
-                    <span class="dash-metrica-label">Monto Total</span>
-                    <span class="dash-metrica-valor">
-                      <oj-bind-text value="[[item.data.montoTotal]]"></oj-bind-text>
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Barra de progreso (admin) -->
-                <div class="dash-progreso-wrap">
-                  <div class="dash-progreso-bar">
-                    <div class="dash-progreso-bar-recibido"
-                      :style="[[{ width: item.data.pctRecibido + '%' }]]">
-                    </div>
-                    <div class="dash-progreso-bar-entregado"
-                      :style="[[{ width: item.data.pctEntregado + '%' }]]">
-                    </div>
-                  </div>
-                  <span class="dash-progreso-pct oj-typography-body-sm oj-text-color-secondary">
-                    <oj-bind-text value="[[item.data.pctRecibido + '% recibido']]"></oj-bind-text>
-                  </span>
                 </div>
               </oj-bind-if>
 
+              <!-- ── Content: En almacén ── -->
+              <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
+                <div class="dash-card-content">
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Monto s/impuestos</span>
+                    <span class="dash-card-dato-valor">
+                      <oj-bind-text value="[[item.data.montoSinImpuestos]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Recibidos</span>
+                    <span class="dash-card-dato-valor dash-card-dato-valor--blue">
+                      <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos + ' / ' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Procesados</span>
+                    <span class="dash-card-dato-valor dash-card-dato-valor--green">
+                      <oj-bind-text value="[[item.data.resumenBienes.procesados + ' / ' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                  <div class="dash-card-dato">
+                    <span class="dash-card-dato-label">Entregados</span>
+                    <span class="dash-card-dato-valor dash-card-dato-valor--amber">
+                      <oj-bind-text value="[[item.data.resumenBienes.entregados + ' / ' + item.data.resumenBienes.totalContratados]]"></oj-bind-text>
+                    </span>
+                  </div>
+                </div>
+              </oj-bind-if>
+
+              <!-- ── Footer ── -->
               <div class="dash-card-footer">
-                <oj-c-button
-                  label="Ver Detalles"
-                  chroming="outlined"
-                  width="100%"
-                  on-oj-action="[[() => cmdVerDetalle(item.data)]]">
-                </oj-c-button>
+                <div class="dash-card-fecha">
+                  <oj-bind-if test="[[item.data.fechaTentativaLlegada]]">
+                    <span class="dash-card-fecha-label">Fecha de llegada (aprox)</span>
+                    <span class="dash-card-fecha-val">
+                      <oj-bind-text value="[[item.data.fechaTentativaLlegadaFormateada]]"></oj-bind-text>
+                    </span>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[!item.data.fechaTentativaLlegada]]">
+                    <span class="dash-card-fecha-label dash-card-fecha-label--muted">Sin fecha asignada</span>
+                  </oj-bind-if>
+                </div>
+                <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
+                  <oj-c-button label="Editar" chroming="ghost" size="sm"
+                    on-oj-action="[[() => cmdEditarContrato(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
+                <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
+                  <oj-c-button label="Ver detalles" chroming="ghost" size="sm"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                  </oj-c-button>
+                </oj-bind-if>
               </div>
 
             </div>

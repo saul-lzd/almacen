@@ -3,7 +3,7 @@
  */
 
 // ──────────────────────────────────────────────────────────────────
-// Estatus efectivo — derivado de estatus + 4 checkpoints
+// Estatus efectivo — derivado de estatus + checkpoints booleanos
 //
 // El backend persiste CAPTURA como estatus formal.
 // El resto se deriva de los checkpoints booleanos irreversibles.
@@ -11,10 +11,8 @@
 
 export type EstatusEfectivo =
     | "CAPTURA"
-    | "POR_RECIBIR"
-    | "RECEPCION_PARCIAL"
-    | "RECIBIDO"
-    | "EN_ENTREGA"
+    | "EN_ALMACEN"
+    | "LISTO_ENTREGAR"
     | "CERRADO";
 
 export type ContratoCheckpoints = {
@@ -30,12 +28,10 @@ export type ContratoCheckpoints = {
  * Orden de prioridad descendente.
  */
 export function calcEstatusEfectivo(c: ContratoCheckpoints): EstatusEfectivo {
-    if (c.estatus === "CAPTURA")        return "CAPTURA";
-    if (c.contratoCerrado)              return "CERRADO";
-    if (c.primeraEntregaAutorizada)     return "EN_ENTREGA";
-    if (c.todosLosBienesRecibidos)      return "RECIBIDO";
-    if (c.primeraRecepcionRegistrada)   return "RECEPCION_PARCIAL";
-    return "POR_RECIBIR";
+    if (c.estatus === "CAPTURA")    return "CAPTURA";
+    if (c.contratoCerrado)          return "CERRADO";
+    if (c.primeraEntregaAutorizada) return "LISTO_ENTREGAR";
+    return "EN_ALMACEN";
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -43,29 +39,44 @@ export function calcEstatusEfectivo(c: ContratoCheckpoints): EstatusEfectivo {
 // ──────────────────────────────────────────────────────────────────
 
 const ESTATUS_LABELS: Record<EstatusEfectivo, string> = {
-    CAPTURA:           "En captura",
-    POR_RECIBIR:       "Por recibir",
-    RECEPCION_PARCIAL: "Recepción parcial",
-    RECIBIDO:          "Recibido",
-    EN_ENTREGA:        "En entrega",
-    CERRADO:           "Cerrado",
+    CAPTURA:        "En captura",
+    EN_ALMACEN:     "En almacén",
+    LISTO_ENTREGAR: "Listo para entregar",
+    CERRADO:        "Cerrado",
 };
 
 const ESTATUS_BADGE: Record<EstatusEfectivo, string> = {
-    CAPTURA:           "",
+    CAPTURA:        "",
+    EN_ALMACEN:     "oj-badge-info",
+    LISTO_ENTREGAR: "oj-badge-warning",
+    CERRADO:        "oj-badge-success",
+};
+
+// Compatibilidad con valores de estatus crudos del backend (usados en lógica de negocio)
+const ESTATUS_LABELS_RAW: Record<string, string> = {
+    POR_RECIBIR:       "En almacén",
+    RECEPCION_PARCIAL: "En almacén",
+    RECIBIDO:          "En almacén",
+    EN_ENTREGA:        "Listo para entregar",
+};
+
+const ESTATUS_BADGE_RAW: Record<string, string> = {
     POR_RECIBIR:       "oj-badge-info",
     RECEPCION_PARCIAL: "oj-badge-info",
-    RECIBIDO:          "oj-badge-warning",
+    RECIBIDO:          "oj-badge-info",
     EN_ENTREGA:        "oj-badge-warning",
-    CERRADO:           "oj-badge-success",
 };
 
 export function mapEstatusToLabel(estatus: string): string {
-    return (ESTATUS_LABELS as Record<string, string>)[estatus] ?? estatus;
+    return (ESTATUS_LABELS as Record<string, string>)[estatus]
+        ?? ESTATUS_LABELS_RAW[estatus]
+        ?? estatus;
 }
 
 export function mapEstatusToBadge(estatus: string): string {
-    return (ESTATUS_BADGE as Record<string, string>)[estatus] ?? "oj-badge-neutral";
+    return (ESTATUS_BADGE as Record<string, string>)[estatus]
+        ?? ESTATUS_BADGE_RAW[estatus]
+        ?? "oj-badge-neutral";
 }
 
 // ──────────────────────────────────────────────────────────────────

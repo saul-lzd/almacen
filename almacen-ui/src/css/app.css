@@ -1137,18 +1137,23 @@
   /* ─ Vista lista ─ */
 
   .dash-lista-tabla {
-    border: 1px solid var(--oj-core-border-color-subtle);
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     overflow: hidden;
   }
 
-  .dash-lista-header {
+  .dash-lista-header,
+  .dash-lista-fila {
     display: grid;
-    grid-template-columns: 2fr 4fr 1.4fr 120px;
-    gap: 0 16px;
+    grid-template-columns: 2fr 150px 100px 90px 90px 90px 130px;
+    gap: 0 12px;
     padding: 10px 20px;
-    background: var(--oj-core-bg-color-secondary);
-    border-bottom: 1px solid var(--oj-core-border-color-subtle);
+    align-items: center;
+  }
+
+  .dash-lista-header {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1156,13 +1161,13 @@
     font-weight: 600;
   }
 
+  .dash-lista-col-center {
+    text-align: center;
+  }
+
   .dash-lista-fila {
-    display: grid;
-    grid-template-columns: 2fr 4fr 1.4fr 120px;
-    gap: 0 16px;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--oj-core-border-color-subtle);
-    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e5e7eb;
     transition: background 0.1s;
   }
 
@@ -1171,25 +1176,38 @@
   }
 
   .dash-lista-fila:hover {
-    background: var(--oj-core-bg-color-secondary);
+    background: #f8faff;
   }
 
   .dash-lista-contrato {
-    font-size: 13px;
-    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
   }
 
-  .dash-lista-adquisicion {
+  .dash-lista-contrato-num {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .dash-lista-contrato-adq {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .dash-lista-resumen {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+  .dash-lista-num {
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
   }
+
+  .dash-lista-num--blue  { color: #1d4ed8; }
+  .dash-lista-num--green { color: #16a34a; }
+  .dash-lista-num--amber { color: #d97706; }
 
   .dash-lista-accion {
     display: flex;
@@ -1207,7 +1225,8 @@
   .dash-card {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    padding: 0;
+    overflow: hidden;
     transition: box-shadow 0.15s;
   }
 
@@ -1215,10 +1234,19 @@
     box-shadow: var(--oj-panel-shadow-md-box-shadow, 0 4px 16px rgba(0,0,0,0.14));
   }
 
+  /* ── Card header ── */
   .dash-card-header {
     display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .dash-card-header-top {
+    display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
   }
 
@@ -1230,92 +1258,78 @@
   }
 
   .dash-card-adquisicion {
+    font-size: 12px;
+    color: var(--oj-core-text-color-secondary);
     word-break: break-word;
     overflow-wrap: break-word;
   }
 
-  .dash-card-metricas {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 16px;
-  }
-
-  .dash-metrica {
+  /* ── Card content ── */
+  .dash-card-content {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 8px;
+    padding: 14px 16px;
+    flex: 1;
   }
 
-  .dash-metrica-label {
+  .dash-card-dato {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .dash-card-dato-label {
     font-size: 11px;
-    color: var(--oj-core-text-color-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    color: var(--oj-core-text-color-secondary);
+    white-space: nowrap;
   }
 
-  .dash-metrica-valor {
-    font-size: 14px;
+  .dash-card-dato-valor {
+    font-size: 13px;
     font-weight: 600;
+    text-align: right;
   }
 
-  .dash-metrica-valor--azul   { color: #1D4ED8; }
-  .dash-metrica-valor--naranja { color: #C2410C; }
-  .dash-metrica-valor--verde  { color: #15803D; }
+  .dash-card-dato-valor--blue  { color: #1d4ed8; }
+  .dash-card-dato-valor--green { color: #16a34a; }
+  .dash-card-dato-valor--amber { color: #d97706; }
 
-  .dash-progreso-wrap {
+  /* ── Card footer ── */
+  .dash-card-footer {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .dash-progreso-bar {
-    height: 6px;
-    border-radius: 3px;
-    background: var(--oj-core-bg-color-secondary);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .dash-progreso-bar-recibido {
-    position: absolute;
-    top: 0; left: 0; bottom: 0;
-    background: #93C5FD;
-    border-radius: 3px;
-    transition: width 0.3s;
-  }
-
-  .dash-progreso-bar-entregado {
-    position: absolute;
-    top: 0; left: 0; bottom: 0;
-    background: #4ADE80;
-    border-radius: 3px;
-    transition: width 0.3s;
-  }
-
-  .dash-progreso-pct {
-    font-size: 11px;
-  }
-
-  .dash-card-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .dash-card-meta-row {
-    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 6px;
-    font-size: 12px;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+  }
+
+  .dash-card-fecha {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .dash-card-fecha-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     color: var(--oj-core-text-color-secondary);
   }
 
-  .dash-card-footer {
-    margin-top: auto;
-    padding-top: 4px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  .dash-card-fecha-label--muted {
+    color: #d1d5db;
+    font-style: italic;
+  }
+
+  .dash-card-fecha-val {
+    font-size: 12px;
+    font-weight: 500;
   }
 
   /* ── DETALLE DEL CONTRATO ── */

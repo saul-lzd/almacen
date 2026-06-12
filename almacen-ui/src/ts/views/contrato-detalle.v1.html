@@ -129,7 +129,7 @@
         </div>
         <!-- Fecha tentativa: editable solo en POR_RECIBIR -->
         <div>
-          <div class="recepcion-info-label">Fecha tentativa de llegada</div>
+          <div class="recepcion-info-label">Fecha de llegada aproximada</div>
           <oj-bind-if test="[[!calcFechaEditable() || !uiEditandoFecha()]]">
             <div class="recepcion-info-valor detalle-fecha-row">
               <span><oj-bind-text value="[[contrato().fechaTentativaLlegada]]"></oj-bind-text></span>
