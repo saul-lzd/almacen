@@ -95,8 +95,7 @@
           </div>
         </div>
 
-
-      </div>
+        </div>
       <div class="cf-ctx-bar-actions">
         <oj-bind-if test="[[calcEsAdmin() && contrato().estatus === 'CAPTURA']]">
           <oj-c-button label="Editar contrato" chroming="callToAction" size="sm"
@@ -444,60 +443,58 @@
         </oj-c-text-area>
       </oj-c-form-layout>
 
-      <div class="oj-panel oj-sm-padding-6x">
-        <div class="dialogo-bienes-titulo">Bienes a recibir</div>
-        <div class="recepcion-tabla">
+      <div class="dialogo-bienes-titulo">Bienes a recibir</div>
+      <div class="recepcion-tabla">
 
-          <div class="recepcion-tabla-header">
-            <div class="recepcion-col-check"></div>
-            <div class="recepcion-col-desc">Descripción</div>
-            <div class="recepcion-col-um">U. Medida</div>
-            <div class="recepcion-col-esperados">Faltantes</div>
-            <div class="recepcion-col-cantidad">Recibidos</div>
-          </div>
-
-          <oj-bind-for-each data="[[listaBienesDialogo()]]">
-            <template data-oj-as="bien">
-              <div class="recepcion-tabla-fila"
-                :class="[[{
-                  'recepcion-fila--diferencia':  !bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0,
-                  'recepcion-fila--completo':     bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() >= 0,
-                  'recepcion-fila--advertencia':  bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0
-                }]]">
-
-                <div class="recepcion-col-check">
-                  <input type="checkbox"
-                    class="recepcion-check"
-                    data-bind="checked: bien.data.todoRecibido, disable: uiGuardandoRecepcion()">
-                </div>
-
-                <div class="recepcion-col-desc oj-typography-body-sm">
-                  <oj-bind-text value="[[bien.data.descripcion || '—']]"></oj-bind-text>
-                </div>
-
-                <div class="recepcion-col-um oj-text-color-secondary oj-typography-body-sm">
-                  <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
-                </div>
-
-                <div class="recepcion-col-esperados oj-text-color-secondary oj-typography-body-sm">
-                  <oj-bind-text value="[[bien.data.cantidadFaltante]]"></oj-bind-text>
-                </div>
-
-                <div class="recepcion-col-cantidad">
-                  <oj-c-input-number
-                    label-edge="none"
-                    value="{{bien.data.cantidadRecibida}}"
-                    min="0"
-                    :max="[[bien.data.cantidadFaltante]]"
-                    :disabled="[[uiGuardandoRecepcion()]]">
-                  </oj-c-input-number>
-                </div>
-
-              </div>
-            </template>
-          </oj-bind-for-each>
-
+        <div class="recepcion-tabla-header">
+          <div class="recepcion-col-check"></div>
+          <div class="recepcion-col-desc">Descripción</div>
+          <div class="recepcion-col-um">U. Medida</div>
+          <div class="recepcion-col-esperados">Faltantes</div>
+          <div class="recepcion-col-cantidad">Recibidos</div>
         </div>
+
+        <oj-bind-for-each data="[[listaBienesDialogo()]]">
+          <template data-oj-as="bien">
+            <div class="recepcion-tabla-fila"
+              :class="[[{
+                'recepcion-fila--diferencia':  !bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0,
+                'recepcion-fila--completo':     bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() >= 0,
+                'recepcion-fila--advertencia':  bien.data.todoRecibido() && bien.data.calcDiferencia() !== null && bien.data.calcDiferencia() < 0
+              }]]">
+
+              <div class="recepcion-col-check">
+                <input type="checkbox"
+                  class="recepcion-check"
+                  data-bind="checked: bien.data.todoRecibido, disable: uiGuardandoRecepcion()">
+              </div>
+
+              <div class="recepcion-col-desc oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.descripcion || '—']]"></oj-bind-text>
+              </div>
+
+              <div class="recepcion-col-um oj-text-color-secondary oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.unidadMedida]]"></oj-bind-text>
+              </div>
+
+              <div class="recepcion-col-esperados oj-text-color-secondary oj-typography-body-sm">
+                <oj-bind-text value="[[bien.data.cantidadFaltante]]"></oj-bind-text>
+              </div>
+
+              <div class="recepcion-col-cantidad">
+                <oj-c-input-number
+                  label-edge="none"
+                  value="{{bien.data.cantidadRecibida}}"
+                  min="0"
+                  :max="[[bien.data.cantidadFaltante]]"
+                  :disabled="[[uiGuardandoRecepcion()]]">
+                </oj-c-input-number>
+              </div>
+
+            </div>
+          </template>
+        </oj-bind-for-each>
+
       </div>
 
     </div>

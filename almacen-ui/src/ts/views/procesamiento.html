@@ -31,39 +31,38 @@
       <div class="cf-ctx-bar-row1">
         <div class="cf-ctx-bar-items">
 
-        <div class="ctx-item fixed">
-          <div class="ctx-label">Contrato</div>
-          <div class="ctx-val mono">
-            <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
-          </div>
-        </div>
-
-        <div class="ctx-item grow">
-          <div class="ctx-label">Adquisición</div>
-          <div class="ctx-val">
-            <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
-          </div>
-        </div>
-
-        <div class="ctx-item fixed">
-          <div class="ctx-label">Proveedor</div>
-          <div class="ctx-val">
-            <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
-          </div>
-        </div>
-
-        <oj-bind-if test="[[recepcionInfo()]]">
           <div class="ctx-item fixed">
-            <div class="ctx-label">Recepción</div>
-            <div class="ctx-val">
-              Recepción <oj-bind-text value="[[recepcionInfo().numero]]"></oj-bind-text>
-              &nbsp;·&nbsp;<oj-bind-text value="[[recepcionInfo().fechaRecepcion]]"></oj-bind-text>
+            <div class="ctx-label">Contrato</div>
+            <div class="ctx-val mono">
+              <oj-bind-text value="[[contrato().numeroContrato]]"></oj-bind-text>
             </div>
           </div>
-        </oj-bind-if>
 
+          <div class="ctx-item grow">
+            <div class="ctx-label">Adquisición</div>
+            <div class="ctx-val">
+              <oj-bind-text value="[[contrato().adquisicion]]"></oj-bind-text>
+            </div>
+          </div>
 
-      </div>
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Proveedor</div>
+            <div class="ctx-val">
+              <oj-bind-text value="[[contrato().proveedor]]"></oj-bind-text>
+            </div>
+          </div>
+
+          <oj-bind-if test="[[recepcionInfo()]]">
+            <div class="ctx-item fixed">
+              <div class="ctx-label">Recepción</div>
+              <div class="ctx-val">
+                Recepción <oj-bind-text value="[[recepcionInfo().numero]]"></oj-bind-text>
+                &nbsp;·&nbsp;<oj-bind-text value="[[recepcionInfo().fechaRecepcion]]"></oj-bind-text>
+              </div>
+            </div>
+          </oj-bind-if>
+
+        </div>
       </div>
       <oj-bind-if test="[[calcEsAdmin() && contrato()]]">
         <div class="cf-ctx-bar-row2">

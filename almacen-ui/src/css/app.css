@@ -42,6 +42,72 @@
 
 
 /* ══════════════════════════════════════════════════════════
+   TABLAS: Estilos compartidos
+   ══════════════════════════════════════════════════════════ */
+
+/* Contenedor */
+.recepcion-tabla,
+.dash-lista-tabla,
+.cf-bienes-captura-tabla-wrap,
+.cd-bienes-tabla {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Encabezado: fondo y separador */
+.recepcion-tabla-header,
+.dash-lista-header,
+.cf-bienes-captura-tabla-header,
+.cd-bienes-row--header {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Encabezado: tipografía */
+.recepcion-tabla-header,
+.dash-lista-header,
+.cf-bienes-captura-tabla-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--oj-core-text-color-secondary);
+}
+.cd-bienes-row--header div {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--oj-core-text-color-secondary);
+}
+
+/* Fila: separador y comportamiento */
+.recepcion-tabla-fila,
+.dash-lista-fila,
+.cf-bienes-captura-tabla-row,
+.cd-bienes-row:not(.cd-bienes-row--header) {
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+/* Última fila: sin borde inferior */
+.recepcion-tabla-fila:last-child,
+.dash-lista-fila:last-child,
+.cf-bienes-captura-tabla-row:last-child,
+.cd-bienes-row:last-child { border-bottom: none; }
+
+/* Fila: hover */
+.recepcion-tabla-fila:not(.recepcion-fila--diferencia):not(.recepcion-fila--completo):not(.recepcion-fila--advertencia):hover,
+.dash-lista-fila:hover,
+.cf-bienes-captura-tabla-row:hover,
+.cd-bienes-row:not(.cd-bienes-row--header):not(.cd-bienes-row--pendiente):hover {
+  background: #f8faff;
+}
+
+
+/* ══════════════════════════════════════════════════════════
    VISTA: RECEPCIÓN
    ══════════════════════════════════════════════════════════ */
 
@@ -206,56 +272,26 @@
   }
 
   /* Tabla de bienes */
-  .recepcion-tabla {
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
+  .recepcion-tabla { margin-bottom: 12px; }
 
-  .recepcion-tabla-header {
-    display: grid;
-    grid-template-columns: 44px 1fr 100px 90px 130px;
-    gap: 12px;
-    padding: 8px 16px;
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--oj-core-text-color-secondary);
-  }
-
+  .recepcion-tabla-header,
   .recepcion-tabla-fila {
     display: grid;
     grid-template-columns: 44px 1fr 100px 90px 130px;
     gap: 12px;
     padding: 8px 16px;
-    border-bottom: 1px solid #e5e7eb;
-    align-items: center;
-    transition: background 0.1s;
-  }
-
-  .recepcion-tabla-fila:last-child {
-    border-bottom: none;
   }
 
   .recepcion-fila--diferencia  { background: #FFF9F9; }
   .recepcion-fila--completo    { background: #F9FFFB; }
   .recepcion-fila--advertencia { background: #FFFBEB; }
-  .recepcion-tabla-fila:not(.recepcion-fila--diferencia):not(.recepcion-fila--completo):not(.recepcion-fila--advertencia):hover {
-    background: #f9fafb;
-  }
 
   /* Columnas de la tabla */
-  .recepcion-col-check    { display: flex; align-items: center; justify-content: center; }
-  .recepcion-col-cantidad { }
+  .recepcion-col-check { display: flex; align-items: center; justify-content: center; }
   .recepcion-col-desc {
     color: var(--oj-core-text-color-primary);
     line-height: 1.4;
   }
-  .recepcion-col-um { }
 
   .recepcion-check {
     width: 16px;
@@ -610,12 +646,6 @@
 
   /* ─ Vista lista ─ */
 
-  .dash-lista-tabla {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
   .dash-lista-header,
   .dash-lista-fila {
     display: grid;
@@ -625,33 +655,9 @@
     align-items: center;
   }
 
-  .dash-lista-header {
-    background: #f9fafb;
-    border-bottom: 1px solid #e5e7eb;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--oj-core-text-color-secondary);
-    font-weight: 600;
-  }
+  .dash-lista-col-center { text-align: center; }
 
-  .dash-lista-col-center {
-    text-align: center;
-  }
-
-  .dash-lista-fila {
-    padding: 12px 20px;
-    border-bottom: 1px solid #e5e7eb;
-    transition: background 0.1s;
-  }
-
-  .dash-lista-fila:last-child {
-    border-bottom: none;
-  }
-
-  .dash-lista-fila:hover {
-    background: #f8faff;
-  }
+  .dash-lista-fila { padding: 12px 20px; }
 
   .dash-lista-contrato {
     display: flex;
@@ -1083,10 +1089,7 @@
 }
 
 /* ── Bienes captura — tabla ── */
-.cf-bienes-captura-tabla-wrap {
-  padding: 0;
-  overflow: hidden;
-}
+.cf-bienes-captura-tabla-wrap { padding: 0; }
 
 .cf-bienes-captura-tabla-header,
 .cf-bienes-captura-tabla-row,
@@ -1096,26 +1099,9 @@
   align-items: center;
 }
 
-.cf-bienes-captura-tabla-header {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--oj-core-text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 8px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
-}
+.cf-bienes-captura-tabla-header { padding: 8px 16px; }
 
-.cf-bienes-captura-tabla-row {
-  padding: 8px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  font-size: 13px;
-}
-
-.cf-bienes-captura-tabla-row:last-child {
-  border-bottom: none;
-}
+.cf-bienes-captura-tabla-row { padding: 8px 16px; font-size: 13px; }
 
 .cf-bienes-captura-tabla-footer {
   padding: 10px 12px;
@@ -1177,7 +1163,6 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 20px;
-  border-bottom: 1px solid #e5e7eb;
 }
 .cd-rec-header-left { display: flex; align-items: center; gap: 10px; }
 .cd-rec-titulo { font-size: 14px; font-weight: 600; color: #1a1a1a; }
@@ -1256,30 +1241,15 @@
   gap: 12px;
   align-items: center;
   padding: 8px 16px;
-  border-bottom: 1px solid #e5e7eb;
 }
 .cd-bienes-row--admin {
   grid-template-columns: 110px 1fr 70px 90px 100px 100px 90px 90px 90px 90px;
 }
-.cd-bienes-row:last-child { border-bottom: none; }
 .cd-bienes-row--pendiente { background: #f9fafb; }
 .cd-bienes-row--pendiente .cd-bienes-desc-text,
 .cd-bienes-row--pendiente .cd-bienes-col-num,
 .cd-bienes-row--pendiente .cd-bienes-col-monto { color: var(--oj-core-text-color-secondary); }
 
-.cd-bienes-row--header {
-  padding: 8px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.cd-bienes-row--header div {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--oj-core-text-color-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
 .cd-bienes-row--header .cd-bienes-col-num         { text-align: center; }
 .cd-bienes-row--header .cd-bienes-col-num--blue   { color: #1d4ed8; }
 .cd-bienes-row--header .cd-bienes-col-num--green  { color: #16a34a; }
@@ -1303,8 +1273,34 @@
 .cd-bienes-num--amber { font-weight: 600; color: #d97706; }
 .cd-bienes-num--muted { color: #9ca3af; }
 
-.cd-bienes-row:not(.cd-bienes-row--header):not(.cd-bienes-row--pendiente):hover { background: #f8faff; }
 .cd-bienes-row--pendiente:hover { background: #f1f5f9; }
+
+/* ── Entrega: variante de tabla con 5 columnas ───────────────── */
+.entrega-bienes-row {
+  grid-template-columns: 36px 90px 1fr 70px 70px;
+}
+.cd-bienes-row--sub {
+  background: #f9fafb;
+  padding-top: 4px;
+  padding-bottom: 12px;
+}
+.cd-bienes-col-full {
+  grid-column: 2 / -1;
+}
+
+/* ── Entrega: sección del formulario ─────────────────────────── */
+.entrega-form-wrap {
+  padding: 20px 20px 0;
+}
+
+/* ── Entrega: sección de tabla de bienes ─────────────────────── */
+.entrega-tabla-seccion {
+  padding: 0 20px;
+}
+.entrega-tabla-seccion .cd-rec-header {
+  padding-left: 0;
+  padding-right: 0;
+}
 
 /* ── Diálogos de info admin (financiero / beneficiarios) ─────── */
 .cf-info-dialog-body { padding: 4px 0; }
