@@ -37,7 +37,7 @@
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
     <!-- ═══ BANNER ══════════════════════════════════════════════════ -->
-    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm oj-sm-padding-0 oj-sm-margin-6x-bottom">
       <div class="cf-ctx-bar-row1">
         <div class="cf-ctx-bar-items">
 
@@ -149,36 +149,36 @@
     <!-- ═══════════════════════════════════════════════════════════
          PANEL — KPIs + Recepciones (fusionado)
     ════════════════════════════════════════════════════════════ -->
-    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom cd-panel-recepciones">
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom cd-panel-recepciones">
 
       <!-- Título de sección -->
-      <div class="cd-panel-section-title">Detalles del Contrato</div>
+      <div class="cd-panel-section-title oj-sm-margin-4x-bottom">Detalles del Contrato</div>
 
       <!-- KPIs -->
-      <div class="proc-kpis">
+      <div class="proc-kpis oj-sm-margin-6x-bottom">
 
-        <div class="cd-kpi-card">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Total de Bienes</div>
           <div class="cd-kpi-num">
             <oj-bind-text value="[[contrato().resumenBienes.totalContratados]]"></oj-bind-text>
           </div>
         </div>
 
-        <div class="cd-kpi-card">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Bienes Recibidos</div>
           <div class="cd-kpi-num cd-kpi-num--blue">
             <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos]]"></oj-bind-text>
           </div>
         </div>
 
-        <div class="cd-kpi-card">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Bienes Procesados</div>
           <div class="cd-kpi-num cd-kpi-num--green">
             <oj-bind-text value="[[contrato().resumenBienes.procesados]]"></oj-bind-text>
           </div>
         </div>
 
-        <div class="cd-kpi-card">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Bienes Entregados</div>
           <div class="cd-kpi-num cd-kpi-num--amber">
             <oj-bind-text value="[[contrato().resumenBienes.entregados]]"></oj-bind-text>
@@ -188,7 +188,7 @@
       </div>
 
       <!-- Header de recepciones -->
-      <div class="cd-rec-header">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
         <div class="cd-rec-header-left">
           <span class="cd-rec-titulo">Recepciones</span>
           <span class="cd-rec-count-badge">
@@ -213,7 +213,7 @@
         <oj-bind-for-each data="[[listRecepciones()]]">
           <template data-oj-as="rec">
 
-            <div class="cd-rec-card">
+            <div class="cd-rec-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
 
               <!-- Card header: dot + título + badge | acciones -->
               <div class="cd-rec-card-header">
@@ -285,10 +285,10 @@
     <!-- ═══════════════════════════════════════════════════════════
          PANEL 3 — Tabla de bienes
     ════════════════════════════════════════════════════════════ -->
-    <div class="oj-panel oj-panel-shadow-sm oj-sm-margin-4x-bottom">
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
 
       <!-- Header del panel -->
-      <div class="cd-rec-header">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
         <div class="cd-rec-header-left">
           <span class="cd-rec-titulo">Bienes en almacén</span>
           <span class="cd-rec-count-badge">

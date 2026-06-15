@@ -25,7 +25,7 @@
   <oj-bind-if test="[[!uiCargando() && contrato()]]">
 
     <!-- ═══ CONTEXT BAR ════════════════════════════════════════════ -->
-    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm ctx-bar-header">
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm oj-sm-padding-0 oj-sm-margin-6x-bottom">
       <div class="cf-ctx-bar-row1">
         <div class="cf-ctx-bar-items">
 
@@ -69,19 +69,19 @@
     </div>
 
     <!-- ═══ WORK AREA ═══════════════════════════════════════════════ -->
-    <div class="oj-panel oj-panel-shadow-sm proc-work-area">
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x proc-work-area">
 
-      <div class="cd-panel-section-title">Entrega de Bienes</div>
+      <div class="cd-panel-section-title oj-sm-margin-4x-bottom">Entrega de Bienes</div>
 
       <!-- KPIs -->
-      <div class="proc-kpis">
-        <div class="cd-kpi-card">
+      <div class="proc-kpis oj-sm-margin-6x-bottom">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Listos para entregar</div>
           <div class="cd-kpi-num cd-kpi-num--green">
             <oj-bind-text value="[[calcTotalBienes()]]"></oj-bind-text>
           </div>
         </div>
-        <div class="cd-kpi-card">
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
           <div class="cd-kpi-label">Seleccionados</div>
           <div class="cd-kpi-num cd-kpi-num--blue">
             <oj-bind-text value="[[calcTotalBienesSeleccionados()]]"></oj-bind-text>
@@ -115,7 +115,7 @@
       <oj-bind-if test="[[listaGrupos().length > 0]]">
 
         <!-- ── DATOS DE LA ENTREGA ── -->
-        <div class="entrega-form-wrap">
+        <div class="entrega-form-wrap oj-sm-margin-6x-bottom">
           <oj-c-form-layout label-edge="top" user-assistance-density="compact" columns="2" full-width="true">
 
             <oj-c-select-single

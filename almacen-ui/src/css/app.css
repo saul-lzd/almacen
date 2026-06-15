@@ -7,19 +7,10 @@
 */
 
 
-.send-off-screen {
-  position: absolute;
-  left: -10000px;
-  top: auto;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-}
-
-
 .appLogo {
   width:auto;
-  height:65px;
+  height:55px;
+  padding: 14px 0 8px;
   content:url("images/sesesp_logo.png")
 }
 
@@ -38,7 +29,6 @@
       transform:translate(-25%, -25%) scale(0.5)
   }
 }
-
 
 
 /* ══════════════════════════════════════════════════════════
@@ -203,14 +193,6 @@
   }
 
   /* Secciones del formulario */
-  .recepcion-seccion {
-    background: white;
-    border: 1px solid var(--oj-core-border-color-subtle);
-    border-radius: 8px;
-    padding: 20px 24px;
-    margin-bottom: 16px;
-  }
-
   .recepcion-seccion-titulo {
     font-size: 15px;
     font-weight: 600;
@@ -337,43 +319,19 @@
 
   /* ── PROCESAMIENTO ── */
 
-  .ctx-bar-header {
-    margin-bottom: 16px;
-  }
-
-  .proc-work-area.oj-panel {
-    padding: 0;
-    overflow: hidden;
-  }
-
   .proc-kpis {
     display: flex;
     align-items: stretch;
     gap: 12px;
-    padding: 20px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  .proc-kpis .cd-kpi-card {
-    flex: 1;
   }
 
   .cd-panel-section-title {
-    padding: 16px 20px 1px;
     font-size: 20px;
     font-weight: 600;
     color: var(--oj-core-text-color-primary);
   }
 
-  .proc-progreso {
-    padding: 14px 20px 16px;
-    border-bottom: 1px solid #e5e7eb;
-  }
-
-  /* Quita el borde inferior de los KPIs en procesamiento (se fusiona con la barra de progreso) */
-  .procesamiento-view .proc-kpis {
-    border-bottom: none;
-  }
+  .proc-progreso { }
 
   .proc-progreso-header {
     display: flex;
@@ -383,17 +341,9 @@
   }
 
   .proc-grupos {
-    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  .proc-grupo-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 16px 20px;
-    background: #fff;
   }
 
   /* Card header */
@@ -439,8 +389,6 @@
 
   /* Marca + Modelo form */
   .proc-grupo-form {
-    margin-top: 16px;
-    padding-top: 16px;
     border-top: 1px solid #f3f4f6;
   }
 
@@ -500,11 +448,6 @@
     max-width: none;
   }
 
-  .oj-badge.oj-badge-subtle.oj-badge-procesado {
-    background: #EDE9FE;
-    color: #5B21B6;
-  }
-
   .procesamiento-pill {
     display: inline-block;
     font-size: 11px;
@@ -519,57 +462,6 @@
     background: #EBF7EE;
     border-color: #A5D6B3;
     color: #15803D;
-  }
-
-  /* ── ENTREGA ── */
-
-  .entrega-grupo {
-    border: 1px solid var(--oj-core-border-color-subtle);
-    border-radius: 6px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    transition: opacity 0.15s;
-  }
-
-  .entrega-grupo--excluido {
-    opacity: 0.45;
-  }
-
-  .entrega-grupo-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    background: var(--oj-core-bg-color-secondary);
-    border-bottom: 1px solid var(--oj-core-border-color-subtle);
-  }
-
-  .entrega-grupo--excluido .entrega-grupo-header {
-    border-bottom: none;
-  }
-
-  .entrega-grupo-info {
-    flex: 1;
-  }
-
-  .entrega-unidades {
-    padding: 8px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .entrega-unidad-fila {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 4px 0;
-    border-bottom: 1px solid var(--oj-core-divider-color);
-    font-size: 12px;
-  }
-
-  .entrega-unidad-fila:last-child {
-    border-bottom: none;
   }
 
   /* ── DASHBOARD (lista / grid) ── */
@@ -606,20 +498,6 @@
     margin-left: auto;
     flex-shrink: 0;
   }
-
-  .dash-buscar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--oj-core-border-color-subtle);
-    border-radius: 6px;
-    padding: 6px 12px;
-    background: var(--oj-core-bg-color);
-    flex: 1;
-    min-width: 240px;
-    max-width: 400px;
-  }
-
 
   .dash-sin-resultados {
     text-align: center;
@@ -818,10 +696,6 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 14px 16px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
   }
 
   .cd-kpi-label {
@@ -999,10 +873,8 @@
 /* ── Context bar — header ─────────────────────────────── */
 
 .cf-ctx-bar.oj-panel {
-  padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .cf-ctx-bar-row1 {
@@ -1092,8 +964,7 @@
 .cf-bienes-captura-tabla-wrap { padding: 0; }
 
 .cf-bienes-captura-tabla-header,
-.cf-bienes-captura-tabla-row,
-.cf-bienes-captura-tabla-footer {
+.cf-bienes-captura-tabla-row {
   display: grid;
   grid-template-columns: 55px 65px 70px 1fr 100px 100px 100px 100px;
   align-items: center;
@@ -1102,27 +973,6 @@
 .cf-bienes-captura-tabla-header { padding: 8px 16px; }
 
 .cf-bienes-captura-tabla-row { padding: 8px 16px; font-size: 13px; }
-
-.cf-bienes-captura-tabla-footer {
-  padding: 10px 12px;
-  border-top: 2px solid var(--oj-core-divider-color, #e0e0e0);
-  background: var(--oj-core-bg-color-secondary, #f5f5f5);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.cf-bienes-captura-tabla-footer-label {
-  grid-column: 1 / span 6;
-  text-align: right;
-  padding-right: 8px;
-  color: var(--oj-core-text-color-secondary, #767676);
-  font-weight: 400;
-}
-
-.cf-bienes-captura-tabla-footer-value {
-  text-align: right;
-  padding: 0 4px;
-}
 
 .cf-bienes-captura-tabla-cell {
   overflow: hidden;
@@ -1156,13 +1006,10 @@
 /* ================================================================
    Panel 2 — Recepciones (contrato-detalle)
 ================================================================ */
-.cd-panel-recepciones.oj-panel { padding: 0; }
-
 .cd-rec-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
 }
 .cd-rec-header-left { display: flex; align-items: center; gap: 10px; }
 .cd-rec-titulo { font-size: 14px; font-weight: 600; color: #1a1a1a; }
@@ -1175,10 +1022,10 @@
   border-radius: 99px;
 }
 
-.cd-rec-list { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px; }
+.cd-rec-list { display: flex; flex-direction: column; gap: 12px; }
 .cd-rec-empty { font-size: 13px; color: #9ca3af; text-align: center; padding: 24px 0; }
 
-.cd-rec-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; }
+.cd-rec-card { }
 .cd-rec-card-header {
   display: flex;
   align-items: center;
@@ -1286,20 +1133,6 @@
 }
 .cd-bienes-col-full {
   grid-column: 2 / -1;
-}
-
-/* ── Entrega: sección del formulario ─────────────────────────── */
-.entrega-form-wrap {
-  padding: 20px 20px 0;
-}
-
-/* ── Entrega: sección de tabla de bienes ─────────────────────── */
-.entrega-tabla-seccion {
-  padding: 0 20px;
-}
-.entrega-tabla-seccion .cd-rec-header {
-  padding-left: 0;
-  padding-right: 0;
 }
 
 /* ── Diálogos de info admin (financiero / beneficiarios) ─────── */
