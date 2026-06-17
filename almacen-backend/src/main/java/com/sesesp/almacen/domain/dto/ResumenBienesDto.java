@@ -18,6 +18,8 @@ public class ResumenBienesDto {
     private long enProceso;
     /** PROCESADO: datos completos, esperando autorización del admin. */
     private long procesados;
+    /** PROCESADO estrictamente: pendientes de autorización por el admin. */
+    private long pendientesAutorizar;
     /** LISTO_PARA_ENTREGAR: autorizados por el admin, pendientes de entrega física. */
     private long listos;
     /** ENTREGADO: entregados al beneficiario. Ciclo completado. */

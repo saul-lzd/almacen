@@ -19,6 +19,7 @@ type ResumenBienes = {
     totalRecibidos: number;
     enProceso: number;
     procesados: number;
+    pendientesAutorizar: number;
     listos: number;
     entregados: number;
 };
@@ -52,6 +53,15 @@ type RecepcionItem = {
     totalProcesados: number;
     progresoPct: number;
     progresoLabel: string;
+    totalPendientesAutorizar: number;
+    pendientesAutorizarPct: number;
+    pendientesAutorizarLabel: string;
+    totalListos: number;
+    listosPct: number;
+    listosLabel: string;
+    totalEntregados: number;
+    entregasPct: number;
+    entregasLabel: string;
 };
 
 type BienDialogo = {
@@ -64,6 +74,28 @@ type BienDialogo = {
     cantidadRecibida: ko.Observable<number | null>;
     calcDiferencia: ko.PureComputed<number | null>;
     todoRecibido: ko.Observable<boolean>;
+};
+
+type UnidadDetalle = {
+    idAlmacenBien: number;
+    codigoInterno: string;
+    numeroSerie: string | null;
+    numeroMotor: string | null;
+    marca: string | null;
+    modelo: string | null;
+    estatus: string;
+    estatusLabel: string;
+    estatusDot: string;
+};
+
+type GrupoDetalle = {
+    idContratoBien: number;
+    lote: number | null;
+    partida: number | null;
+    descripcion: string;
+    unidadMedida: string;
+    totalUnidades: number;
+    unidades: UnidadDetalle[];
 };
 
 type ClavePresupuestal = {
@@ -133,6 +165,13 @@ class ContratoDetalleViewModel {
 
     public cmdVerFinanciero    = (): void => { this.uiDialogoFinanciero(true); };
     public cmdVerBeneficiarios = (): void => { this.uiDialogoBeneficiarios(true); };
+
+    // ── Diálogo de detalle de recepción ────────────────────────
+    public uiDialogoDetalle     = ko.observable<boolean>(false);
+    public uiCargandoDetalle    = ko.observable<boolean>(false);
+    public uiErrorDetalle       = ko.observable<string>("");
+    public detalleTitulo        = ko.observable<string>("");
+    public listaGruposDetalle   = ko.observableArray<GrupoDetalle>([]);
 
     // ── Diálogo de recepción ────────────────────────────────────
     public uiDialogoRecepcion  = ko.observable<boolean>(false);
@@ -267,7 +306,7 @@ class ContratoDetalleViewModel {
                     montoAsignadoNum:  parseFloat(cl.montoAsignado) || 0,
                     montoAsignado:     this.formatMonto(cl.montoAsignado),
                 })),
-                resumenBienes:            r,
+                resumenBienes: { ...r, pendientesAutorizar: r.pendientesAutorizar ?? 0 },
                 primeraEntregaAutorizada: c.primeraEntregaAutorizada ?? false,
                 bienes: (c.bienes ?? []).map((b: any) => ({
                     idContratoBien:       b.idContratoBien,
@@ -459,6 +498,15 @@ class ContratoDetalleViewModel {
                 const pct = r.totalBienes > 0
                     ? Math.round(r.totalProcesados / r.totalBienes * 100)
                     : 0;
+                const pendientesAutorizarPct = r.totalBienes > 0
+                    ? Math.round(r.totalPendientesAutorizar / r.totalBienes * 100)
+                    : 0;
+                const listosPct = r.totalBienes > 0
+                    ? Math.round(r.totalListos / r.totalBienes * 100)
+                    : 0;
+                const entregasPct = r.totalBienes > 0
+                    ? Math.round(r.totalEntregados / r.totalBienes * 100)
+                    : 0;
                 return {
                     idRecepcionAlmacen: r.idRecepcionAlmacen,
                     folio:              r.folio,
@@ -471,9 +519,18 @@ class ContratoDetalleViewModel {
                     estatusLabel:       this.estatusRecepcionToLabel(r.estatus),
                     estatusDot:         dot,
                     totalBienes:        r.totalBienes,
-                    totalProcesados:    r.totalProcesados,
-                    progresoPct:        pct,
-                    progresoLabel:      `${r.totalProcesados} / ${r.totalBienes} procesados`,
+                    totalProcesados:          r.totalProcesados,
+                    progresoPct:              pct,
+                    progresoLabel:            `${r.totalProcesados} / ${r.totalBienes} procesados`,
+                    totalPendientesAutorizar: r.totalPendientesAutorizar,
+                    pendientesAutorizarPct,
+                    pendientesAutorizarLabel: `${r.totalPendientesAutorizar} / ${r.totalBienes} por autorizar`,
+                    totalListos:              r.totalListos,
+                    listosPct,
+                    listosLabel:        `${r.totalListos} / ${r.totalBienes} listos`,
+                    totalEntregados:    r.totalEntregados,
+                    entregasPct,
+                    entregasLabel:      `${r.totalEntregados} / ${r.totalBienes} entregados`,
                 };
             });
             this.listRecepciones(items);
@@ -488,13 +545,69 @@ class ContratoDetalleViewModel {
     // ================================================================
     // COMMANDS — Recepciones
     // ================================================================
-    public cmdVerDetallesRecepcion = (_recepcion: RecepcionItem): void => {
-        // stub — navigation or detail dialog to be implemented
+    public cmdVerDetallesRecepcion = async (recepcion: RecepcionItem): Promise<void> => {
+        if (!this.contratoId) return;
+        this.detalleTitulo(recepcion.titulo);
+        this.listaGruposDetalle([]);
+        this.uiErrorDetalle("");
+        this.uiDialogoDetalle(true);
+        this.uiCargandoDetalle(true);
+        try {
+            const data: any[] = await contratosApi.obtenerBienesDetalleRecepcion(
+                this.contratoId, recepcion.idRecepcionAlmacen
+            );
+            const grupos: GrupoDetalle[] = data.map(g => ({
+                idContratoBien: g.idContratoBien,
+                lote:           g.lote,
+                partida:        g.partida,
+                descripcion:    g.descripcion,
+                unidadMedida:   g.unidadMedida,
+                totalUnidades:  g.totalUnidades,
+                unidades: (g.unidades ?? []).map((u: any) => ({
+                    idAlmacenBien: u.idAlmacenBien,
+                    codigoInterno: u.codigoInterno,
+                    numeroSerie:   u.numeroSerie || null,
+                    numeroMotor:   u.numeroMotor || null,
+                    marca:         u.marca || null,
+                    modelo:        u.modelo || null,
+                    estatus:       u.estatus,
+                    estatusLabel:  this.estatusUnidadToLabel(u.estatus),
+                    estatusDot:    this.estatusUnidadToDot(u.estatus),
+                })),
+            }));
+            this.listaGruposDetalle(grupos);
+        } catch (err: any) {
+            this.uiErrorDetalle("No se pudieron cargar los detalles de la recepción.");
+        } finally {
+            this.uiCargandoDetalle(false);
+        }
     };
 
     // ================================================================
     // HELPERS
     // ================================================================
+    private estatusUnidadToDot(estatus: string): string {
+        switch (estatus) {
+            case "RECIBIDO":            return "gray";
+            case "EN_PROCESO":          return "amber";
+            case "PROCESADO":           return "blue";
+            case "LISTO_PARA_ENTREGAR": return "green";
+            case "ENTREGADO":           return "blue";
+            default:                    return "gray";
+        }
+    }
+
+    private estatusUnidadToLabel(estatus: string): string {
+        switch (estatus) {
+            case "RECIBIDO":            return "Recibido";
+            case "EN_PROCESO":          return "En proceso";
+            case "PROCESADO":           return "Procesado";
+            case "LISTO_PARA_ENTREGAR": return "Para entregar";
+            case "ENTREGADO":           return "Entregado";
+            default:                    return estatus;
+        }
+    }
+
     private formatFecha(val: string | null | undefined): string {
         if (!val) return "—";
         const d = new Date(val);

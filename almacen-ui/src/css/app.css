@@ -713,9 +713,11 @@
     color: #1a1a1a;
   }
 
-  .cd-kpi-num--blue   { color: #1d4ed8; }
+  .cd-kpi-num--blue   { color: #0369a1; }
+  .cd-kpi-num--teal   { color: #0d9488; }
+  .cd-kpi-num--amber  { color: #b45309; }
   .cd-kpi-num--green  { color: #166534; }
-  .cd-kpi-num--amber  { color: #92400e; }
+  .cd-kpi-num--violet { color: #6d28d9; }
 
   .detalle-fecha-editar {
     display: flex;
@@ -1051,7 +1053,7 @@
 
 .cd-rec-info-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   gap: 24px;
   align-items: center;
 }
@@ -1074,10 +1076,12 @@
   overflow: hidden;
 }
 .cd-rec-progreso-fill { height: 100%; border-radius: 99px; transition: width .3s ease; }
-.cd-rec-progreso-fill--gray  { background: #9ca3af; }
-.cd-rec-progreso-fill--amber { background: #d97706; }
-.cd-rec-progreso-fill--green { background: #16a34a; }
-.cd-rec-progreso-fill--blue  { background: #1d4ed8; }
+.cd-rec-progreso-fill--gray   { background: #9ca3af; }
+.cd-rec-progreso-fill--blue   { background: #0284c7; }
+.cd-rec-progreso-fill--teal   { background: #0d9488; }
+.cd-rec-progreso-fill--amber  { background: #d97706; }
+.cd-rec-progreso-fill--green  { background: #16a34a; }
+.cd-rec-progreso-fill--violet { background: #7c3aed; }
 
 /* ── Panel 3: Tabla de bienes ─────────────────────────────────── */
 .cd-bienes-tabla { padding: 0; }
@@ -1098,9 +1102,11 @@
 .cd-bienes-row--pendiente .cd-bienes-col-monto { color: var(--oj-core-text-color-secondary); }
 
 .cd-bienes-row--header .cd-bienes-col-num         { text-align: center; }
-.cd-bienes-row--header .cd-bienes-col-num--blue   { color: #1d4ed8; }
-.cd-bienes-row--header .cd-bienes-col-num--green  { color: #16a34a; }
+.cd-bienes-row--header .cd-bienes-col-num--blue   { color: #0369a1; }
+.cd-bienes-row--header .cd-bienes-col-num--teal   { color: #0d9488; }
 .cd-bienes-row--header .cd-bienes-col-num--amber  { color: #d97706; }
+.cd-bienes-row--header .cd-bienes-col-num--green  { color: #16a34a; }
+.cd-bienes-row--header .cd-bienes-col-num--violet { color: #6d28d9; }
 
 .cd-bienes-col-partida { display: flex; align-items: center; }
 .cd-bienes-col-desc    { min-width: 0; }
@@ -1109,9 +1115,11 @@
 .cd-bienes-col-monto   { text-align: right; font-size: 13px; font-weight: 500; color: var(--oj-core-text-color-primary); }
 .cd-bienes-col-estado  { display: flex; align-items: center; justify-content: center; }
 .cd-bienes-row--header .cd-bienes-col-monto { text-align: right; }
-.cd-bienes-col-num--blue  { color: #1d4ed8; }
-.cd-bienes-col-num--green { color: #16a34a; }
-.cd-bienes-col-num--amber { color: #d97706; }
+.cd-bienes-col-num--blue   { color: #0369a1; }
+.cd-bienes-col-num--teal   { color: #0d9488; }
+.cd-bienes-col-num--amber  { color: #d97706; }
+.cd-bienes-col-num--green  { color: #16a34a; }
+.cd-bienes-col-num--violet { color: #6d28d9; }
 
 .cd-bienes-desc-text { font-size: 13px; color: #374151; }
 
@@ -1122,17 +1130,48 @@
 
 .cd-bienes-row--pendiente:hover { background: #f1f5f9; }
 
-/* ── Entrega: variante de tabla con 5 columnas ───────────────── */
+/* ── Entrega: variante de tabla (partida | desc | um | disponibles | a entregar) */
 .entrega-bienes-row {
-  grid-template-columns: 36px 90px 1fr 70px 70px;
+  grid-template-columns: 100px 1fr 100px 100px 130px;
 }
+
+/* ── Detalle de recepción: tabla de grupos (partida | desc | um | total) */
+.detalle-rec-row {
+  grid-template-columns: 110px 1fr 90px 70px;
+}
+.detalle-rec-unidades {
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.detalle-rec-unidad-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 110px;
+  gap: 12px;
+  padding: 6px 12px;
+  font-size: 12px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: center;
+}
+.detalle-rec-unidad-row:last-child { border-bottom: none; }
+.detalle-rec-unidad-row--header {
+  background: #f9fafb;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--oj-core-text-color-secondary);
+  border-bottom: 1px solid #e5e7eb;
+}
+.detalle-rec-estatus { display: flex; justify-content: flex-end; }
 .cd-bienes-row--sub {
   background: #f9fafb;
   padding-top: 4px;
   padding-bottom: 12px;
 }
 .cd-bienes-col-full {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
 }
 
 /* ── Diálogos de info admin (financiero / beneficiarios) ─────── */

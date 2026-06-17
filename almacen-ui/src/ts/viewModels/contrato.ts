@@ -451,13 +451,29 @@ class NuevoContratoViewModel {
   public calcBienesExistentes = ko.pureComputed(() => this.listBienes().filter(b => b.idContratoBien !== null).length);
 
   // ── Estado de secciones (para badges del sidebar) ──
-  public calcSeccionGeneralDone = ko.pureComputed(() =>
+  // Estos observables solo se actualizan tras un guardado o carga exitosa.
+  public uiSeccionGeneralGuardada       = ko.observable<boolean>(false);
+  public uiSeccionPartesGuardada        = ko.observable<boolean>(false);
+  public uiSeccionFinancieraGuardada    = ko.observable<boolean>(false);
+  public uiSeccionBeneficiariosGuardada = ko.observable<boolean>(false);
+  public uiSeccionBienesGuardada        = ko.observable<boolean>(false);
+
+  public calcTodasSeccionesGuardadas = ko.pureComputed(() =>
+    this.uiSeccionGeneralGuardada() &&
+    this.uiSeccionPartesGuardada() &&
+    this.uiSeccionFinancieraGuardada() &&
+    this.uiSeccionBeneficiariosGuardada() &&
+    this.uiSeccionBienesGuardada()
+  );
+
+  // Computeds vivos — usados internamente para evaluar el estado al sincronizar
+  private calcSeccionGeneralDone = ko.pureComputed(() =>
     !!this.contratoId() &&
     !!this.frmNumeroContrato() &&
     !!this.frmFechaTentativaLlegada() &&
     !!this.frmAdquisicion()
   );
-  public calcSeccionPartesDone = ko.pureComputed(() =>
+  private calcSeccionPartesDone = ko.pureComputed(() =>
     !!this.contratoId() &&
     !!this.frmCompradorId() &&
     !!this.frmAdministradorId() &&
@@ -466,25 +482,25 @@ class NuevoContratoViewModel {
     !!this.frmProveedorRepresentante() &&
     !!this.frmProveedorCaracter()
   );
-  public calcSeccionFinancieraDone = ko.pureComputed(() =>
+  private calcSeccionFinancieraDone = ko.pureComputed(() =>
     !!this.contratoId() &&
     Number(this.frmMontoSinImpuestos() || 0) > 0 &&
     !this.calcClavesIncompletas()
   );
-  public calcSeccionBeneficiariosDone = ko.pureComputed(() =>
+  private calcSeccionBeneficiariosDone = ko.pureComputed(() =>
     this.calcBeneficiariosChips().length > 0
   );
-  public calcSeccionBienesDone = ko.pureComputed(() =>
+  private calcSeccionBienesDone = ko.pureComputed(() =>
     this.calcHayBienes() && !this.calcBienesIncompletos()
   );
 
-  public calcTodasSeccionesDone = ko.pureComputed(() =>
-    this.calcSeccionGeneralDone() &&
-    this.calcSeccionPartesDone() &&
-    this.calcSeccionFinancieraDone() &&
-    this.calcSeccionBeneficiariosDone() &&
-    this.calcSeccionBienesDone()
-  );
+  private sincronizarEstadoGuardado(): void {
+    this.uiSeccionGeneralGuardada(this.calcSeccionGeneralDone());
+    this.uiSeccionPartesGuardada(this.calcSeccionPartesDone());
+    this.uiSeccionFinancieraGuardada(this.calcSeccionFinancieraDone());
+    this.uiSeccionBeneficiariosGuardada(this.calcSeccionBeneficiariosDone());
+    this.uiSeccionBienesGuardada(this.calcSeccionBienesDone());
+  }
 
   public calcBeneficiariosChips = ko.pureComputed(() =>
     this.frmBeneficiariosTexto()
@@ -569,6 +585,7 @@ class NuevoContratoViewModel {
     const data: ContratoResponsePayload = await contratosApi.obtenerPorId(id);
     console.log("=== JSON CRUDO DEL BACKEND ===", JSON.stringify(data, null, 2));
     this.mapResponseToUI(data);
+    this.sincronizarEstadoGuardado();
     this.navegarPrimerSeccionIncompleta();
   }
 
@@ -672,7 +689,7 @@ class NuevoContratoViewModel {
   // ================================================================
 
   public calcLabelRegresar = ko.pureComputed(() =>
-    this.uiModo() === "EDICION" ? "Regresar" : "Ir a Inicio"
+    this.uiModo() === "EDICION" ? "Ver Detalle" : "Panel de Inicio"
   );
 
   public cmdEditarFuncionarios = (): void => {

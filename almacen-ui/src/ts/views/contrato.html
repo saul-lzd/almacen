@@ -166,7 +166,7 @@
           on-oj-action="[[cmdGuardarBorrador]]">
           <span slot="startIcon" class="oj-ux-ico-save"></span>
         </oj-c-button>
-        <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura' && calcTodasSeccionesDone()]]">
+        <oj-bind-if test="[[uiModo() === 'EDICION' && uiEstatusContrato() == 'En captura' && calcTodasSeccionesGuardadas()]]">
           <oj-c-button
             chroming="callToAction"
             size="sm"
@@ -231,37 +231,37 @@
     <!-- ── SIDEBAR ── -->
     <div class="cf-sidebar">
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'general'}]]" on-click="[[() => cmdNavegar('general')]]">
-        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionGeneralDone(), 'cf-sb-badge--num': !calcSeccionGeneralDone()}]]">
-          <oj-bind-if test="[[calcSeccionGeneralDone()]]"><span>✓</span></oj-bind-if>
-          <oj-bind-if test="[[!calcSeccionGeneralDone()]]"><span>1</span></oj-bind-if>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': uiSeccionGeneralGuardada(), 'cf-sb-badge--num': !uiSeccionGeneralGuardada()}]]">
+          <oj-bind-if test="[[uiSeccionGeneralGuardada()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!uiSeccionGeneralGuardada()]]"><span>1</span></oj-bind-if>
         </span>
         <span class="cf-sidebar-item-label">Datos generales</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'partes'}]]" on-click="[[() => cmdNavegar('partes')]]">
-        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionPartesDone(), 'cf-sb-badge--num': !calcSeccionPartesDone()}]]">
-          <oj-bind-if test="[[calcSeccionPartesDone()]]"><span>✓</span></oj-bind-if>
-          <oj-bind-if test="[[!calcSeccionPartesDone()]]"><span>2</span></oj-bind-if>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': uiSeccionPartesGuardada(), 'cf-sb-badge--num': !uiSeccionPartesGuardada()}]]">
+          <oj-bind-if test="[[uiSeccionPartesGuardada()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!uiSeccionPartesGuardada()]]"><span>2</span></oj-bind-if>
         </span>
         <span class="cf-sidebar-item-label">Partes</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'pagos'}]]" on-click="[[() => cmdNavegar('pagos')]]">
-        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionFinancieraDone(), 'cf-sb-badge--num': !calcSeccionFinancieraDone()}]]">
-          <oj-bind-if test="[[calcSeccionFinancieraDone()]]"><span>✓</span></oj-bind-if>
-          <oj-bind-if test="[[!calcSeccionFinancieraDone()]]"><span>3</span></oj-bind-if>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': uiSeccionFinancieraGuardada(), 'cf-sb-badge--num': !uiSeccionFinancieraGuardada()}]]">
+          <oj-bind-if test="[[uiSeccionFinancieraGuardada()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!uiSeccionFinancieraGuardada()]]"><span>3</span></oj-bind-if>
         </span>
         <span class="cf-sidebar-item-label">Información financiera</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'beneficiarios'}]]" on-click="[[() => cmdNavegar('beneficiarios')]]">
-        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionBeneficiariosDone(), 'cf-sb-badge--num': !calcSeccionBeneficiariosDone()}]]">
-          <oj-bind-if test="[[calcSeccionBeneficiariosDone()]]"><span>✓</span></oj-bind-if>
-          <oj-bind-if test="[[!calcSeccionBeneficiariosDone()]]"><span>4</span></oj-bind-if>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': uiSeccionBeneficiariosGuardada(), 'cf-sb-badge--num': !uiSeccionBeneficiariosGuardada()}]]">
+          <oj-bind-if test="[[uiSeccionBeneficiariosGuardada()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!uiSeccionBeneficiariosGuardada()]]"><span>4</span></oj-bind-if>
         </span>
         <span class="cf-sidebar-item-label">Beneficiarios</span>
       </div>
       <div class="cf-sidebar-item" :class="[[{'cf-sidebar-item--active': uiSeccionActiva() === 'bienes'}]]" on-click="[[() => cmdNavegar('bienes')]]">
-        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': calcSeccionBienesDone(), 'cf-sb-badge--num': !calcSeccionBienesDone()}]]">
-          <oj-bind-if test="[[calcSeccionBienesDone()]]"><span>✓</span></oj-bind-if>
-          <oj-bind-if test="[[!calcSeccionBienesDone()]]"><span>5</span></oj-bind-if>
+        <span :class="[[{'cf-sb-badge': true, 'cf-sb-badge--done': uiSeccionBienesGuardada(), 'cf-sb-badge--num': !uiSeccionBienesGuardada()}]]">
+          <oj-bind-if test="[[uiSeccionBienesGuardada()]]"><span>✓</span></oj-bind-if>
+          <oj-bind-if test="[[!uiSeccionBienesGuardada()]]"><span>5</span></oj-bind-if>
         </span>
         <span class="cf-sidebar-item-label">Adquisición</span>
       </div>
@@ -625,7 +625,7 @@
 
 
           <!-- Tabla de bienes -->
-          <div class="cf-bienes-captura-tabla-wrap">
+          <div class="oj-panel cf-bienes-captura-tabla-wrap">
 
             <!-- Header de columnas -->
             <div class="cf-bienes-captura-tabla-header">

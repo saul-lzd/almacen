@@ -244,13 +244,9 @@ class ProcesamientoViewModel {
                     calcTodosProcesados: ko.pureComputed(() =>
                         calcProcesados() === unidades.length
                     ),
-                    calcListoParaFinalizar: ko.pureComputed(() => {
-                        if (!frmMarca().trim() && !frmModelo().trim()) return false;
-                        if (uiRequiereNumeroSerie()) {
-                            return unidades.every(u => !!u.frmNumeroSerie().trim());
-                        }
-                        return true;
-                    }),
+                    calcListoParaFinalizar: ko.pureComputed(() =>
+                        unidades.every(u => u.uiEstatus() === "EN_PROCESO" || u.uiEstatus() === "PROCESADO")
+                    ),
                     uiGuardandoGrupo: ko.observable<boolean>(false),
                 };
             });

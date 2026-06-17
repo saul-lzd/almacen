@@ -143,6 +143,16 @@ public class ContratoController {
     }
 
     /**
+     * Devuelve todos los bienes de una recepción sin filtro de estatus (para vista de detalle).
+     */
+    @GetMapping("/{idContrato}/recepciones/{idRecepcion}/bienes")
+    public ResponseEntity<List<AlmacenBienGrupoDto>> getBienesDetalleRecepcion(
+            @PathVariable Integer idContrato,
+            @PathVariable Integer idRecepcion) {
+        return ResponseEntity.ok(almacenBienService.getBienesDetalleRecepcion(idContrato, idRecepcion));
+    }
+
+    /**
      * Devuelve los bienes listos para entregar (LISTO_PARA_ENTREGAR) agrupados por tipo.
      */
     @GetMapping("/{idContrato}/bienes-entrega")

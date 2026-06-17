@@ -16,11 +16,13 @@
 import * as AccUtils from "../accUtils";
 import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
+import { getNombre } from "../utils/auth";
 import { contratosApi } from "../utils/api";
 
 import "oj-c/dialog";
 import "oj-c/form-layout";
 import "oj-c/input-text";
+import "oj-c/input-number";
 import "oj-c/select-single";
 import "oj-c/text-area";
 import "oj-c/button";
@@ -52,7 +54,7 @@ type GrupoEntrega = {
     unidadMedida: string;
     totalUnidades: number;
     unidades: UnidadEntrega[];
-    uiSeleccionado: ko.Observable<boolean>;
+    frmCantidad: ko.Observable<number | null>;
 };
 
 type ContratoEntrega = {
@@ -99,30 +101,26 @@ class EntregaViewModel {
     // FORMULARIO
     // ----------------------------------------------------------------
     public frmIdBeneficiario           = ko.observable<number | null>(null);
-    public frmNombreEntregaAlmacen     = ko.observable<string>("");
+    public frmNombreEntregaAlmacen     = ko.observable<string>(getNombre() ?? "");
     public frmNombreRecibeBeneficiario = ko.observable<string>("");
     public frmObservaciones            = ko.observable<string>("");
 
     // ----------------------------------------------------------------
     // COMPUTED
     // ----------------------------------------------------------------
-    public calcGruposSeleccionados = ko.pureComputed(() =>
-        this.listaGrupos().filter(g => g.uiSeleccionado())
-    );
-
     public calcTotalBienes = ko.pureComputed(() =>
         this.listaGrupos().reduce((sum, g) => sum + g.totalUnidades, 0)
     );
 
     public calcTotalBienesSeleccionados = ko.pureComputed(() =>
-        this.calcGruposSeleccionados().reduce((sum, g) => sum + g.totalUnidades, 0)
+        this.listaGrupos().reduce((sum, g) => sum + (Number(g.frmCantidad()) || 0), 0)
     );
 
     public calcPuedeConfirmar = ko.pureComputed(() => {
         if (!this.frmIdBeneficiario()) return false;
         if (!this.frmNombreEntregaAlmacen().trim()) return false;
         if (!this.frmNombreRecibeBeneficiario().trim()) return false;
-        if (this.calcGruposSeleccionados().length === 0) return false;
+        if (this.calcTotalBienesSeleccionados() === 0) return false;
         return true;
     });
 
@@ -198,7 +196,7 @@ class EntregaViewModel {
                     marca:         u.marca || null,
                     modelo:        u.modelo || null,
                 })),
-                uiSeleccionado: ko.observable<boolean>(true),
+                frmCantidad: ko.observable<number | null>(g.totalUnidades),
             }));
             this.listaGrupos(grupos);
 
@@ -224,8 +222,12 @@ class EntregaViewModel {
         this.uiError("");
         this.uiExito("");
 
-        const idsAlmacenBien = this.calcGruposSeleccionados()
-            .flatMap(g => g.unidades.map(u => u.idAlmacenBien));
+        const idsAlmacenBien = this.listaGrupos()
+            .filter(g => (Number(g.frmCantidad()) || 0) > 0)
+            .flatMap(g => g.unidades
+                .slice(0, Number(g.frmCantidad()) || 0)
+                .map(u => u.idAlmacenBien)
+            );
 
         const payload = {
             idBeneficiario:           this.frmIdBeneficiario(),

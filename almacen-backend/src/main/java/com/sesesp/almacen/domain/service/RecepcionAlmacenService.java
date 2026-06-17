@@ -226,6 +226,18 @@ public class RecepcionAlmacenService {
                 .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
                         r.getIdRecepcionAlmacen(),
                         List.of(EstatusBien.PROCESADO, EstatusBien.LISTO_PARA_ENTREGAR, EstatusBien.ENTREGADO));
+        int totalPendientesAutorizar = (int) almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                        r.getIdRecepcionAlmacen(),
+                        List.of(EstatusBien.PROCESADO));
+        int totalListos = (int) almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                        r.getIdRecepcionAlmacen(),
+                        List.of(EstatusBien.LISTO_PARA_ENTREGAR));
+        int totalEntregados = (int) almacenBienRepository
+                .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndEstatusInAndActivoTrue(
+                        r.getIdRecepcionAlmacen(),
+                        List.of(EstatusBien.ENTREGADO));
 
         return new RecepcionDetalleDto(
                 r.getIdRecepcionAlmacen(),
@@ -237,6 +249,9 @@ public class RecepcionAlmacenService {
                 r.getEstatus().name(),
                 totalBienes,
                 totalProcesados,
+                totalPendientesAutorizar,
+                totalListos,
+                totalEntregados,
                 bienes
         );
     }

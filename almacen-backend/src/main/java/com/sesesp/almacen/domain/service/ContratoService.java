@@ -395,15 +395,17 @@ public class ContratoService {
         for (ContratoEntity c : contratos) {
             Integer id = c.getIdContrato();
             Map<String, Long> s = countMap.getOrDefault(id, Map.of());
-            long enProceso  = s.getOrDefault("RECIBIDO", 0L) + s.getOrDefault("EN_PROCESO", 0L);
-            long procesados = s.getOrDefault("PROCESADO", 0L);
-            long listos     = s.getOrDefault("LISTO_PARA_ENTREGAR", 0L);
-            long entregados = s.getOrDefault("ENTREGADO", 0L);
+            long enProceso           = s.getOrDefault("RECIBIDO", 0L) + s.getOrDefault("EN_PROCESO", 0L);
+            long pendientesAutorizar = s.getOrDefault("PROCESADO", 0L);
+            long listos              = s.getOrDefault("LISTO_PARA_ENTREGAR", 0L);
+            long entregados          = s.getOrDefault("ENTREGADO", 0L);
+            long procesados          = pendientesAutorizar + listos + entregados;
             result.put(id, ResumenBienesDto.builder()
                     .totalContratados(totales.getOrDefault(id, 0L))
-                    .totalRecibidos(enProceso + procesados + listos + entregados)
+                    .totalRecibidos(enProceso + pendientesAutorizar + listos + entregados)
                     .enProceso(enProceso)
                     .procesados(procesados)
+                    .pendientesAutorizar(pendientesAutorizar)
                     .listos(listos)
                     .entregados(entregados)
                     .build());

@@ -107,6 +107,10 @@ export const contratosApi = {
         return fetch(url, getInit()).then(r => handleResponse(r));
     },
 
+    // GET  /api/contratos/:id/recepciones/:recepcionId/bienes — todos los bienes de una recepción (detalle, sin filtro de estatus)
+    obtenerBienesDetalleRecepcion: (idContrato: number, idRecepcion: number): Promise<any[]> =>
+        fetch(`${BASE_URL}/api/contratos/${idContrato}/recepciones/${idRecepcion}/bienes`, getInit()).then(r => handleResponse(r)),
+
     // GET  /api/contratos/:id/bienes-entrega — bienes listos para entrega al beneficiario
     obtenerBienesEntrega: (id: number): Promise<any[]> =>
         fetch(`${BASE_URL}/api/contratos/${id}/bienes-entrega`, getInit()).then(r => handleResponse(r)),

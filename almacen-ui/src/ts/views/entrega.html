@@ -6,7 +6,7 @@
 
   <!-- BREADCRUMB -->
   <div class="vista-nav">
-    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
+    <oj-c-button label="Regresar a Detalles del Contrato" chroming="borderless" size="sm" on-oj-action="[[cmdRegresar]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
     <div class="vista-nav-sep"></div>
@@ -82,7 +82,7 @@
           </div>
         </div>
         <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
-          <div class="cd-kpi-label">Seleccionados</div>
+          <div class="cd-kpi-label">A entregar</div>
           <div class="cd-kpi-num cd-kpi-num--blue">
             <oj-bind-text value="[[calcTotalBienesSeleccionados()]]"></oj-bind-text>
           </div>
@@ -172,11 +172,11 @@
 
             <!-- Header -->
             <div class="cd-bienes-row cd-bienes-row--header entrega-bienes-row">
-              <div class="recepcion-col-check"></div>
               <div class="cd-bienes-col-partida">Lote / Partida</div>
               <div class="cd-bienes-col-desc">Descripción</div>
               <div class="cd-bienes-col-um">U. Medida</div>
-              <div class="cd-bienes-col-num">Bienes</div>
+              <div class="cd-bienes-col-num cd-bienes-col-num--center">Disponibles</div>
+              <div class="cd-bienes-col-num cd-bienes-col-num--center">A entregar</div>
             </div>
 
             <oj-bind-for-each data="[[listaGrupos()]]">
@@ -184,13 +184,7 @@
 
                 <!-- Fila principal -->
                 <div class="cd-bienes-row entrega-bienes-row"
-                  :class="[[{'cd-bienes-row--pendiente': !grupo.data.uiSeleccionado()}]]">
-
-                  <div class="recepcion-col-check">
-                    <input type="checkbox"
-                      class="recepcion-check"
-                      data-bind="checked: grupo.data.uiSeleccionado">
-                  </div>
+                  :class="[[{'cd-bienes-row--pendiente': (grupo.data.frmCantidad() || 0) === 0}]]">
 
                   <div class="cd-bienes-col-partida">
                     <oj-bind-if test="[[grupo.data.lote !== null || grupo.data.partida !== null]]">
@@ -213,18 +207,26 @@
                     <oj-bind-text value="[[grupo.data.unidadMedida]]"></oj-bind-text>
                   </div>
 
+                  <div class="cd-bienes-col-num cd-bienes-col-num--center">
+                    <oj-bind-text value="[[grupo.data.totalUnidades]]"></oj-bind-text>
+                  </div>
+
                   <div class="cd-bienes-col-num">
-                    <span class="cd-bienes-num--green">
-                      <oj-bind-text value="[[grupo.data.totalUnidades]]"></oj-bind-text>
-                    </span>
+                    <oj-c-input-number
+                      label-hint=""
+                      label-edge="none"
+                      value="{{grupo.data.frmCantidad}}"
+                      min="0"
+                      max="[[grupo.data.totalUnidades]]"
+                      style="min-width: 100px">
+                    </oj-c-input-number>
                   </div>
 
                 </div>
 
                 <!-- Sub-fila: números de serie -->
-                <oj-bind-if test="[[grupo.data.uiSeleccionado() && calcGrupoTieneSerie(grupo.data)]]">
+                <oj-bind-if test="[[(grupo.data.frmCantidad() || 0) > 0 && calcGrupoTieneSerie(grupo.data)]]">
                   <div class="cd-bienes-row cd-bienes-row--sub entrega-bienes-row">
-                    <div class="recepcion-col-check"></div>
                     <div class="cd-bienes-col-full">
                       <div class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Números de serie</div>
                       <div class="proc-serie-grid3">

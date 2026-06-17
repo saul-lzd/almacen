@@ -4,7 +4,7 @@
 
   <!-- ═══ BREADCRUMB ══════════════════════════════════════════════ -->
   <div class="vista-nav">
-    <oj-c-button label="Regresar" chroming="borderless" size="sm" on-oj-action="[[cmdGoBack]]">
+    <oj-c-button label="Panel de Inicio" chroming="borderless" size="sm" on-oj-action="[[cmdGoBack]]">
       <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
     </oj-c-button>
     <div class="vista-nav-sep"></div>
@@ -165,22 +165,36 @@
         </div>
 
         <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
-          <div class="cd-kpi-label">Bienes Recibidos</div>
+          <div class="cd-kpi-label">Recibidos</div>
           <div class="cd-kpi-num cd-kpi-num--blue">
             <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos]]"></oj-bind-text>
           </div>
         </div>
 
         <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
-          <div class="cd-kpi-label">Bienes Procesados</div>
-          <div class="cd-kpi-num cd-kpi-num--green">
+          <div class="cd-kpi-label">Procesados</div>
+          <div class="cd-kpi-num cd-kpi-num--teal">
             <oj-bind-text value="[[contrato().resumenBienes.procesados]]"></oj-bind-text>
           </div>
         </div>
 
         <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
-          <div class="cd-kpi-label">Bienes Entregados</div>
+          <div class="cd-kpi-label">Por autorizar</div>
           <div class="cd-kpi-num cd-kpi-num--amber">
+            <oj-bind-text value="[[contrato().resumenBienes.pendientesAutorizar]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
+          <div class="cd-kpi-label">Listos para entregar</div>
+          <div class="cd-kpi-num cd-kpi-num--green">
+            <oj-bind-text value="[[contrato().resumenBienes.listos]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
+          <div class="cd-kpi-label">Entregados</div>
+          <div class="cd-kpi-num cd-kpi-num--violet">
             <oj-bind-text value="[[contrato().resumenBienes.entregados]]"></oj-bind-text>
           </div>
         </div>
@@ -226,12 +240,19 @@
                     <oj-bind-text value="[[rec.data.estatusLabel]]"></oj-bind-text>
                   </span>
                 </div>
-                <oj-bind-if test="[[calcPuedeProcesar() && (rec.data.estatus === 'INICIADA' || rec.data.estatus === 'EN_PROCESO')]]">
-                  <oj-c-button label="Procesar" chroming="solid" size="sm"
-                    on-oj-action="[[() => cmdProcesarBienes(rec.data)]]">
-                    <span slot="startIcon" class="oj-ux-ico-scan-barcode"></span>
-                  </oj-c-button>
-                </oj-bind-if>
+                <div class="cd-rec-card-header-right">
+                  <oj-bind-if test="[[calcPuedeProcesar() && (rec.data.estatus === 'INICIADA' || rec.data.estatus === 'EN_PROCESO')]]">
+                    <oj-c-button label="Procesar" chroming="solid" size="sm"
+                      on-oj-action="[[() => cmdProcesarBienes(rec.data)]]">
+                      <span slot="startIcon" class="oj-ux-ico-scan-barcode"></span>
+                    </oj-c-button>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[rec.data.estatus === 'PROCESADA' || rec.data.estatus === 'ENTREGADA']]">
+                    <oj-c-button label="Ver detalle" chroming="outlined" size="sm"
+                      on-oj-action="[[() => cmdVerDetallesRecepcion(rec.data)]]">
+                    </oj-c-button>
+                  </oj-bind-if>
+                </div>
               </div>
 
               <!-- Info row: Fecha | Transportista | Almacenista | Progreso -->
@@ -259,13 +280,49 @@
                 </div>
 
                 <div class="cd-rec-info-col">
-                  <div class="cd-rec-info-label">Progreso</div>
+                  <div class="cd-rec-info-label">Procesados</div>
                   <div class="cd-rec-info-val">
                     <oj-bind-text value="[[rec.data.progresoLabel]]"></oj-bind-text>
                   </div>
                   <div class="cd-rec-progreso-bar">
-                    <div :class="[['cd-rec-progreso-fill cd-rec-progreso-fill--' + rec.data.estatusDot]]"
+                    <div class="cd-rec-progreso-fill cd-rec-progreso-fill--teal"
                          :style="[[{width: rec.data.progresoPct + '%'}]]">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cd-rec-info-col">
+                  <div class="cd-rec-info-label">Por autorizar</div>
+                  <div class="cd-rec-info-val">
+                    <oj-bind-text value="[[rec.data.pendientesAutorizarLabel]]"></oj-bind-text>
+                  </div>
+                  <div class="cd-rec-progreso-bar">
+                    <div class="cd-rec-progreso-fill cd-rec-progreso-fill--amber"
+                         :style="[[{width: rec.data.pendientesAutorizarPct + '%'}]]">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cd-rec-info-col">
+                  <div class="cd-rec-info-label">Listos para entregar</div>
+                  <div class="cd-rec-info-val">
+                    <oj-bind-text value="[[rec.data.listosLabel]]"></oj-bind-text>
+                  </div>
+                  <div class="cd-rec-progreso-bar">
+                    <div class="cd-rec-progreso-fill cd-rec-progreso-fill--green"
+                         :style="[[{width: rec.data.listosPct + '%'}]]">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cd-rec-info-col">
+                  <div class="cd-rec-info-label">Entregados</div>
+                  <div class="cd-rec-info-val">
+                    <oj-bind-text value="[[rec.data.entregasLabel]]"></oj-bind-text>
+                  </div>
+                  <div class="cd-rec-progreso-bar">
+                    <div class="cd-rec-progreso-fill cd-rec-progreso-fill--violet"
+                         :style="[[{width: rec.data.entregasPct + '%'}]]">
                     </div>
                   </div>
                 </div>
@@ -311,8 +368,8 @@
             <div class="cd-bienes-col-monto">Subtotal</div>
           </oj-bind-if>
           <div class="cd-bienes-col-num cd-bienes-col-num--blue">Recibidos</div>
-          <div class="cd-bienes-col-num cd-bienes-col-num--green">Procesados</div>
-          <div class="cd-bienes-col-num cd-bienes-col-num--amber">Entregados</div>
+          <div class="cd-bienes-col-num cd-bienes-col-num--teal">Procesados</div>
+          <div class="cd-bienes-col-num cd-bienes-col-num--violet">Entregados</div>
           <div class="cd-bienes-col-estado">Estado</div>
         </div>
 
@@ -558,6 +615,122 @@
     <div slot="footer">
       <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoFinanciero(false)]]"></oj-c-button>
     </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Detalle de Recepción ══════════════════════ -->
+  <oj-c-dialog
+    :dialog-title="[[detalleTitulo()]]"
+    opened="{{uiDialogoDetalle}}"
+    cancel-behavior="icon"
+    min-width="75vw">
+
+    <div slot="body">
+
+      <oj-bind-if test="[[uiCargandoDetalle()]]">
+        <div class="recepcion-cargando">Cargando detalles...</div>
+      </oj-bind-if>
+
+      <oj-bind-if test="[[uiErrorDetalle()]]">
+        <div class="recepcion-banner recepcion-banner--error dialogo-banner">
+          <span class="oj-ux-ico-warning-s"></span>
+          <oj-bind-text value="[[uiErrorDetalle]]"></oj-bind-text>
+        </div>
+      </oj-bind-if>
+
+      <oj-bind-if test="[[!uiCargandoDetalle() && listaGruposDetalle().length > 0]]">
+        <div class="cd-bienes-tabla">
+
+          <!-- Header -->
+          <div class="cd-bienes-row cd-bienes-row--header detalle-rec-row">
+            <div class="cd-bienes-col-partida">Lote / Partida</div>
+            <div class="cd-bienes-col-desc">Descripción</div>
+            <div class="cd-bienes-col-um">U. Medida</div>
+            <div class="cd-bienes-col-num">Total</div>
+          </div>
+
+          <oj-bind-for-each data="[[listaGruposDetalle()]]">
+            <template data-oj-as="grupo">
+
+              <!-- Fila del grupo -->
+              <div class="cd-bienes-row detalle-rec-row">
+
+                <div class="cd-bienes-col-partida">
+                  <oj-bind-if test="[[grupo.data.lote !== null || grupo.data.partida !== null]]">
+                    <span class="recepcion-partida-tag">
+                      <oj-bind-text value="[['L' + (grupo.data.lote ?? '?') + ' · P' + (grupo.data.partida ?? '?')]]"></oj-bind-text>
+                    </span>
+                  </oj-bind-if>
+                  <oj-bind-if test="[[grupo.data.lote === null && grupo.data.partida === null]]">
+                    <span class="oj-text-color-secondary">—</span>
+                  </oj-bind-if>
+                </div>
+
+                <div class="cd-bienes-col-desc">
+                  <span class="cd-bienes-desc-text oj-line-clamp-2">
+                    <oj-bind-text value="[[grupo.data.descripcion]]"></oj-bind-text>
+                  </span>
+                </div>
+
+                <div class="cd-bienes-col-um">
+                  <oj-bind-text value="[[grupo.data.unidadMedida]]"></oj-bind-text>
+                </div>
+
+                <div class="cd-bienes-col-num">
+                  <oj-bind-text value="[[grupo.data.totalUnidades]]"></oj-bind-text>
+                </div>
+
+              </div>
+
+              <!-- Sub-fila: unidades -->
+              <div class="cd-bienes-row cd-bienes-row--sub detalle-rec-row">
+                <div class="cd-bienes-col-full">
+                  <div class="detalle-rec-unidades">
+                    <div class="detalle-rec-unidad-row detalle-rec-unidad-row--header">
+                      <span>
+                        <oj-bind-text value="[[grupo.data.unidadMedida === 'Vehículo' ? 'N. Motor' : 'N. Serie']]"></oj-bind-text>
+                      </span>
+                      <span>Marca</span>
+                      <span>Modelo</span>
+                      <span class="detalle-rec-estatus">Estatus</span>
+                    </div>
+                    <oj-bind-for-each data="[[grupo.data.unidades]]">
+                      <template data-oj-as="unidad">
+                        <div class="detalle-rec-unidad-row">
+                          <span class="oj-typography-body-sm">
+                            <oj-bind-text value="[[grupo.data.unidadMedida === 'Vehículo' ? (unidad.data.numeroMotor || '—') : (unidad.data.numeroSerie || '—')]]"></oj-bind-text>
+                          </span>
+                          <span class="oj-typography-body-sm">
+                            <oj-bind-text value="[[unidad.data.marca || '—']]"></oj-bind-text>
+                          </span>
+                          <span class="oj-typography-body-sm">
+                            <oj-bind-text value="[[unidad.data.modelo || '—']]"></oj-bind-text>
+                          </span>
+                          <span class="detalle-rec-estatus">
+                            <span :class="[['cd-rec-badge cd-rec-badge--' + unidad.data.estatusDot]]">
+                              <oj-bind-text value="[[unidad.data.estatusLabel]]"></oj-bind-text>
+                            </span>
+                          </span>
+                        </div>
+                      </template>
+                    </oj-bind-for-each>
+                  </div>
+                </div>
+              </div>
+
+            </template>
+          </oj-bind-for-each>
+
+        </div>
+      </oj-bind-if>
+
+    </div>
+
+    <div slot="footer">
+      <oj-c-button label="Cerrar" chroming="outlined"
+        on-oj-action="[[() => uiDialogoDetalle(false)]]">
+      </oj-c-button>
+    </div>
+
   </oj-c-dialog>
 
   <!-- ═══ DIÁLOGO: Beneficiarios ═══════════════════════════════ -->

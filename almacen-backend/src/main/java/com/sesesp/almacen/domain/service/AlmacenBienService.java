@@ -60,6 +60,14 @@ public class AlmacenBienService {
     }
 
     @Transactional(readOnly = true)
+    public List<AlmacenBienGrupoDto> getBienesDetalleRecepcion(Integer idContrato, Integer idRecepcion) {
+        contratoRepository.findById(idContrato)
+                .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));
+
+        return agrupar(almacenBienRepository.findAllByContratoAndRecepcion(idContrato, idRecepcion));
+    }
+
+    @Transactional(readOnly = true)
     public List<AlmacenBienGrupoDto> getBienesListosParaEntregar(Integer idContrato) {
         contratoRepository.findById(idContrato)
                 .orElseThrow(() -> new EntityNotFoundException("Contrato no encontrado: " + idContrato));

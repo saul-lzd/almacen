@@ -25,6 +25,9 @@ public class RecepcionDetalleDto {
     private String      estatus;
     private int         totalBienes;
     private int         totalProcesados;
+    private int         totalPendientesAutorizar;
+    private int         totalListos;
+    private int         totalEntregados;
     private List<BienDetalleDto> bienes;
 
     @Data
