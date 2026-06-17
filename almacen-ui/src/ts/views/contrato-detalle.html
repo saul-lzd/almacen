@@ -247,7 +247,7 @@
                       <span slot="startIcon" class="oj-ux-ico-scan-barcode"></span>
                     </oj-c-button>
                   </oj-bind-if>
-                  <oj-bind-if test="[[rec.data.estatus === 'PROCESADA' || rec.data.estatus === 'ENTREGADA']]">
+                  <oj-bind-if test="[[rec.data.estatus === 'PROCESADA' || rec.data.estatus === 'ENTREGADA' || (rec.data.totalBienes > 0 && rec.data.totalProcesados >= rec.data.totalBienes)]]">
                     <oj-c-button label="Ver detalle" chroming="outlined" size="sm"
                       on-oj-action="[[() => cmdVerDetallesRecepcion(rec.data)]]">
                     </oj-c-button>
@@ -686,6 +686,7 @@
                 <div class="cd-bienes-col-full">
                   <div class="detalle-rec-unidades">
                     <div class="detalle-rec-unidad-row detalle-rec-unidad-row--header">
+                      <span>#</span>
                       <span>
                         <oj-bind-text value="[[grupo.data.unidadMedida === 'Vehículo' ? 'N. Motor' : 'N. Serie']]"></oj-bind-text>
                       </span>
@@ -696,6 +697,9 @@
                     <oj-bind-for-each data="[[grupo.data.unidades]]">
                       <template data-oj-as="unidad">
                         <div class="detalle-rec-unidad-row">
+                          <span class="oj-typography-body-sm" style="color: var(--oj-core-text-color-secondary)">
+                            <oj-bind-text value="[[unidad.index + 1]]"></oj-bind-text>
+                          </span>
                           <span class="oj-typography-body-sm">
                             <oj-bind-text value="[[grupo.data.unidadMedida === 'Vehículo' ? (unidad.data.numeroMotor || '—') : (unidad.data.numeroSerie || '—')]]"></oj-bind-text>
                           </span>

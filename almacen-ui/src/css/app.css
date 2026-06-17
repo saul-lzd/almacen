@@ -1147,7 +1147,7 @@
 }
 .detalle-rec-unidad-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 110px;
+  grid-template-columns: 28px 1fr 1fr 1fr 110px;
   gap: 12px;
   padding: 6px 12px;
   font-size: 12px;

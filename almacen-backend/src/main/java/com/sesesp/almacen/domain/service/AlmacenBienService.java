@@ -245,6 +245,8 @@ public class AlmacenBienService {
         RecepcionAlmacenEntity recepcion = getRecepcion(bien);
         if (recepcion == null || recepcion.getEstatus() == EstatusRecepcion.PROCESADA) return;
 
+        almacenBienRepository.flush();
+
         Integer idRecepcion = recepcion.getIdRecepcionAlmacen();
         long total = almacenBienRepository
                 .countByRecepcionAlmacenBienRecepcionAlmacenIdRecepcionAlmacenAndActivoTrue(idRecepcion);
