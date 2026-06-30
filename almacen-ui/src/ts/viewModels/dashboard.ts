@@ -162,15 +162,17 @@ class DashboardViewModel {
                 const fechaRaw: string | null = c.fechaTentativaLlegada
                     ? c.fechaTentativaLlegada.split("T")[0]
                     : null;
-                const r = c.resumenBienes;
+                const resumenBienes = c.resumenBienes; // contador de bienes por estatus (enProceso, entregados, listos, pendientesAutorizar, procesados, totalContratados, totalRecibidos)
+                console.log("Resumen de bienes para contrato >> ", c.idContrato, resumenBienes);
+
                 // listos = bienes ya autorizados para entrega; procesados = confirmados pero aún no autorizados
-                const hayListos = !!r && r.listos > 0;
-                const todosBienesProcessados = !!r && r.totalRecibidos > 0 &&
-                    (r.procesados + r.listos) >= r.totalRecibidos;
+                const hayListos = !!resumenBienes && resumenBienes.listos > 0;
+                const todosBienesProcesados = !!resumenBienes && resumenBienes.totalRecibidos > 0 &&
+                    (resumenBienes.procesados + resumenBienes.listos) >= resumenBienes.totalRecibidos;
                 const efectivo = calcEstatusEfectivo({
                     ...c,
                     primeraEntregaAutorizada: c.primeraEntregaAutorizada || hayListos,
-                    todosBienesProcessados,
+                    todosBienesProcesados,
                 });
                 return {
                     idContrato:     c.idContrato,
@@ -199,8 +201,8 @@ class DashboardViewModel {
                     },
                     // Acumulado real: bienes que completaron el flujo de procesamiento
                     // (independientemente de si ya fueron autorizados o entregados)
-                    totalProcesadosAcum: r
-                        ? (r.procesados + r.listos + r.entregados)
+                    totalProcesadosAcum: resumenBienes
+                        ? (resumenBienes.procesados + resumenBienes.listos + resumenBienes.entregados)
                         : 0,
                     pctRecibido:    c.resumenBienes?.totalContratados
                         ? Math.round(c.resumenBienes.totalRecibidos / c.resumenBienes.totalContratados * 100) : 0,
@@ -262,9 +264,9 @@ class DashboardViewModel {
         return `${day} ${meses[parseInt(month) - 1]} ${year}`;
     }
 
-    public calcProgreso(r: ResumenBienes): number {
-        if (!r.totalContratados) return 0;
-        return Math.round((r.entregados / r.totalContratados) * 100);
+    public calcProgreso(resumenBienes: ResumenBienes): number {
+        if (!resumenBienes.totalContratados) return 0;
+        return Math.round((resumenBienes.entregados / resumenBienes.totalContratados) * 100);
     }
 }
 

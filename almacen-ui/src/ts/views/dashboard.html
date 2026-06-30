@@ -139,12 +139,12 @@
 
               <div class="dash-lista-accion">
                 <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
-                  <oj-c-button label="Editar" chroming="outlined" size="sm"
+                  <oj-c-button label="Editar" chroming="ghost" size="sm"
                     on-oj-action="[[() => cmdEditarContrato(item.data)]]">
                   </oj-c-button>
                 </oj-bind-if>
                 <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
-                  <oj-c-button label="Ver detalles" chroming="outlined" size="sm"
+                  <oj-c-button label="Ver detalles" chroming="ghost" size="sm"
                     on-oj-action="[[() => cmdVerDetalle(item.data)]]">
                   </oj-c-button>
                 </oj-bind-if>
