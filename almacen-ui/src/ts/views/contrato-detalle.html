@@ -483,22 +483,78 @@
         </div>
       </oj-bind-if>
 
-      <oj-c-form-layout label-edge="top" class="oj-sm-margin-6x-bottom">
-        <oj-c-input-text
-          label-hint="Transportista"
-          value="{{frmTransportista}}"
-          :disabled="[[uiGuardandoRecepcion()]]"
-          user-assistance-density="compact"
-          required="true">
-        </oj-c-input-text>
-        <oj-c-text-area
-          label-hint="Observaciones"
-          value="{{frmObservaciones}}"
-          :disabled="[[uiGuardandoRecepcion()]]"
-          rows="2"
-          max-length="500">
-        </oj-c-text-area>
-      </oj-c-form-layout>
+      <div class="oj-flex oj-flex-items-pad oj-sm-margin-6x-bottom">
+        <div class="oj-flex-item oj-sm-12 oj-lg-6">
+          <oj-c-form-layout label-edge="top">
+            <oj-c-input-text
+              label-hint="Transportista"
+              value="{{frmTransportista}}"
+              :disabled="[[uiGuardandoRecepcion()]]"
+              user-assistance-density="compact"
+              required="true">
+            </oj-c-input-text>
+            <oj-c-text-area
+              label-hint="Observaciones"
+              value="{{frmObservaciones}}"
+              :disabled="[[uiGuardandoRecepcion()]]"
+              rows="2"
+              max-length="500">
+            </oj-c-text-area>
+          </oj-c-form-layout>
+        </div>
+
+        <div class="oj-flex-item oj-sm-12 oj-lg-6">
+          <div class="evidencias-seccion">
+            <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-2x-bottom">
+              <div class="oj-flex-bar-start">
+                <span class="evidencias-titulo">Evidencias fotográficas</span>
+              </div>
+              <div class="oj-flex-bar-end">
+                <span :class="[['cd-rec-badge ' + (calcFaltanEvidencias() ? 'cd-rec-badge--gray' : 'cd-rec-badge--green')]]">
+                  <oj-bind-text value="[[calcEvidenciaContador]]"></oj-bind-text>
+                </span>
+              </div>
+            </div>
+
+            <div class="evidencias-grid">
+              <oj-bind-for-each data="[[listaEvidencias()]]">
+                <template data-oj-as="ev">
+                  <div class="evidencia-item">
+                    <img :src="[[ev.data.previewUrl]]" alt="Evidencia" />
+                    <div class="evidencia-item-remove">
+                      <oj-c-button
+                        chroming="borderless"
+                        display="icons"
+                        aria-label="Eliminar evidencia"
+                        :disabled="[[uiGuardandoRecepcion()]]"
+                        on-oj-action="[[() => cmdRemoverEvidencia(ev.data)]]">
+                        <span slot="startIcon" class="oj-ux-ico-close"></span>
+                      </oj-c-button>
+                    </div>
+                  </div>
+                </template>
+              </oj-bind-for-each>
+
+              <oj-c-file-picker
+                class="evidencia-picker"
+                accept='["image/*"]'
+                :disabled="[[uiGuardandoRecepcion()]]"
+                on-oj-select="[[onSelectImageListener]]">
+                <div slot="trigger" class="evidencia-picker-trigger" tabindex="0">
+                  <span class="oj-ux-ico-plus"></span>
+                  <span class="evidencia-picker-trigger-label">Agregar</span>
+                </div>
+              </oj-c-file-picker>
+            </div>
+
+            <oj-bind-if test="[[calcFaltanEvidencias()]]">
+              <div class="oj-typography-body-sm oj-text-color-secondary oj-sm-margin-2x-top">
+                Se requieren al menos 5 evidencias fotográficas para confirmar la recepción.
+              </div>
+            </oj-bind-if>
+          </div>
+        </div>
+      </div>
 
       <div class="dialogo-bienes-titulo">Bienes a recibir</div>
       <div class="recepcion-tabla">

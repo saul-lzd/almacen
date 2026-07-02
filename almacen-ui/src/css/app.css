@@ -752,6 +752,74 @@
     margin-bottom: 8px;
   }
 
+  .evidencias-titulo {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .evidencias-grid {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .evidencia-item {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+  }
+
+  .evidencia-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .evidencia-item-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+  }
+
+  .evidencia-item-remove oj-c-button {
+    --oj-c-base-button-variants-borderless-base-color: var(--oj-c-text-icon-inverse);
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+  }
+
+  .evidencia-picker {
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+  }
+
+  .evidencia-picker-trigger {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px dashed var(--oj-c-border-enabled);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--oj-c-text-icon-secondary);
+  }
+
+  .evidencia-picker-trigger .oj-ux-ico-plus {
+    font-size: 18px;
+  }
+
+  .evidencia-picker-trigger-label {
+    font-size: 11px;
+  }
+
   .recepcion-banner--advertencia {
     background: #FFFBEB;
     border: 1px solid #FCD34D;

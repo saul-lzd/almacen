@@ -3,12 +3,14 @@ import * as ko from "knockout";
 import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
 import { contratosApi } from "../utils/api";
+import { CFilePickerElement } from 'oj-c/file-picker';
 import "oj-c/button";
 import "oj-c/dialog";
 import "oj-c/input-text";
 import "oj-c/input-number";
 import "oj-c/text-area";
 import "oj-c/form-layout";
+import "oj-c/file-picker";
 
 // ================================================================
 // TIPOS
@@ -62,6 +64,12 @@ type RecepcionItem = {
     totalEntregados: number;
     entregasPct: number;
     entregasLabel: string;
+};
+
+type EvidenciaImagen = {
+    id: string;
+    file: File;
+    previewUrl: string;
 };
 
 type BienDialogo = {
@@ -181,9 +189,47 @@ class ContratoDetalleViewModel {
     public frmObservaciones    = ko.observable<string>("");
     public listaBienesDialogo  = ko.observableArray<BienDialogo>([]);
 
+    // ── Evidencias fotográficas de la recepción ─────────────────
+    // Mínimo requerido para poder confirmar — no es un tope, se pueden agregar más.
+    public readonly minEvidencias = 5;
+    public listaEvidencias     = ko.observableArray<EvidenciaImagen>([]);
+
+    public calcEvidenciaContador = ko.pureComputed(() =>
+        `${this.listaEvidencias().length} / ${this.minEvidencias}`
+    );
+
+    public calcFaltanEvidencias = ko.pureComputed(() =>
+        this.listaEvidencias().length < this.minEvidencias
+    );
+
+    public onSelectImageListener = (event: CFilePickerElement.ojSelect) => {
+        const archivos = Array.from(event.detail.files);
+
+        const nuevas: EvidenciaImagen[] = archivos.map(file => ({
+            id: crypto.randomUUID(),
+            file,
+            previewUrl: URL.createObjectURL(file),
+        }));
+
+        // oj-bind-for-each solo detecta reemplazos completos del array, no mutaciones
+        // incrementales (push/splice) — por eso se reconstruye el array completo aquí.
+        this.listaEvidencias([...this.listaEvidencias(), ...nuevas]);
+    };
+
+    public cmdRemoverEvidencia = (evidencia: EvidenciaImagen): void => {
+        URL.revokeObjectURL(evidencia.previewUrl);
+        this.listaEvidencias(this.listaEvidencias().filter(e => e.id !== evidencia.id));
+    };
+
+    private limpiarEvidencias(): void {
+        this.listaEvidencias().forEach(e => URL.revokeObjectURL(e.previewUrl));
+        this.listaEvidencias([]);
+    }
+
     public calcPuedeConfirmarRecepcion = ko.pureComputed(() => {
         if (!this.frmTransportista().trim()) return false;
         if (this.listaBienesDialogo().length === 0) return false;
+        if (this.listaEvidencias().length < this.minEvidencias) return false;
         return this.listaBienesDialogo().every(b =>
             b.cantidadRecibida() !== null && b.cantidadRecibida()! >= 0
         );
@@ -448,11 +494,13 @@ class ContratoDetalleViewModel {
         this.frmTransportista("");
         this.frmObservaciones("");
         this.uiErrorDialogo("");
+        this.limpiarEvidencias();
         this.uiDialogoRecepcion(true);
     };
 
     public cmdCerrarRecepcion = (): void => {
         if (this.uiGuardandoRecepcion()) return;
+        this.limpiarEvidencias();
         this.uiDialogoRecepcion(false);
     };
 
@@ -474,6 +522,7 @@ class ContratoDetalleViewModel {
         try {
             await contratosApi.registrarRecepcion(this.contratoId, payload);
             this.uiDialogoRecepcion(false);
+            this.limpiarEvidencias();
             this.uiExito("Recepción registrada correctamente.");
             await this.loadContrato(this.contratoId);
             void this.loadRecepciones(this.contratoId);
