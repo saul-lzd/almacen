@@ -328,13 +328,12 @@ public class RecepcionAlmacenService {
      */
     private void subirEvidencias(RecepcionAlmacenEntity recepcion, List<MultipartFile> evidencias) {
         String folderContrato = recepcion.getContrato().getNumeroContrato().replaceAll("/", "_");
-        String fecha = recepcion.getFechaRecepcion().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String folio = recepcion.getFolioEntradaAlmacen();
+        String folio = recepcion.getFolioEntradaAlmacen().replaceAll("-","_");
 
         List<EvidenciaEntradaEntity> entidades = new ArrayList<>();
         int numeroProgresivo = 1;
         for (MultipartFile file : evidencias) {
-            String nombreEnS3 = fecha + "_" + folio + "_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
+            String nombreEnS3 = folio + "_IMG_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
             String key = "evidencias/recepcion/" + folderContrato + "/" + nombreEnS3;
             String url = s3StorageService.uploadEvidencia(file, key);
             entidades.add(EvidenciaEntradaEntity.builder()
@@ -427,10 +426,10 @@ public class RecepcionAlmacenService {
                 ));
     }
 
-    /** Genera folio único: EA-{AÑO}-{secuencial 4 dígitos} */
+    /** Genera folio único: EA-{secuencial 4 dígitos}-{YYYY-MM-DD} */
     private String generarFolio() {
-        String anio = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy"));
+        String fecha = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         long secuencial = recepcionAlmacenRepository.count() + 1;
-        return String.format("EA-%s-%04d", anio, secuencial);
+        return String.format("EA-%04d-%s", secuencial, fecha);
     }
 }
