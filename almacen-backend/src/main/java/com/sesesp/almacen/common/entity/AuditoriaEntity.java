@@ -1,10 +1,9 @@
 package com.sesesp.almacen.common.entity;
 
+import com.sesesp.almacen.common.util.SecurityUtils;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 
@@ -31,7 +30,7 @@ public abstract class AuditoriaEntity {
     @PrePersist
     protected void onCreate() {
         if (usuarioCreacion == null) {
-            usuarioCreacion = getCurrentUserId();
+            usuarioCreacion = SecurityUtils.getCurrentUserId();
         }
         fechaCreacion = LocalDateTime.now();
         activo = true;
@@ -39,17 +38,7 @@ public abstract class AuditoriaEntity {
 
     @PreUpdate
     protected void onUpdate() {
-        usuarioModificacion = getCurrentUserId();
+        usuarioModificacion = SecurityUtils.getCurrentUserId();
         fechaModificacion = LocalDateTime.now();
-    }
-
-    private static Integer getCurrentUserId() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.getDetails() instanceof Integer id) {
-                return id;
-            }
-        } catch (Exception ignored) {}
-        return 1;
     }
 }

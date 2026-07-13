@@ -205,7 +205,7 @@ class ContratoDetalleViewModel {
     public onSelectImageListener = (event: CFilePickerElement.ojSelect) => {
         const archivos = Array.from(event.detail.files);
 
-        const nuevas: EvidenciaImagen[] = archivos.map(file => ({
+        const nuevasImgs: EvidenciaImagen[] = archivos.map(file => ({
             id: crypto.randomUUID(),
             file,
             previewUrl: URL.createObjectURL(file),
@@ -213,7 +213,7 @@ class ContratoDetalleViewModel {
 
         // oj-bind-for-each solo detecta reemplazos completos del array, no mutaciones
         // incrementales (push/splice) — por eso se reconstruye el array completo aquí.
-        this.listaEvidencias([...this.listaEvidencias(), ...nuevas]);
+        this.listaEvidencias([...this.listaEvidencias(), ...nuevasImgs]);
     };
 
     public cmdRemoverEvidencia = (evidencia: EvidenciaImagen): void => {
@@ -519,8 +519,10 @@ class ContratoDetalleViewModel {
             })),
         };
 
+        const evidencias = this.listaEvidencias().map(e => e.file);
+
         try {
-            await contratosApi.registrarRecepcion(this.contratoId, payload);
+            await contratosApi.registrarRecepcion(this.contratoId, payload, evidencias);
             this.uiDialogoRecepcion(false);
             this.limpiarEvidencias();
             this.uiExito("Recepción registrada correctamente.");

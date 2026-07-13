@@ -538,6 +538,7 @@
               <oj-c-file-picker
                 class="evidencia-picker"
                 accept='["image/*"]'
+                capture="[['environment']]"
                 :disabled="[[uiGuardandoRecepcion()]]"
                 on-oj-select="[[onSelectImageListener]]">
                 <div slot="trigger" class="evidencia-picker-trigger" tabindex="0">

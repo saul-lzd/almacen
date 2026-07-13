@@ -1,6 +1,7 @@
 package com.sesesp.almacen.domain.service;
 
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
+import com.sesesp.almacen.common.util.SecurityUtils;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto.BienRecepcionDto;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenResponseDto;
@@ -10,12 +11,14 @@ import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.ContratoBienEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
+import com.sesesp.almacen.domain.entity.EvidenciaEntradaEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoBienRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.EvidenciaEntradaRepository;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -24,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -45,6 +49,11 @@ public class RecepcionAlmacenService {
     private final RecepcionAlmacenRepository recepcionAlmacenRepository;
     private final RecepcionAlmacenBienRepository recepcionAlmacenBienRepository;
     private final AlmacenBienRepository almacenBienRepository;
+    private final EvidenciaEntradaRepository evidenciaEntradaRepository;
+    private final S3StorageService s3StorageService;
+
+    private static final int MIN_EVIDENCIAS = 5;
+    private static final int MAX_EVIDENCIAS = 10;
 
     /**
      * Registra la recepción de bienes cuando llega el proveedor.
@@ -62,8 +71,10 @@ public class RecepcionAlmacenService {
      *   - Si alguna cantidad es menor a la esperada → RECEPCION_PARCIAL
      */
     @Transactional
-    public void recibirBienes(Integer idContrato, RecepcionAlmacenRequestDto request) {
+    public void recibirBienes(Integer idContrato, RecepcionAlmacenRequestDto request, List<MultipartFile> evidencias) {
         logger.info("Registrando recepción para contrato ID: {}", idContrato);
+
+        validarEvidencias(evidencias);
 
         // 1. Cargar y validar el contrato
         ContratoEntity contrato = contratoRepository.findById(idContrato)
@@ -175,6 +186,9 @@ public class RecepcionAlmacenService {
 
         // 7.1 Crear una AlmacenBienEntity por cada unidad física recibida
         crearUnidadesAlmacen(contrato, recepcion);
+
+        // 7.2 Subir evidencias fotográficas a S3 y guardar su referencia
+        subirEvidencias(recepcion, evidencias);
 
         // 8. Actualizar checkpoints del contrato
         if (!contrato.isPrimeraRecepcionRegistrada()) {
@@ -291,6 +305,56 @@ public class RecepcionAlmacenService {
     // ─────────────────────────────────────────────────────────────
     // Helpers privados
     // ─────────────────────────────────────────────────────────────
+
+    private void validarEvidencias(List<MultipartFile> evidencias) {
+        int total = evidencias == null ? 0 : evidencias.size();
+        if (total < MIN_EVIDENCIAS || total > MAX_EVIDENCIAS) {
+            throw new ContratoValidacionException(List.of(
+                    "Debes adjuntar entre " + MIN_EVIDENCIAS + " y " + MAX_EVIDENCIAS
+                            + " fotos de evidencia (se recibieron " + total + ")."));
+        }
+    }
+
+    /**
+     * Sube cada foto a S3 dentro de la carpeta del contrato (todas las recepciones
+     * del mismo contrato comparten esa carpeta — sin subcarpeta por recepción) y
+     * guarda su referencia en evidencia_entrada. Se llama después de persistir la
+     * recepción porque necesita su folio (ya asignado) para nombrar cada archivo.
+     *
+     * Nombre de archivo: {fecha}_{folio}_{numeroProgresivo}{extension}, ej.
+     * "2026-07-06_EA-2026-0009_1.jpg" — el folio ya es único por recepción, así
+     * que distingue las fotos de esta recepción de las de cualquier otra recepción
+     * del mismo contrato dentro de la carpeta compartida.
+     */
+    private void subirEvidencias(RecepcionAlmacenEntity recepcion, List<MultipartFile> evidencias) {
+        String folderContrato = recepcion.getContrato().getNumeroContrato().replaceAll("/", "_");
+        String fecha = recepcion.getFechaRecepcion().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String folio = recepcion.getFolioEntradaAlmacen();
+
+        List<EvidenciaEntradaEntity> entidades = new ArrayList<>();
+        int numeroProgresivo = 1;
+        for (MultipartFile file : evidencias) {
+            String nombreEnS3 = fecha + "_" + folio + "_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
+            String key = "evidencias/recepcion/" + folderContrato + "/" + nombreEnS3;
+            String url = s3StorageService.uploadEvidencia(file, key);
+            entidades.add(EvidenciaEntradaEntity.builder()
+                    .recepcionAlmacen(recepcion)
+                    .url(url)
+                    .nombreArchivo(file.getOriginalFilename())
+                    .fechaCaptura(LocalDateTime.now())
+                    .usuarioCaptura(SecurityUtils.getCurrentUserId())
+                    .build());
+            numeroProgresivo++;
+        }
+
+        evidenciaEntradaRepository.saveAll(entidades);
+    }
+
+    private static String extraerExtension(String originalFilename) {
+        if (originalFilename == null) return "";
+        int dot = originalFilename.lastIndexOf('.');
+        return dot >= 0 ? originalFilename.substring(dot) : "";
+    }
 
     private void validarRequest(RecepcionAlmacenRequestDto request) {
         List<String> errores = new ArrayList<>();

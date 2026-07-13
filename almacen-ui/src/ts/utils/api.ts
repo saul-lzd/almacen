@@ -53,6 +53,12 @@ function getInit(): RequestInit {
     return { headers: authHeader() };
 }
 
+// RequestInit para peticiones con multipart/form-data (archivos).
+// No se fija "Content-Type" a mano: el browser arma el boundary solo.
+function multipartInit(method: string, formData: FormData): RequestInit {
+    return { method, headers: authHeader(), body: formData };
+}
+
 // ================================================================
 // CONTRATOS
 // ================================================================
@@ -96,8 +102,13 @@ export const contratosApi = {
         fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, getInit()).then(r => handleResponse(r)),
 
     // POST  /api/contratos/:id/recepcion — registra la recepción física de bienes en almacén
-    registrarRecepcion: (id: number, payload: unknown): Promise<any> =>
-        fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, jsonInit("POST", payload)).then(r => handleResponse(r)),
+    // multipart/form-data: parte "request" (JSON) + parte "evidencias" (fotos)
+    registrarRecepcion: (id: number, payload: unknown, evidencias: File[] = []): Promise<any> => {
+        const formData = new FormData();
+        formData.append("request", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+        evidencias.forEach(file => formData.append("evidencias", file));
+        return fetch(`${BASE_URL}/api/contratos/${id}/recepcion`, multipartInit("POST", formData)).then(r => handleResponse(r));
+    },
 
     // GET  /api/contratos/:id/almacen-bienes — bienes con su estado en almacén (para vista de recepción)
     obtenerBienesAlmacen: (id: number, recepcionId?: number): Promise<any[]> => {

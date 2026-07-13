@@ -14,8 +14,10 @@ import com.sesesp.almacen.domain.service.RecepcionAlmacenService;
 import com.sesesp.almacen.domain.service.SalidaAlmacenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -119,12 +121,15 @@ public class ContratoController {
      * Registra la recepción de bienes cuando llega el proveedor al almacén.
      * Cambia el estatus de POR_RECIBIR a EN_ALMACEN (recepción completa)
      * o RECEPCION_PARCIAL (si algún bien llegó con menos unidades de las esperadas).
+     * Recibe multipart/form-data: la parte "request" con el JSON del payload
+     * y la parte "evidencias" con las fotos (mínimo 5, máximo 10).
      */
-    @PostMapping("/{idContrato}/recepcion")
+    @PostMapping(value = "/{idContrato}/recepcion", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registrarRecepcion(
             @PathVariable Integer idContrato,
-            @RequestBody RecepcionAlmacenRequestDto request) {
-        recepcionAlmacenService.recibirBienes(idContrato, request);
+            @RequestPart("request") RecepcionAlmacenRequestDto request,
+            @RequestPart("evidencias") List<MultipartFile> evidencias) {
+        recepcionAlmacenService.recibirBienes(idContrato, request, evidencias);
         return ResponseEntity.ok().build();
     }
 
