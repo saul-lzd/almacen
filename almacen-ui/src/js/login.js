@@ -1,5 +1,5 @@
 const TOKEN_KEY = "almacen.token";
-const API = "http://localhost:8080";
+const API = window.APP_CONFIG?.apiBaseUrl ?? "http://localhost:8080";
 
 (function checkSession() {
   const token = sessionStorage.getItem(TOKEN_KEY);

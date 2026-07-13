@@ -1,0 +1,12 @@
+node_modules/
+web/
+dist/
+staging/
+staged-themes/
+.idea/
+.vscode/
+.git/
+.DS_Store
+npm-debug.log*
+.env
+.env.local

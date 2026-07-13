@@ -58,3 +58,8 @@
 
 .DS_Store
 Thumbs.db
+
+
+### --- DOCKER ---
+
+/.env

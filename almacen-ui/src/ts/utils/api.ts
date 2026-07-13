@@ -6,7 +6,7 @@
 
 import { getToken, redirectToLogin } from "./auth";
 
-export const BASE_URL = "http://localhost:8080";
+export const BASE_URL = (window as any).APP_CONFIG?.apiBaseUrl ?? "http://localhost:8080";
 
 // ── Helpers internos ─────────────────────────────────────────────
 

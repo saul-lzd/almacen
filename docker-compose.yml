@@ -1,0 +1,59 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: almacen_v5
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - almacen-net
+
+  backend:
+    build: ./almacen-backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/almacen_v5
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8000}
+      AWS_REGION: ${AWS_REGION:-us-east-2}
+      AWS_S3_BUCKET_EVIDENCIAS: ${AWS_S3_BUCKET_EVIDENCIAS}
+      # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY — solo si la EC2 NO tiene
+      # un IAM role adjunto (recomendado usar el IAM role, no estas env vars)
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - almacen-net
+
+  frontend:
+    build: ./almacen-ui
+    restart: unless-stopped
+    environment:
+      # "" = rutas relativas (/api, /auth) — Nginx sirve todo en el mismo origen
+      API_BASE_URL: ""
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - almacen-net
+
+networks:
+  almacen-net:
+
+volumes:
+  mysql_data:

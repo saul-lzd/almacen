@@ -1,0 +1,11 @@
+target/
+.idea/
+.vscode/
+.mvn/wrapper/maven-wrapper.jar
+*.iml
+.DS_Store
+.git/
+mvnw
+mvnw.cmd
+*.sql
+HELP.md
