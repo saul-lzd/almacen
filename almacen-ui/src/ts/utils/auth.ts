@@ -13,7 +13,12 @@ function decodePayload(): JwtPayload | null {
     if (!token) return null;
     try {
         const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-        return JSON.parse(atob(base64)) as JwtPayload;
+        // atob() devuelve una "binary string" (1 char = 1 byte) — hay que
+        // reinterpretar esos bytes como UTF-8 explícitamente, si no, cualquier
+        // acento en el payload (ej. "nombre":"Almacén") sale como mojibake.
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const json = new TextDecoder("utf-8").decode(bytes);
+        return JSON.parse(json) as JwtPayload;
     } catch {
         return null;
     }

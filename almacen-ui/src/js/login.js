@@ -5,7 +5,9 @@ const API = window.APP_CONFIG?.apiBaseUrl ?? "http://localhost:8080";
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (!token) return;
   try {
-    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const payload = JSON.parse(new TextDecoder("utf-8").decode(bytes));
     if (payload.exp * 1000 > Date.now()) {
       window.location.href = "index.html";
     }

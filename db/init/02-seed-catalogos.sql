@@ -15,6 +15,7 @@
 -- hace referencia — mismo truco que usa ese mismo componente.
 -- ================================================================
 
+SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 INSERT INTO unidad_medida (nombre, activo, fecha_creacion, usuario_creacion)

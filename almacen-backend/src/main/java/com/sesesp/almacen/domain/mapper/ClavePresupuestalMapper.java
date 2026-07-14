@@ -19,7 +19,10 @@ public class ClavePresupuestalMapper {
 
         CatalogOptionDto dto = new CatalogOptionDto();
         dto.setValue(entity.getClave());
-        dto.setLabel(entity.getPartidaEspecifica());
+        // Clave primero: varias claves comparten la misma partida_especifica,
+        // y el dropdown cerrado trunca el texto — con la clave al frente,
+        // lo que distingue una opción de otra sigue visible aunque se corte.
+        dto.setLabel(entity.getClave() + " (" + entity.getPartidaEspecifica() + ")");
         dto.setMetadata(metadata);
 
         return dto;

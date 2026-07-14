@@ -9,6 +9,7 @@
 -- dockerizar el proyecto (ver memoria del proyecto).
 -- ================================================================
 
+SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 INSERT INTO funcionario (nombre, dependencia, caracter, tipo_funcionario, es_activo_en_rol, activo, fecha_creacion, usuario_creacion)
