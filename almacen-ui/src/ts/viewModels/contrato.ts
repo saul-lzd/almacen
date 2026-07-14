@@ -604,6 +604,7 @@ class NuevoContratoViewModel {
 
       if (this.uiModo() === "EDICION" && this.contratoId()) {
         await this.loadContrato(this.contratoId()!);
+        this.navegarPrimerSeccionIncompleta();
       }
     } catch (err) {
       console.error("Error en carga inicial:", err);
@@ -618,7 +619,6 @@ class NuevoContratoViewModel {
     console.log("=== JSON CRUDO DEL BACKEND ===", JSON.stringify(data, null, 2));
     this.mapResponseToUI(data);
     this.sincronizarEstadoGuardado();
-    this.navegarPrimerSeccionIncompleta();
   }
 
   private navegarPrimerSeccionIncompleta(): void {
