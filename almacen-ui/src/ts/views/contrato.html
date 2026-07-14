@@ -453,13 +453,29 @@
         <oj-bind-if test="[[uiSeccionActiva() === 'pagos']]">
 
           <!-- Montos -->
-          <!-- <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; align-items: start;"> -->
-          <oj-c-form-layout max-columns="3" direction="row" label-edge="top" user-assistance-density="compact">
-            <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="{{frmMontoSinImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
-            <oj-c-input-number label-hint="Impuestos" input-prefix="$" value="{{frmImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
-            <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="[[calcMontoTotal]]" readonly="true" label-edge="top" user-assistance-density="compact" help-hints.definition="Calculado por sistema"></oj-c-input-number>
-          </oj-c-form-layout>
-          <!-- </div> -->
+          <oj-c-radioset
+            label-hint="¿Conoce el desglose de impuestos?"
+            direction="row"
+            label-edge="top"
+            value="{{uiConoceImpuestosSel}}"
+            options="[[uiConoceImpuestosOptions]]">
+          </oj-c-radioset>
+
+          <oj-bind-if test="[[uiConoceImpuestosSel() === 'si']]">
+            <oj-c-form-layout max-columns="3" direction="row" label-edge="top" user-assistance-density="compact" class="oj-sm-margin-4x-top">
+              <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="{{frmMontoSinImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
+              <oj-c-input-number label-hint="Impuestos" input-prefix="$" value="{{frmImpuestos}}" min="0" label-edge="top" user-assistance-density="compact"></oj-c-input-number>
+              <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="[[calcMontoTotal]]" readonly="true" label-edge="top" user-assistance-density="compact" help-hints.definition="Calculado por sistema"></oj-c-input-number>
+            </oj-c-form-layout>
+          </oj-bind-if>
+
+          <oj-bind-if test="[[uiConoceImpuestosSel() === 'no']]">
+            <oj-c-form-layout max-columns="3" direction="row" label-edge="top" user-assistance-density="compact" class="oj-sm-margin-4x-top">
+              <oj-c-input-number label-hint="Monto Total" input-prefix="$" value="{{frmMontoTotalConocido}}" min="0" label-edge="top" user-assistance-density="compact" help-hints.definition="El sistema calcula el desglose con IVA 16%"></oj-c-input-number>
+              <oj-c-input-number label-hint="Monto Sin Impuestos" input-prefix="$" value="[[frmMontoSinImpuestos]]" readonly="true" label-edge="top" user-assistance-density="compact" help-hints.definition="Calculado: Total ÷ 1.16"></oj-c-input-number>
+              <oj-c-input-number label-hint="Impuestos (16%)" input-prefix="$" value="[[frmImpuestos]]" readonly="true" label-edge="top" user-assistance-density="compact" help-hints.definition="Calculado: Total − Monto sin impuestos"></oj-c-input-number>
+            </oj-c-form-layout>
+          </oj-bind-if>
 
           <!-- Claves presupuestales -->
           <div class="oj-sm-margin-6x-top">

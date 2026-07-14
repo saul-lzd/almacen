@@ -38,6 +38,7 @@ import 'oj-c/input-date-picker';
 import 'ojs/ojformlayout';
 import "ojs/ojdatetimepicker";
 import "ojs/ojinputtext";
+import "oj-c/radioset";
 
 // ================================================================
 // TIPOS
@@ -294,6 +295,19 @@ class NuevoContratoViewModel {
   public frmMontoSinImpuestos = ko.observable<number | null>(0);
   public frmImpuestos         = ko.observable<number | null>(0);
 
+  // Si el contrato no desglosa impuestos, se captura solo el total y el
+  // sistema calcula monto base + IVA 16%: Total = A + A(.16) = A(1.16)
+  // null = sin seleccionar todavía — el formulario de montos se oculta
+  // hasta que el usuario elige "Sí" o "No".
+  public uiConoceImpuestosSel = ko.observable<string | null>(null);
+  public readonly uiConoceImpuestosOptions = [
+    { value: "si", label: "Sí" },
+    { value: "no", label: "No" },
+  ];
+  public frmMontoTotalConocido = ko.observable<number | null>(0);
+
+  private static readonly TASA_IVA = 0.16;
+
   public calcMontoTotal = ko.pureComputed(() => {
     const base = Number(this.frmMontoSinImpuestos() || 0);
     const imp  = Number(this.frmImpuestos() || 0);
@@ -528,6 +542,24 @@ class NuevoContratoViewModel {
     // Row vacío inicial en claves presupuestales
     this.listClaves([this.makeClaveItem(1)]);
     this.seqClave = 2;
+
+    // Modo "No" (no conoce el desglose): recalcula monto base + impuestos
+    // (IVA 16%) cada vez que cambia el total capturado.
+    // Total = base + base(.16) = base(1.16)
+    this.frmMontoTotalConocido.subscribe((total) => {
+        if (this.uiConoceImpuestosSel() !== "no") return;
+        const totalNum = Number(total || 0);
+        const base = totalNum / (1 + NuevoContratoViewModel.TASA_IVA);
+        this.frmMontoSinImpuestos(Number(base.toFixed(2)));
+        this.frmImpuestos(Number((totalNum - base).toFixed(2)));
+    });
+
+    // Al seleccionar "No", precargar el total con lo ya capturado (si había)
+    this.uiConoceImpuestosSel.subscribe((sel) => {
+        if (sel === "no") {
+            this.frmMontoTotalConocido(this.calcMontoTotal());
+        }
+    });
 
     const idParam = params?.routerState?.params?.id;
     if (idParam) {
@@ -974,9 +1006,11 @@ class NuevoContratoViewModel {
     this.uiEstatusRaw(data.estatus);
     this.uiEstatusContrato(mapEstatusToLabel(data.estatus));
 
-    // Montos
+    // Montos — un contrato existente siempre trae el desglose ya
+    // capturado (el sistema no persiste "cómo" se calculó, solo el resultado)
     this.frmMontoSinImpuestos(data.montoSinImpuestos);
     this.frmImpuestos(data.impuestos);
+    this.uiConoceImpuestosSel("si");
 
 
     // Proveedor
