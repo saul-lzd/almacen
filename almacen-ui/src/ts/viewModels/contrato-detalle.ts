@@ -12,6 +12,17 @@ import "oj-c/text-area";
 import "oj-c/form-layout";
 import "oj-c/file-picker";
 
+// crypto.randomUUID solo existe en "contextos seguros" (HTTPS o localhost) —
+// en un deploy por HTTP plano sobre IP (sin dominio/TLS) el navegador no
+// expone la función y truena "crypto.randomUUID is not a function", sobre
+// todo notorio en móvil al capturar evidencia con la cámara.
+function generarIdCliente(): string {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 // ================================================================
 // TIPOS
 // ================================================================
@@ -206,7 +217,7 @@ class ContratoDetalleViewModel {
         const archivos = Array.from(event.detail.files);
 
         const nuevasImgs: EvidenciaImagen[] = archivos.map(file => ({
-            id: crypto.randomUUID(),
+            id: generarIdCliente(),
             file,
             previewUrl: URL.createObjectURL(file),
         }));
