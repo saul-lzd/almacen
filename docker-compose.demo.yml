@@ -7,13 +7,14 @@
 # Al vivir en un directorio de clon separado (ej. /home/ubuntu/almacen-demo),
 # Docker Compose ya usa ese nombre de carpeta como project name, así que la
 # red, el volumen de mysql y los nombres de contenedor quedan aislados de
-# producción automáticamente. Lo único que de verdad choca en el mismo host
-# es el puerto 80 del frontend — este archivo solo cambia eso.
+# producción automáticamente.
+#
+# El puerto del frontend se controla con FRONTEND_PORT en el .env de este
+# stack (ej. FRONTEND_PORT=8080) — no se pisa aqui porque Docker Compose
+# concatena (no reemplaza) las listas como "ports" entre archivos, y eso
+# terminaria intentando publicar el 80 Y el 8080 a la vez, chocando con
+# produccion.
 services:
-  frontend:
-    ports:
-      - "8080:80"
-
   # Sin el mount de db/init: el mysql de demo se restaura desde un dump
   # completo (schema+datos) de producción en vez de arrancar con los
   # scripts de catalogos (que asumen BD vacia y chocarian con el dump).

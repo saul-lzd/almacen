@@ -46,7 +46,7 @@ services:
       # "" = rutas relativas (/api, /auth) — Nginx sirve todo en el mismo origen
       API_BASE_URL: ""
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
     networks:
