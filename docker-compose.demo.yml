@@ -1,0 +1,15 @@
+# Override para el ambiente de capacitacion/demo — se usa JUNTO con
+# docker-compose.yml (mismo repo/stack, distinto directorio en la EC2), NO
+# lo reemplaza:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+#
+# Al vivir en un directorio de clon separado (ej. /home/ubuntu/almacen-demo),
+# Docker Compose ya usa ese nombre de carpeta como project name, así que la
+# red, el volumen de mysql y los nombres de contenedor quedan aislados de
+# producción automáticamente. Lo único que de verdad choca en el mismo host
+# es el puerto 80 del frontend — este archivo solo cambia eso.
+services:
+  frontend:
+    ports:
+      - "8080:80"

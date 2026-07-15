@@ -63,3 +63,9 @@ Thumbs.db
 ### --- DOCKER ---
 
 /.env
+/db/backups/
+
+
+### --- CLAUDE CODE ---
+
+/.claude/

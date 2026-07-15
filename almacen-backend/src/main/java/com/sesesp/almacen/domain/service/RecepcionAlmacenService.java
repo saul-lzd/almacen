@@ -334,7 +334,7 @@ public class RecepcionAlmacenService {
         int numeroProgresivo = 1;
         for (MultipartFile file : evidencias) {
             String nombreEnS3 = folio + "_IMG_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
-            String key = "evidencias/recepcion/" + folderContrato + "/" + nombreEnS3;
+            String key = s3StorageService.getPrefixEvidencias() + "/recepcion/" + folderContrato + "/" + nombreEnS3;
             String url = s3StorageService.uploadEvidencia(file, key);
             entidades.add(EvidenciaEntradaEntity.builder()
                     .recepcionAlmacen(recepcion)

@@ -25,13 +25,25 @@ public class S3StorageService {
     private final S3Client s3Client;
     private final String bucket;
     private final String region;
+    private final String prefixEvidencias;
 
     public S3StorageService(S3Client s3Client,
                              @Value("${aws.s3.bucket-evidencias}") String bucket,
-                             @Value("${aws.region}") String region) {
+                             @Value("${aws.region}") String region,
+                             @Value("${aws.s3.prefix-evidencias}") String prefixEvidencias) {
         this.s3Client = s3Client;
         this.bucket = bucket;
         this.region = region;
+        this.prefixEvidencias = prefixEvidencias;
+    }
+
+    /**
+     * Prefijo raíz de las evidencias en S3 (ej. "evidencias" en producción,
+     * "evidencias-capacitacion" en el ambiente de demo) — mismo bucket, distinta
+     * carpeta lógica según el ambiente, vía AWS_S3_PREFIX_EVIDENCIAS.
+     */
+    public String getPrefixEvidencias() {
+        return prefixEvidencias;
     }
 
     /**
