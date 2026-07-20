@@ -127,8 +127,13 @@ export const contratosApi = {
         fetch(`${BASE_URL}/api/contratos/${id}/bienes-entrega`, getInit()).then(r => handleResponse(r)),
 
     // POST /api/contratos/:id/entrega — registra la entrega al beneficiario
-    registrarEntrega: (id: number, payload: unknown): Promise<any> =>
-        fetch(`${BASE_URL}/api/contratos/${id}/entrega`, jsonInit("POST", payload)).then(r => handleResponse(r)),
+    // multipart/form-data: parte "request" (JSON) + parte "evidencias" (fotos)
+    registrarEntrega: (id: number, payload: unknown, evidencias: File[] = []): Promise<any> => {
+        const formData = new FormData();
+        formData.append("request", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+        evidencias.forEach(file => formData.append("evidencias", file));
+        return fetch(`${BASE_URL}/api/contratos/${id}/entrega`, multipartInit("POST", formData)).then(r => handleResponse(r));
+    },
 };
 
 // ================================================================

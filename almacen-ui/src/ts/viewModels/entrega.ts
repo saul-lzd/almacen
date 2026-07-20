@@ -18,6 +18,7 @@ import * as ko from "knockout";
 import { mapEstatusToLabel } from "../utils/contratoUtils";
 import { getNombre } from "../utils/auth";
 import { contratosApi } from "../utils/api";
+import { CFilePickerElement } from 'oj-c/file-picker';
 
 import "oj-c/dialog";
 import "oj-c/form-layout";
@@ -26,12 +27,30 @@ import "oj-c/input-number";
 import "oj-c/select-single";
 import "oj-c/text-area";
 import "oj-c/button";
+import "oj-c/file-picker";
 
 import ArrayDataProvider = require("ojs/ojarraydataprovider");
+
+// crypto.randomUUID solo existe en "contextos seguros" (HTTPS o localhost) —
+// en un deploy por HTTP plano sobre IP (sin dominio/TLS) el navegador no
+// expone la función y truena "crypto.randomUUID is not a function", sobre
+// todo notorio en móvil al capturar evidencia con la cámara.
+function generarIdCliente(): string {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        return crypto.randomUUID();
+    }
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
 
 // ================================================================
 // TIPOS
 // ================================================================
+
+type EvidenciaImagen = {
+    id: string;
+    file: File;
+    previewUrl: string;
+};
 
 type BeneficiarioItem = {
     idBeneficiario: number;
@@ -105,6 +124,43 @@ class EntregaViewModel {
     public frmNombreRecibeBeneficiario = ko.observable<string>("");
     public frmObservaciones            = ko.observable<string>("");
 
+    // ── Evidencias fotográficas de la entrega ─────────────────
+    // Mínimo requerido para poder confirmar — no es un tope, se pueden agregar más.
+    public readonly minEvidencias = 5;
+    public listaEvidencias     = ko.observableArray<EvidenciaImagen>([]);
+
+    public calcEvidenciaContador = ko.pureComputed(() =>
+        `${this.listaEvidencias().length} / ${this.minEvidencias}`
+    );
+
+    public calcFaltanEvidencias = ko.pureComputed(() =>
+        this.listaEvidencias().length < this.minEvidencias
+    );
+
+    public onSelectImageListener = (event: CFilePickerElement.ojSelect) => {
+        const archivos = Array.from(event.detail.files);
+
+        const nuevasImgs: EvidenciaImagen[] = archivos.map(file => ({
+            id: generarIdCliente(),
+            file,
+            previewUrl: URL.createObjectURL(file),
+        }));
+
+        // oj-bind-for-each solo detecta reemplazos completos del array, no mutaciones
+        // incrementales (push/splice) — por eso se reconstruye el array completo aquí.
+        this.listaEvidencias([...this.listaEvidencias(), ...nuevasImgs]);
+    };
+
+    public cmdRemoverEvidencia = (evidencia: EvidenciaImagen): void => {
+        URL.revokeObjectURL(evidencia.previewUrl);
+        this.listaEvidencias(this.listaEvidencias().filter(e => e.id !== evidencia.id));
+    };
+
+    private limpiarEvidencias(): void {
+        this.listaEvidencias().forEach(e => URL.revokeObjectURL(e.previewUrl));
+        this.listaEvidencias([]);
+    }
+
     // ----------------------------------------------------------------
     // COMPUTED
     // ----------------------------------------------------------------
@@ -121,6 +177,7 @@ class EntregaViewModel {
         if (!this.frmNombreEntregaAlmacen().trim()) return false;
         if (!this.frmNombreRecibeBeneficiario().trim()) return false;
         if (this.calcTotalBienesSeleccionados() === 0) return false;
+        if (this.listaEvidencias().length < this.minEvidencias) return false;
         return true;
     });
 
@@ -152,7 +209,7 @@ class EntregaViewModel {
         }
     }
 
-    disconnected(): void {}
+    disconnected(): void { this.limpiarEvidencias(); }
     transitionCompleted(): void {}
 
     // ================================================================
@@ -237,9 +294,12 @@ class EntregaViewModel {
             idsAlmacenBien,
         };
 
+        const evidencias = this.listaEvidencias().map(e => e.file);
+
         try {
-            await contratosApi.registrarEntrega(this.contratoId, payload);
+            await contratosApi.registrarEntrega(this.contratoId, payload, evidencias);
             this.uiExito("Entrega registrada correctamente.");
+            this.limpiarEvidencias();
             await this.loadDatos(this.contratoId);
 
         } catch (err: any) {

@@ -169,12 +169,16 @@ public class ContratoController {
     /**
      * Registra la entrega de bienes a un beneficiario.
      * Marca los bienes como ENTREGADO y actualiza el estatus del contrato.
+     *
+     * multipart/form-data: la parte "request" con el JSON de EntregaRequestDto
+     * y la parte "evidencias" con las fotos (mínimo 5, máximo 10).
      */
-    @PostMapping("/{idContrato}/entrega")
+    @PostMapping(value = "/{idContrato}/entrega", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> registrarEntrega(
             @PathVariable Integer idContrato,
-            @RequestBody EntregaRequestDto request) {
-        salidaAlmacenService.registrarEntrega(idContrato, request);
+            @RequestPart("request") EntregaRequestDto request,
+            @RequestPart("evidencias") List<MultipartFile> evidencias) {
+        salidaAlmacenService.registrarEntrega(idContrato, request, evidencias);
         return ResponseEntity.ok().build();
     }
 }

@@ -1,12 +1,14 @@
 package com.sesesp.almacen.domain.service;
 
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
+import com.sesesp.almacen.common.util.SecurityUtils;
 import com.sesesp.almacen.domain.dto.EntregaRequestDto;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity;
 import com.sesesp.almacen.domain.entity.AlmacenBienEntity.EstatusBien;
 import com.sesesp.almacen.domain.entity.BeneficiarioEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity.EstatusContrato;
+import com.sesesp.almacen.domain.entity.EvidenciaSalidaEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity;
 import com.sesesp.almacen.domain.entity.RecepcionAlmacenEntity.EstatusRecepcion;
 import com.sesesp.almacen.domain.entity.SalidaAlmacenBienEntity;
@@ -14,6 +16,7 @@ import com.sesesp.almacen.domain.entity.SalidaAlmacenEntity;
 import com.sesesp.almacen.domain.repository.AlmacenBienRepository;
 import com.sesesp.almacen.domain.repository.BeneficiarioRepository;
 import com.sesesp.almacen.domain.repository.ContratoRepository;
+import com.sesesp.almacen.domain.repository.EvidenciaSalidaRepository;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import com.sesesp.almacen.domain.repository.SalidaAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -41,6 +45,11 @@ public class SalidaAlmacenService {
     private final AlmacenBienRepository almacenBienRepository;
     private final SalidaAlmacenRepository salidaAlmacenRepository;
     private final RecepcionAlmacenRepository recepcionAlmacenRepository;
+    private final EvidenciaSalidaRepository evidenciaSalidaRepository;
+    private final S3StorageService s3StorageService;
+
+    private static final int MIN_EVIDENCIAS = 5;
+    private static final int MAX_EVIDENCIAS = 10;
 
     /**
      * Registra la entrega de bienes a un beneficiario.
@@ -57,8 +66,10 @@ public class SalidaAlmacenService {
      *   - Marca la recepción como ENTREGADA si todos sus bienes están en ENTREGADO
      */
     @Transactional
-    public void registrarEntrega(Integer idContrato, EntregaRequestDto request) {
+    public void registrarEntrega(Integer idContrato, EntregaRequestDto request, List<MultipartFile> evidencias) {
         logger.info("Registrando entrega para contrato ID: {}", idContrato);
+
+        validarEvidencias(evidencias);
 
         // 1. Validar contrato
         ContratoEntity contrato = contratoRepository.findById(idContrato)
@@ -137,6 +148,9 @@ public class SalidaAlmacenService {
         salidaAlmacenRepository.save(salida);
         almacenBienRepository.saveAll(bienes);
 
+        // 6.1 Subir evidencias fotográficas a S3 y guardar su referencia
+        subirEvidencias(salida, evidencias);
+
         // 7. Marcar checkpoint de primera entrega
         if (!contrato.isPrimeraEntregaAutorizada()) {
             contrato.setPrimeraEntregaAutorizada(true);
@@ -185,5 +199,63 @@ public class SalidaAlmacenService {
         String anio = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy"));
         long secuencial = salidaAlmacenRepository.count() + 1;
         return String.format("SA-%s-%04d", anio, secuencial);
+    }
+
+    private void validarEvidencias(List<MultipartFile> evidencias) {
+        int total = evidencias == null ? 0 : evidencias.size();
+        if (total < MIN_EVIDENCIAS || total > MAX_EVIDENCIAS) {
+            throw new ContratoValidacionException(List.of(
+                    "Debes adjuntar entre " + MIN_EVIDENCIAS + " y " + MAX_EVIDENCIAS
+                            + " fotos de evidencia (se recibieron " + total + ")."));
+        }
+    }
+
+    /**
+     * Sube cada foto a S3 dentro de la carpeta del contrato y guarda su referencia
+     * en evidencia_salida. Se llama después de persistir la salida porque necesita
+     * su folio (ya asignado) para nombrar cada archivo.
+     *
+     * Estructura en S3: {prefixEvidencias}/{numeroContrato}/evidencia/entrega/{nombreArchivo}
+     * — misma raíz que usan las evidencias de recepción ("recepcion/") y de bienes
+     * procesados ("bienes/").
+     *
+     * Nombre de archivo: SA_{consecutivo}_{fecha}_IMG_{numeroProgresivo}{extension}, ej.
+     * "SA_0001_2026_07_20_IMG_1.jpg" — el consecutivo es el mismo secuencial usado
+     * en el folio (SA-{año}-{consecutivo}), pero aquí se combina con la fecha completa
+     * de la salida (no solo el año) para mantener la misma convención que recepción.
+     */
+    private void subirEvidencias(SalidaAlmacenEntity salida, List<MultipartFile> evidencias) {
+        String folderContrato = salida.getContrato().getNumeroContrato().replaceAll("/", "_");
+
+        String[] folioParts = salida.getFolioSalidaAlmacen().split("-");
+        String consecutivo = folioParts[folioParts.length - 1];
+        String fecha = salida.getFechaSalida().format(DateTimeFormatter.ofPattern("yyyy_MM_dd"));
+        String base = "SA_" + consecutivo + "_" + fecha;
+
+        List<EvidenciaSalidaEntity> entidades = new ArrayList<>();
+        int numeroProgresivo = 1;
+        for (MultipartFile file : evidencias) {
+            String nombreEnS3 = base + "_IMG_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
+            String key = s3StorageService.getPrefixEvidencias() + "/" + folderContrato
+                    + "/evidencia/entrega/" + nombreEnS3;
+
+            String url = s3StorageService.uploadEvidencia(file, key);
+            entidades.add(EvidenciaSalidaEntity.builder()
+                    .salidaAlmacen(salida)
+                    .url(url)
+                    .nombreArchivo(file.getOriginalFilename())
+                    .fechaCaptura(LocalDateTime.now())
+                    .usuarioCaptura(SecurityUtils.getCurrentUserId())
+                    .build());
+            numeroProgresivo++;
+        }
+
+        evidenciaSalidaRepository.saveAll(entidades);
+    }
+
+    private static String extraerExtension(String originalFilename) {
+        if (originalFilename == null) return "";
+        int dot = originalFilename.lastIndexOf('.');
+        return dot >= 0 ? originalFilename.substring(dot) : "";
     }
 }
