@@ -38,8 +38,8 @@ public class S3StorageService {
     }
 
     /**
-     * Prefijo raíz de las evidencias en S3 (ej. "evidencias" en producción,
-     * "evidencias-capacitacion" en el ambiente de demo) — mismo bucket, distinta
+     * Prefijo raíz de las evidencias en S3 (ej. "almacen" en producción,
+     * "almacen-capacitacion" en el ambiente de demo) — mismo bucket, distinta
      * carpeta lógica según el ambiente, vía AWS_S3_PREFIX_EVIDENCIAS.
      */
     public String getPrefixEvidencias() {

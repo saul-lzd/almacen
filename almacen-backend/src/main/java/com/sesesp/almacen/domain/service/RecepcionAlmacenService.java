@@ -321,8 +321,13 @@ public class RecepcionAlmacenService {
      * guarda su referencia en evidencia_entrada. Se llama después de persistir la
      * recepción porque necesita su folio (ya asignado) para nombrar cada archivo.
      *
-     * Nombre de archivo: {fecha}_{folio}_{numeroProgresivo}{extension}, ej.
-     * "2026-07-06_EA-2026-0009_1.jpg" — el folio ya es único por recepción, así
+     * Estructura en S3: {prefixEvidencias}/{numeroContrato}/evidencia/recepcion/{nombreArchivo}
+     * — el prefijo raíz (default "almacen", ver AWS_S3_PREFIX_EVIDENCIAS) es la
+     * misma raíz "{contrato}/evidencia/" que usarán las evidencias de bienes
+     * procesados ("bienes/") y de entrega ("entrega/").
+     *
+     * Nombre de archivo: {folio}_IMG_{numeroProgresivo}{extension}, ej.
+     * "EA_0009_2026_07_06_IMG_1.jpg" — el folio ya es único por recepción, así
      * que distingue las fotos de esta recepción de las de cualquier otra recepción
      * del mismo contrato dentro de la carpeta compartida.
      */
@@ -334,7 +339,9 @@ public class RecepcionAlmacenService {
         int numeroProgresivo = 1;
         for (MultipartFile file : evidencias) {
             String nombreEnS3 = folio + "_IMG_" + numeroProgresivo + extraerExtension(file.getOriginalFilename());
-            String key = s3StorageService.getPrefixEvidencias() + "/recepcion/" + folderContrato + "/" + nombreEnS3;
+            String key = s3StorageService.getPrefixEvidencias() + "/" + folderContrato
+                    + "/evidencia/recepcion/" + nombreEnS3;
+
             String url = s3StorageService.uploadEvidencia(file, key);
             entidades.add(EvidenciaEntradaEntity.builder()
                     .recepcionAlmacen(recepcion)
