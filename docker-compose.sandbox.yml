@@ -1,10 +1,10 @@
-# Override para el ambiente de capacitacion/demo — se usa JUNTO con
+# Override para el ambiente de sandbox — se usa JUNTO con
 # docker-compose.yml (mismo repo/stack, distinto directorio en la EC2), NO
 # lo reemplaza:
 #
-#   docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.sandbox.yml up -d
 #
-# Al vivir en un directorio de clon separado (ej. /home/ubuntu/almacen-demo),
+# Al vivir en un directorio de clon separado (ej. /home/ubuntu/almacen-sandbox),
 # Docker Compose ya usa ese nombre de carpeta como project name, así que la
 # red, el volumen de mysql y los nombres de contenedor quedan aislados de
 # producción automáticamente.
@@ -15,9 +15,16 @@
 # terminaria intentando publicar el 80 Y el 8080 a la vez, chocando con
 # produccion.
 services:
-  # Sin el mount de db/init: el mysql de demo se restaura desde un dump
+  # Sin el mount de db/init: el mysql de sandbox se restaura desde un dump
   # completo (schema+datos) de producción en vez de arrancar con los
   # scripts de catalogos (que asumen BD vacia y chocarian con el dump).
   mysql:
     volumes:
       - mysql_data:/var/lib/mysql
+
+  # Prefix fijo (no depende del .env de este stack) — sandbox comparte el
+  # bucket de producción, este prefix es lo único que separa las fotos
+  # de prueba de las reales dentro de ese bucket.
+  backend:
+    environment:
+      AWS_S3_PREFIX_EVIDENCIAS: almacen-sandbox

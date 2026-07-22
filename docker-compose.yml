@@ -29,6 +29,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8000}
       AWS_REGION: ${AWS_REGION:-us-east-2}
       AWS_S3_BUCKET_EVIDENCIAS: ${AWS_S3_BUCKET_EVIDENCIAS}
+      AWS_S3_PREFIX_EVIDENCIAS: ${AWS_S3_PREFIX_EVIDENCIAS:-almacen}
       # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY — solo si la EC2 NO tiene
       # un IAM role adjunto (recomendado usar el IAM role, no estas env vars)
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
