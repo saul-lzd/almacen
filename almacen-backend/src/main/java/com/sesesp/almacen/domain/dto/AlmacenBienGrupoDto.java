@@ -19,4 +19,13 @@ public class AlmacenBienGrupoDto {
     private String unidadMedida;
     private int totalUnidades;
     private List<AlmacenBienDto> unidades;
+
+    /** NINGUNO | SIMPLE | CONJUNTO — determina qué se captura por unidad. */
+    private String tipoCapturaSerie;
+
+    /** Nombres de componente esperados cuando tipoCapturaSerie = CONJUNTO, en orden. */
+    private List<String> componentesEsperados;
+
+    /** Fotos "de catálogo" ya subidas para este grupo (no aplica a Vehículo). */
+    private int totalEvidenciasGrupo;
 }

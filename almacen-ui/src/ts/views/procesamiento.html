@@ -194,13 +194,16 @@
                   </div>
                 </div>
                 <div class="proc-grupo-acciones">
-                  <oj-bind-if test="[[grupo.data.calcTodosProcesados()]]">
-                    <span class="procesamiento-pill procesamiento-pill--completo">✓ Procesado</span>
-                  </oj-bind-if>
-                  <oj-bind-if test="[[!grupo.data.calcTodosProcesados()]]">
-                    <span class="procesamiento-pill">
-                      <oj-bind-text value="[[grupo.data.calcProcesados() + ' / ' + grupo.data.totalUnidades + ' procesados']]"></oj-bind-text>
+                  <oj-bind-if test="[[!grupo.data.calcEsVehiculo()]]">
+                    <span :class="[['cd-rec-badge ' + (grupo.data.uiTotalEvidenciasGrupo() < minEvidenciasGrupo ? 'cd-rec-badge--gray' : 'cd-rec-badge--green')]]">
+                      <oj-bind-text value="[[grupo.data.uiTotalEvidenciasGrupo() + ' / ' + minEvidenciasGrupo + ' evidencias']]"></oj-bind-text>
                     </span>
+                    <oj-c-button
+                      label="Agregar Evidencias"
+                      chroming="outlined"
+                      size="sm"
+                      on-oj-action="[[() => cmdAbrirEvidenciaGrupo(grupo.data)]]">
+                    </oj-c-button>
                   </oj-bind-if>
                   <oj-c-button
                     label="Finalizar Procesamiento"
@@ -240,17 +243,24 @@
                 </oj-c-form-layout>
               </div>
 
-              <!-- ── TOGGLE NÚMERO DE SERIE ── -->
-              <div class="proc-serie-toggle">
-                <oj-switch value="{{grupo.data.uiRequiereNumeroSerie}}"></oj-switch>
-                <span class="oj-typography-body-sm oj-text-color-secondary">Requiere número de serie</span>
-              </div>
-
-              <!-- ── NÚMEROS DE SERIE (condicional) ── -->
-              <oj-bind-if test="[[grupo.data.uiRequiereNumeroSerie()]]">
+              <!-- ── VEHÍCULO: número de motor por unidad + evidencia por unidad (5 fotos c/u) ── -->
+              <oj-bind-if test="[[grupo.data.calcEsVehiculo()]]">
                 <div class="proc-serie-lista">
-                  <div class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Número de Serie</div>
-
+                  <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-2x-bottom">
+                    <div class="oj-flex-bar-start">
+                      <span class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Número de Motor</span>
+                    </div>
+                    <div class="oj-flex-bar-end">
+                      <oj-bind-if test="[[grupo.data.calcTodosProcesados()]]">
+                        <span class="procesamiento-pill procesamiento-pill--completo">✓ Procesado</span>
+                      </oj-bind-if>
+                      <oj-bind-if test="[[!grupo.data.calcTodosProcesados()]]">
+                        <span class="procesamiento-pill">
+                          <oj-bind-text value="[[grupo.data.calcProcesados() + ' / ' + grupo.data.totalUnidades + ' procesados']]"></oj-bind-text>
+                        </span>
+                      </oj-bind-if>
+                    </div>
+                  </div>
                   <div class="proc-serie-grid3">
                     <oj-bind-for-each data="[[grupo.data.unidades]]">
                       <template data-oj-as="unidad">
@@ -264,17 +274,182 @@
                               value="{{unidad.data.frmNumeroSerie}}">
                             </oj-c-input-text>
                           </div>
+                          <oj-c-button
+                            :label="[['Evidencia (' + unidad.data.uiTotalEvidencias() + '/' + minEvidenciasVehiculo + ')']]"
+                            chroming="outlined"
+                            size="sm"
+                            on-oj-action="[[() => cmdAbrirEvidenciaUnidad(grupo.data, unidad.data)]]">
+                          </oj-c-button>
                         </div>
                       </template>
                     </oj-bind-for-each>
                   </div>
-
                 </div>
+              </oj-bind-if>
+
+              <!-- ── NO VEHÍCULO: tipo de captura de serie + evidencia de catálogo del grupo ── -->
+              <oj-bind-if test="[[!grupo.data.calcEsVehiculo()]]">
+
+                <div class="proc-serie-toggle">
+                  <oj-switch value="{{grupo.data.uiRequiereNumeroSerie}}"></oj-switch>
+                  <span class="oj-typography-body-sm oj-text-color-secondary">Este bien requiere número de serie</span>
+                </div>
+
+                <oj-bind-if test="[[grupo.data.uiRequiereNumeroSerie()]]">
+                  <div class="proc-serie-toggle">
+                    <oj-c-radioset
+                      label-hint="¿El bien requiere un número de serie o está formado por un conjunto de componentes con números de serie únicos?"
+                      label-edge="top"
+                      direction="row"
+                      value="{{grupo.data.uiSubTipoCapturaSerie}}"
+                      options="[[listaSubTipoCapturaOptions]]">
+                    </oj-c-radioset>
+                  </div>
+                </oj-bind-if>
+
+                <oj-c-button
+                  label="Guardar configuración"
+                  chroming="outlined"
+                  size="sm"
+                  class="oj-sm-margin-2x-top"
+                  :disabled="[[grupo.data.uiGuardandoConfig()]]"
+                  on-oj-action="[[() => cmdGuardarCapturaSerie(grupo.data)]]">
+                </oj-c-button>
+
+                <!-- ── CONJUNTO: plantilla de componentes esperados ── -->
+                <oj-bind-if test="[[grupo.data.calcTipoCapturaEfectivo() === 'CONJUNTO']]">
+                  <div class="proc-serie-lista">
+                    <div class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">
+                      Nombre de los componentes de este bien (se capturan igual para las <oj-bind-text value="[[grupo.data.totalUnidades]]"></oj-bind-text> unidades)
+                    </div>
+                    <oj-bind-for-each data="[[grupo.data.listaComponentesEsperados]]">
+                      <template data-oj-as="comp">
+                        <div class="proc-componente-fila">
+                          <input
+                            type="text"
+                            class="proc-componente-input"
+                            list="listaCatalogoComponentesDatalist"
+                            placeholder="Nombre del componente (ej. Monitor, CPU, Teclado)"
+                            :value="[[comp.data.nombre]]"
+                            on-change="[[ev => cmdSetNombreComponenteEsperado(grupo.data, comp.data, ev.target.value)]]" />
+                          <oj-c-button
+                            chroming="borderless"
+                            display="icons"
+                            aria-label="Eliminar componente"
+                            on-oj-action="[[() => cmdEliminarComponenteEsperado(grupo.data, comp.data)]]">
+                            <span slot="startIcon" class="oj-ux-ico-close"></span>
+                          </oj-c-button>
+                        </div>
+                      </template>
+                    </oj-bind-for-each>
+                    <oj-c-button
+                      label="+ Agregar componente"
+                      chroming="borderless"
+                      size="sm"
+                      on-oj-action="[[() => cmdAgregarComponenteEsperado(grupo.data)]]">
+                    </oj-c-button>
+                  </div>
+                </oj-bind-if>
+
+                <!-- ── SIMPLE: número de serie por unidad + evidencia por unidad (1 foto c/u) ──
+                     Solo aparece tras "Guardar configuración" — evita re-renderizar la lista
+                     completa de unidades en cada click del radio de arriba. ── -->
+                <oj-bind-if test="[[grupo.data.uiTipoCapturaGuardado() === 'SIMPLE']]">
+                  <div class="proc-serie-lista">
+                    <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-2x-bottom">
+                      <div class="oj-flex-bar-start">
+                        <span class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Número de Serie</span>
+                      </div>
+                      <div class="oj-flex-bar-end">
+                        <oj-bind-if test="[[grupo.data.calcTodosProcesados()]]">
+                          <span class="procesamiento-pill procesamiento-pill--completo">✓ Procesado</span>
+                        </oj-bind-if>
+                        <oj-bind-if test="[[!grupo.data.calcTodosProcesados()]]">
+                          <span class="procesamiento-pill">
+                            <oj-bind-text value="[[grupo.data.calcProcesados() + ' / ' + grupo.data.totalUnidades + ' procesados']]"></oj-bind-text>
+                          </span>
+                        </oj-bind-if>
+                      </div>
+                    </div>
+                    <div class="proc-serie-grid3">
+                      <oj-bind-for-each data="[[grupo.data.unidades]]">
+                        <template data-oj-as="unidad">
+                          <div class="proc-serie-fila">
+                            <div class="proc-serie-label oj-typography-body-sm">
+                              <oj-bind-text value="[[unidad.data.displayLabel]]"></oj-bind-text>
+                            </div>
+                            <div class="proc-serie-input">
+                              <oj-c-input-text
+                                label-hint=""
+                                value="{{unidad.data.frmNumeroSerie}}">
+                              </oj-c-input-text>
+                            </div>
+                            <oj-c-button
+                              :label="[['Evidencia (' + unidad.data.uiTotalEvidencias() + '/' + minEvidenciasSimple + ')']]"
+                              chroming="outlined"
+                              size="sm"
+                              on-oj-action="[[() => cmdAbrirEvidenciaUnidad(grupo.data, unidad.data)]]">
+                            </oj-c-button>
+                          </div>
+                        </template>
+                      </oj-bind-for-each>
+                    </div>
+                  </div>
+                </oj-bind-if>
+
+                <!-- ── CONJUNTO: botón de captura por unidad — solo tras guardar la configuración ── -->
+                <oj-bind-if test="[[grupo.data.uiTipoCapturaGuardado() === 'CONJUNTO']]">
+                  <div class="proc-serie-lista">
+                    <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-2x-bottom">
+                      <div class="oj-flex-bar-start">
+                        <span class="proc-serie-header oj-typography-body-xs oj-text-color-secondary">Número de Serie</span>
+                      </div>
+                      <div class="oj-flex-bar-end">
+                        <oj-bind-if test="[[grupo.data.calcTodosProcesados()]]">
+                          <span class="procesamiento-pill procesamiento-pill--completo">✓ Procesado</span>
+                        </oj-bind-if>
+                        <oj-bind-if test="[[!grupo.data.calcTodosProcesados()]]">
+                          <span class="procesamiento-pill">
+                            <oj-bind-text value="[[grupo.data.calcProcesados() + ' / ' + grupo.data.totalUnidades + ' procesados']]"></oj-bind-text>
+                          </span>
+                        </oj-bind-if>
+                      </div>
+                    </div>
+                    <div class="proc-serie-grid3">
+                      <oj-bind-for-each data="[[grupo.data.unidades]]">
+                        <template data-oj-as="unidad">
+                          <div class="proc-serie-fila">
+                            <div class="proc-serie-label oj-typography-body-sm">
+                              <oj-bind-text value="[[unidad.data.displayLabel]]"></oj-bind-text>
+                            </div>
+                            <oj-c-button
+                              :label="[['Capturar componentes (' + unidad.data.uiComponentesGuardados().length + '/' + grupo.data.listaComponentesEsperados().length + ')']]"
+                              chroming="outlined"
+                              size="sm"
+                              :disabled="[[grupo.data.listaComponentesEsperados().length === 0]]"
+                              on-oj-action="[[() => cmdAbrirComponentes(grupo.data, unidad.data)]]">
+                            </oj-c-button>
+                          </div>
+                        </template>
+                      </oj-bind-for-each>
+                    </div>
+                  </div>
+                </oj-bind-if>
+
               </oj-bind-if>
 
             </div>
           </template>
         </oj-bind-for-each>
+
+        <!-- Catálogo de nombres de componente para el <input list> de arriba -->
+        <datalist id="listaCatalogoComponentesDatalist">
+          <oj-bind-for-each data="[[listaCatalogoComponentes()]]">
+            <template data-oj-as="nombre">
+              <option :value="[[nombre.data]]"></option>
+            </template>
+          </oj-bind-for-each>
+        </datalist>
 
       </div><!-- /proc-grupos -->
 
@@ -340,6 +515,131 @@
     </div>
     <div slot="footer">
       <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoBeneficiarios(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Evidencias fotográficas (grupo o unidad) ═══════════ -->
+  <oj-c-dialog dialog-title="[[uiDialogoEvidenciaTitulo()]]" opened="{{uiDialogoEvidencia}}" min-width="40rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <div class="oj-flex-bar oj-sm-align-items-center oj-sm-margin-2x-bottom">
+        <div class="oj-flex-bar-start">
+          <span class="oj-typography-body-sm oj-text-color-secondary">
+            Se requieren al menos <oj-bind-text value="[[uiDialogoEvidenciaMin()]]"></oj-bind-text> fotos.
+          </span>
+        </div>
+        <div class="oj-flex-bar-end">
+          <span :class="[['cd-rec-badge ' + (calcFaltanEvidenciaDialogo() ? 'cd-rec-badge--gray' : 'cd-rec-badge--green')]]">
+            <oj-bind-text value="[[calcTotalEvidenciaDialogo() + ' / ' + uiDialogoEvidenciaMin()]]"></oj-bind-text>
+          </span>
+        </div>
+      </div>
+
+      <oj-bind-if test="[[uiDialogoEvidenciaPrevias() > 0]]">
+        <div class="oj-typography-body-sm oj-text-color-secondary oj-sm-margin-2x-bottom">
+          Ya hay <oj-bind-text value="[[uiDialogoEvidenciaPrevias()]]"></oj-bind-text> foto(s) guardada(s) — las nuevas se agregan a esas.
+        </div>
+      </oj-bind-if>
+
+      <div class="evidencias-grid">
+        <oj-bind-for-each data="[[listaEvidenciasDialogo()]]">
+          <template data-oj-as="ev">
+            <div class="evidencia-item">
+              <img :src="[[ev.data.previewUrl]]" alt="Evidencia" />
+              <div class="evidencia-item-remove">
+                <oj-c-button
+                  chroming="borderless"
+                  display="icons"
+                  aria-label="Eliminar evidencia"
+                  :disabled="[[uiGuardandoEvidencia()]]"
+                  on-oj-action="[[() => cmdRemoverEvidenciaDialogo(ev.data)]]">
+                  <span slot="startIcon" class="oj-ux-ico-close"></span>
+                </oj-c-button>
+              </div>
+            </div>
+          </template>
+        </oj-bind-for-each>
+
+        <oj-c-file-picker
+          class="evidencia-picker"
+          accept='["image/*"]'
+          capture="[['environment']]"
+          :disabled="[[uiGuardandoEvidencia()]]"
+          on-oj-select="[[onSelectEvidenciaDialogo]]">
+          <div slot="trigger" class="evidencia-picker-trigger" tabindex="0">
+            <span class="oj-ux-ico-plus"></span>
+            <span class="evidencia-picker-trigger-label">Agregar</span>
+          </div>
+        </oj-c-file-picker>
+      </div>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cancelar" chroming="outlined"
+        :disabled="[[uiGuardandoEvidencia()]]"
+        on-oj-action="[[cmdCerrarEvidenciaDialogo]]">
+      </oj-c-button>
+      <oj-c-button label="Guardar" chroming="callToAction"
+        :disabled="[[uiGuardandoEvidencia() || listaEvidenciasDialogo().length === 0]]"
+        on-oj-action="[[cmdGuardarEvidenciaDialogo]]">
+      </oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Componentes de una unidad "Conjunto" ═══════════════ -->
+  <oj-c-dialog dialog-title="[[uiDialogoComponentesTitulo()]]" opened="{{uiDialogoComponentes}}" min-width="50rem">
+    <div slot="body" class="cf-info-dialog-body">
+      <oj-bind-for-each data="[[listaComponentesDialogo()]]">
+        <template data-oj-as="comp">
+          <div class="proc-componente-captura-fila">
+            <div class="proc-componente-captura-nombre oj-typography-body-md oj-typography-semi-bold">
+              <oj-bind-text value="[[comp.data.nombreComponente]]"></oj-bind-text>
+            </div>
+            <oj-c-input-text
+              label-hint="Número de serie"
+              label-edge="top"
+              value="{{comp.data.frmNumeroSerie}}">
+            </oj-c-input-text>
+
+            <oj-bind-if test="[[comp.data.evidencia() === null]]">
+              <oj-c-file-picker
+                class="evidencia-picker"
+                accept='["image/*"]'
+                capture="[['environment']]"
+                :disabled="[[uiGuardandoComponentes()]]"
+                on-oj-select="[[ev => onSelectComponenteFoto(comp.data, ev)]]">
+                <div slot="trigger" class="evidencia-picker-trigger" tabindex="0">
+                  <span class="oj-ux-ico-plus"></span>
+                  <span class="evidencia-picker-trigger-label">Foto etiqueta</span>
+                </div>
+              </oj-c-file-picker>
+            </oj-bind-if>
+            <oj-bind-if test="[[comp.data.evidencia() !== null]]">
+              <div class="evidencia-item">
+                <img :src="[[comp.data.evidencia().previewUrl]]" alt="Evidencia" />
+                <div class="evidencia-item-remove">
+                  <oj-c-button
+                    chroming="borderless"
+                    display="icons"
+                    aria-label="Eliminar evidencia"
+                    :disabled="[[uiGuardandoComponentes()]]"
+                    on-oj-action="[[() => cmdRemoverComponenteFoto(comp.data)]]">
+                    <span slot="startIcon" class="oj-ux-ico-close"></span>
+                  </oj-c-button>
+                </div>
+              </div>
+            </oj-bind-if>
+          </div>
+        </template>
+      </oj-bind-for-each>
+    </div>
+    <div slot="footer">
+      <oj-c-button label="Cancelar" chroming="outlined"
+        :disabled="[[uiGuardandoComponentes()]]"
+        on-oj-action="[[cmdCerrarComponentes]]">
+      </oj-c-button>
+      <oj-c-button label="Guardar" chroming="callToAction"
+        :disabled="[[uiGuardandoComponentes() || !calcPuedeGuardarComponentes()]]"
+        on-oj-action="[[cmdGuardarComponentes]]">
+      </oj-c-button>
     </div>
   </oj-c-dialog>
 

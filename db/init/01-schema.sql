@@ -34,6 +34,8 @@ CREATE TABLE `almacen_bien` (
   `usuario_modificacion` int unsigned DEFAULT NULL,
   `activo` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id_almacen_bien`),
+  UNIQUE KEY `uq_almacen_bien_numero_serie` (`numero_serie`),
+  UNIQUE KEY `uq_almacen_bien_numero_motor` (`numero_motor`),
   KEY `fk_almacen_bien_contrato` (`id_contrato`),
   KEY `fk_almacen_bien_contrato_bien` (`id_contrato_bien`),
   KEY `fk_almacen_bien_recepcion_bien` (`id_recepcion_almacen_bien`),
@@ -67,6 +69,25 @@ CREATE TABLE `beneficiario` (
   CONSTRAINT `fk_beneficiario_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `catalogo_componente`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `catalogo_componente` (
+  `id_catalogo_componente` int unsigned NOT NULL AUTO_INCREMENT,
+  `nombre` varchar(150) NOT NULL,
+  `fecha_creacion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_creacion` int unsigned NOT NULL DEFAULT '1',
+  `fecha_modificacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `usuario_modificacion` int unsigned DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id_catalogo_componente`),
+  UNIQUE KEY `uq_catalogo_componente_nombre` (`nombre`),
+  KEY `fk_catalogo_componente_creacion` (`usuario_creacion`),
+  KEY `fk_catalogo_componente_modificacion` (`usuario_modificacion`),
+  CONSTRAINT `fk_catalogo_componente_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_catalogo_componente_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `clave_presupuestal`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -85,6 +106,35 @@ CREATE TABLE `clave_presupuestal` (
   KEY `fk_clave_presupuestal_modificacion` (`usuario_modificacion`),
   CONSTRAINT `fk_clave_presupuestal_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `fk_clave_presupuestal_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `componente_bien`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `componente_bien` (
+  `id_componente_bien` int unsigned NOT NULL AUTO_INCREMENT,
+  `id_almacen_bien` int unsigned NOT NULL,
+  `nombre_componente` varchar(150) NOT NULL,
+  `numero_serie` varchar(150) NOT NULL,
+  `url` varchar(500) DEFAULT NULL,
+  `nombre_archivo` varchar(255) NOT NULL,
+  `fecha_captura` datetime NOT NULL,
+  `usuario_captura` int unsigned DEFAULT NULL,
+  `fecha_creacion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_creacion` int unsigned NOT NULL DEFAULT '1',
+  `fecha_modificacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `usuario_modificacion` int unsigned DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id_componente_bien`),
+  UNIQUE KEY `uq_componente_bien_numero_serie` (`numero_serie`),
+  KEY `fk_componente_bien_almacen_bien` (`id_almacen_bien`),
+  KEY `fk_componente_bien_creacion` (`usuario_creacion`),
+  KEY `fk_componente_bien_modificacion` (`usuario_modificacion`),
+  KEY `fk_componente_bien_captura` (`usuario_captura`),
+  CONSTRAINT `fk_componente_bien_almacen_bien` FOREIGN KEY (`id_almacen_bien`) REFERENCES `almacen_bien` (`id_almacen_bien`),
+  CONSTRAINT `fk_componente_bien_captura` FOREIGN KEY (`usuario_captura`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_componente_bien_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_componente_bien_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `contrato`;
@@ -163,6 +213,7 @@ CREATE TABLE `contrato_bien` (
   `cantidad` int unsigned DEFAULT NULL,
   `precio_unitario` decimal(15,2) NOT NULL,
   `subtotal` decimal(15,2) NOT NULL,
+  `tipo_captura_serie` enum('NINGUNO','SIMPLE','CONJUNTO') NOT NULL DEFAULT 'NINGUNO',
   `fecha_creacion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `usuario_creacion` int unsigned NOT NULL DEFAULT '1',
   `fecha_modificacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
@@ -177,6 +228,28 @@ CREATE TABLE `contrato_bien` (
   CONSTRAINT `fk_contrato_bien_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `fk_contrato_bien_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `fk_contrato_bien_unidad` FOREIGN KEY (`id_unidad_medida`) REFERENCES `unidad_medida` (`id_unidad_medida`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `contrato_bien_componente`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contrato_bien_componente` (
+  `id_contrato_bien_componente` int unsigned NOT NULL AUTO_INCREMENT,
+  `id_contrato_bien` int unsigned NOT NULL,
+  `nombre_componente` varchar(150) NOT NULL,
+  `orden` smallint unsigned NOT NULL DEFAULT '0',
+  `fecha_creacion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_creacion` int unsigned NOT NULL DEFAULT '1',
+  `fecha_modificacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `usuario_modificacion` int unsigned DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id_contrato_bien_componente`),
+  KEY `fk_cbc_contrato_bien` (`id_contrato_bien`),
+  KEY `fk_cbc_creacion` (`usuario_creacion`),
+  KEY `fk_cbc_modificacion` (`usuario_modificacion`),
+  CONSTRAINT `fk_cbc_contrato_bien` FOREIGN KEY (`id_contrato_bien`) REFERENCES `contrato_bien` (`id_contrato_bien`),
+  CONSTRAINT `fk_cbc_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_cbc_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `contrato_clave_presupuestal`;
@@ -284,6 +357,32 @@ CREATE TABLE `evidencia_bien` (
   CONSTRAINT `fk_evidencia_bien_captura` FOREIGN KEY (`usuario_captura`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `fk_evidencia_bien_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
   CONSTRAINT `fk_evidencia_bien_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `evidencia_contrato_bien`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `evidencia_contrato_bien` (
+  `id_evidencia_contrato_bien` int unsigned NOT NULL AUTO_INCREMENT,
+  `id_contrato_bien` int unsigned NOT NULL,
+  `url` varchar(500) DEFAULT NULL,
+  `nombre_archivo` varchar(255) NOT NULL,
+  `fecha_captura` datetime NOT NULL,
+  `usuario_captura` int unsigned DEFAULT NULL,
+  `fecha_creacion` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `usuario_creacion` int unsigned NOT NULL DEFAULT '1',
+  `fecha_modificacion` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `usuario_modificacion` int unsigned DEFAULT NULL,
+  `activo` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id_evidencia_contrato_bien`),
+  KEY `fk_evidencia_contrato_bien_cb` (`id_contrato_bien`),
+  KEY `fk_evidencia_contrato_bien_creacion` (`usuario_creacion`),
+  KEY `fk_evidencia_contrato_bien_modificacion` (`usuario_modificacion`),
+  KEY `fk_evidencia_contrato_bien_captura` (`usuario_captura`),
+  CONSTRAINT `fk_evidencia_contrato_bien_cb` FOREIGN KEY (`id_contrato_bien`) REFERENCES `contrato_bien` (`id_contrato_bien`),
+  CONSTRAINT `fk_evidencia_contrato_bien_captura` FOREIGN KEY (`usuario_captura`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_evidencia_contrato_bien_creacion` FOREIGN KEY (`usuario_creacion`) REFERENCES `usuario` (`id_usuario`),
+  CONSTRAINT `fk_evidencia_contrato_bien_modificacion` FOREIGN KEY (`usuario_modificacion`) REFERENCES `usuario` (`id_usuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `evidencia_entrada`;

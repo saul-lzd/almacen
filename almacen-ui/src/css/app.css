@@ -448,6 +448,50 @@
     max-width: none;
   }
 
+  /* Plantilla de componentes esperados (bienes "Conjunto") */
+  .proc-componente-fila {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    max-width: 480px;
+  }
+
+  .proc-componente-input {
+    flex: 1;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--oj-core-text-color-primary);
+  }
+
+  .proc-componente-input:focus {
+    outline: none;
+    border-color: var(--oj-core-brand-color-primary, #2563eb);
+  }
+
+  /* Diálogo de captura de componentes por unidad */
+  .proc-componente-captura-fila {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .proc-componente-captura-fila:last-child {
+    border-bottom: none;
+  }
+
+  .proc-componente-captura-nombre {
+    min-width: 120px;
+    flex-shrink: 0;
+    padding-bottom: 8px;
+  }
+
   .procesamiento-pill {
     display: inline-block;
     font-size: 11px;

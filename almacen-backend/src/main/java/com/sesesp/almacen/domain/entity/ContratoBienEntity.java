@@ -6,6 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.Formula;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Bien (producto) que se va a adquirir en el contrato.
@@ -78,4 +80,37 @@ public class ContratoBienEntity extends AuditoriaEntity {
     @Formula("(SELECT COUNT(*) FROM almacen_bien ab WHERE ab.id_contrato_bien = id_contrato_bien" +
              " AND ab.estatus = 'ENTREGADO')")
     private Long cantidadEntregadaTotal;
+
+    /**
+     * Determina qué se captura por unidad al procesar los bienes de este grupo:
+     *   NINGUNO:  no se captura número de serie/motor (ej. botas, gorras).
+     *   SIMPLE:   un único número de serie/motor por unidad (ej. laptops).
+     *   CONJUNTO: la unidad es un paquete de varias piezas, cada una con su
+     *             propio número de serie (ej. workstation = Monitor+CPU+Teclado)
+     *             — los nombres de los componentes esperados viven en
+     *             ContratoBienComponenteEntity.
+     * No aplica a bienes con unidadMedida = "Vehículo": ahí el número de motor
+     * siempre se captura vía AlmacenBienEntity.numeroMotor, independientemente
+     * de este campo.
+     */
+    @Column(name = "tipo_captura_serie", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private TipoCapturaSerie tipoCapturaSerie = TipoCapturaSerie.NINGUNO;
+
+    /** Plantilla de componentes esperados cuando tipoCapturaSerie = CONJUNTO. */
+    @OneToMany(mappedBy = "contratoBien", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ContratoBienComponenteEntity> componentesEsperados = new ArrayList<>();
+
+    /** Fotos "de catálogo" del tipo de bien (mínimo 5, una sola vez por grupo). */
+    @OneToMany(mappedBy = "contratoBien", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<EvidenciaContratoBienEntity> evidencias = new ArrayList<>();
+
+    public enum TipoCapturaSerie {
+        NINGUNO,
+        SIMPLE,
+        CONJUNTO
+    }
 }

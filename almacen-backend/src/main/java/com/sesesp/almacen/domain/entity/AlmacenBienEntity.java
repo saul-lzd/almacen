@@ -101,9 +101,20 @@ public class AlmacenBienEntity extends AuditoriaEntity {
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
 
+    /**
+     * Fotos por unidad: para bienes "Vehículo" son las 5 fotos generales del
+     * vehículo; para bienes con tipoCapturaSerie = SIMPLE es la foto de la
+     * etiqueta del número de serie/motor. No se usa para el caso CONJUNTO
+     * (ahí cada foto va embebida en su propio ComponenteBienEntity).
+     */
     @OneToMany(mappedBy = "almacenBien", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<EvidenciaBienEntity> evidencias = new ArrayList<>();
+
+    /** Números de serie + foto por componente, cuando el grupo es CONJUNTO. */
+    @OneToMany(mappedBy = "almacenBien", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ComponenteBienEntity> componentes = new ArrayList<>();
 
     public enum EstatusBien {
         RECIBIDO,

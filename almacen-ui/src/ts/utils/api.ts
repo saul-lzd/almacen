@@ -155,6 +155,40 @@ export const almacenBienesApi = {
     // PATCH /api/almacen-bienes/procesar-bloque — procesa múltiples bienes en una sola llamada
     procesarBloque: (payload: unknown): Promise<any> =>
         fetch(`${BASE_URL}/api/almacen-bienes/procesar-bloque`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
+
+    // POST /api/almacen-bienes/:id/evidencias — fotos por unidad (Vehículo: min 5; Simple: min 1). Acumulativo.
+    subirEvidencia: (id: number, evidencias: File[]): Promise<any> => {
+        const formData = new FormData();
+        evidencias.forEach(file => formData.append("evidencias", file));
+        return fetch(`${BASE_URL}/api/almacen-bienes/${id}/evidencias`, multipartInit("POST", formData)).then(r => handleResponse(r));
+    },
+
+    // POST /api/almacen-bienes/:id/componentes — número de serie + foto por cada componente de una unidad "Conjunto"
+    guardarComponentes: (id: number, componentes: { nombreComponente: string; numeroSerie: string }[], evidencias: File[]): Promise<any> => {
+        const formData = new FormData();
+        formData.append("request", new Blob([JSON.stringify(componentes)], { type: "application/json" }));
+        evidencias.forEach(file => formData.append("evidencias", file));
+        return fetch(`${BASE_URL}/api/almacen-bienes/${id}/componentes`, multipartInit("POST", formData)).then(r => handleResponse(r));
+    },
+};
+
+// ================================================================
+// CONTRATO BIENES
+// Configuración y evidencias a nivel de tipo de bien (grupo), no de unidad.
+// ================================================================
+
+export const contratoBienesApi = {
+
+    // PATCH /api/contrato-bienes/:id/captura-serie — define Ninguno/Simple/Conjunto y sus componentes esperados
+    definirCapturaSerie: (id: number, payload: unknown): Promise<any> =>
+        fetch(`${BASE_URL}/api/contrato-bienes/${id}/captura-serie`, jsonInit("PATCH", payload)).then(r => handleResponse(r)),
+
+    // POST /api/contrato-bienes/:id/evidencias — fotos "de catálogo" del tipo de bien (min 5). Acumulativo.
+    subirEvidencia: (id: number, evidencias: File[]): Promise<any> => {
+        const formData = new FormData();
+        evidencias.forEach(file => formData.append("evidencias", file));
+        return fetch(`${BASE_URL}/api/contrato-bienes/${id}/evidencias`, multipartInit("POST", formData)).then(r => handleResponse(r));
+    },
 };
 
 // ================================================================
@@ -175,4 +209,8 @@ export const catalogosApi = {
     // GET /api/funcionarios — devuelve titulares y administradores de contrato
     obtenerFuncionarios: (): Promise<any[]> =>
         fetch(`${BASE_URL}/api/funcionarios`, getInit()).then(r => handleResponse(r)),
+
+    // GET /api/catalogo-componentes — nombres de componente para autocompletado en bienes "Conjunto"
+    obtenerComponentes: (): Promise<string[]> =>
+        fetch(`${BASE_URL}/api/catalogo-componentes`, getInit()).then(r => handleResponse(r)),
 };

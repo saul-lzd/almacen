@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
@@ -22,4 +23,10 @@ public class AlmacenBienDto {
     private String marca;
     private String modelo;
     private String descripcionComplementaria;
+
+    /** Fotos ya subidas para esta unidad — Vehículo (min 5) o etiqueta de serie simple (min 1). */
+    private int totalEvidencias;
+
+    /** Componentes ya capturados (nombre + número de serie + si ya tiene foto) — solo grupos CONJUNTO. */
+    private List<ComponenteBienDto> componentes;
 }

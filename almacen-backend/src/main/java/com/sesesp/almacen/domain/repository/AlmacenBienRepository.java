@@ -20,6 +20,18 @@ public interface AlmacenBienRepository extends JpaRepository<AlmacenBienEntity, 
 
     List<AlmacenBienEntity> findByIdAlmacenBienInAndActivoTrue(List<Integer> ids);
 
+    /** Para validar unicidad global de número de serie antes de guardar. */
+    List<AlmacenBienEntity> findByNumeroSerieInAndActivoTrue(Collection<String> numerosSerie);
+
+    /**
+     * Para validar unicidad global de número de motor — trae también el contrato
+     * para poder informar en qué contrato ya está registrado cada duplicado.
+     */
+    @Query("SELECT ab FROM AlmacenBienEntity ab " +
+           "JOIN FETCH ab.contrato " +
+           "WHERE ab.numeroMotor IN :numerosMotor AND ab.activo = true")
+    List<AlmacenBienEntity> findByNumeroMotorInWithContrato(@Param("numerosMotor") Collection<String> numerosMotor);
+
     /**
      * Carga bienes de un contrato con JOIN FETCH para evitar N+1:
      * resuelve contratoBien→unidadMedida y recepcionAlmacenBien→recepcionAlmacen en una sola query.

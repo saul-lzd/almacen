@@ -37,4 +37,13 @@ VALUES
     ('Par',         1, NOW(), 1),
     ('Servicio',    1, NOW(), 1);
 
+-- Catálogo de nombres de componente para bienes "conjunto" (ej. workstation
+-- = Monitor + CPU + Teclado). Crece solo: cuando el almacenista escribe un
+-- nombre nuevo al capturar evidencia, se agrega aquí para autocompletado futuro.
+INSERT INTO catalogo_componente (nombre, activo, fecha_creacion, usuario_creacion)
+VALUES
+    ('CPU',      1, NOW(), 1),
+    ('Teclado',  1, NOW(), 1),
+    ('Ratón',    1, NOW(), 1);
+
 SET FOREIGN_KEY_CHECKS = 1;
