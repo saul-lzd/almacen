@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.service;
 
+import com.sesesp.almacen.common.SESESP_UTILS;
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.common.util.SecurityUtils;
 import com.sesesp.almacen.domain.dto.EntregaRequestDto;
@@ -47,9 +48,6 @@ public class SalidaAlmacenService {
     private final RecepcionAlmacenRepository recepcionAlmacenRepository;
     private final EvidenciaSalidaRepository evidenciaSalidaRepository;
     private final S3StorageService s3StorageService;
-
-    private static final int MIN_EVIDENCIAS = 5;
-    private static final int MAX_EVIDENCIAS = 10;
 
     /**
      * Registra la entrega de bienes a un beneficiario.
@@ -198,14 +196,15 @@ public class SalidaAlmacenService {
     private String generarFolio() {
         String anio = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy"));
         long secuencial = salidaAlmacenRepository.count() + 1;
-        return String.format("SA-%s-%04d", anio, secuencial);
+        return String.format("%s-%s-%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_FOLIO + "d",
+                SESESP_UTILS.PREFIJO_FOLIO_ENTREGA, anio, secuencial);
     }
 
     private void validarEvidencias(List<MultipartFile> evidencias) {
         int total = evidencias == null ? 0 : evidencias.size();
-        if (total < MIN_EVIDENCIAS || total > MAX_EVIDENCIAS) {
+        if (total < SESESP_UTILS.MIN_EVIDENCIAS_ENTREGA || total > SESESP_UTILS.MAX_EVIDENCIAS_ENTREGA) {
             throw new ContratoValidacionException(List.of(
-                    "Debes adjuntar entre " + MIN_EVIDENCIAS + " y " + MAX_EVIDENCIAS
+                    "Debes adjuntar entre " + SESESP_UTILS.MIN_EVIDENCIAS_ENTREGA + " y " + SESESP_UTILS.MAX_EVIDENCIAS_ENTREGA
                             + " fotos de evidencia (se recibieron " + total + ")."));
         }
     }
@@ -230,7 +229,7 @@ public class SalidaAlmacenService {
         String[] folioParts = salida.getFolioSalidaAlmacen().split("-");
         String consecutivo = folioParts[folioParts.length - 1];
         String fecha = salida.getFechaSalida().format(DateTimeFormatter.ofPattern("yyyy_MM_dd"));
-        String base = "SA_" + consecutivo + "_" + fecha;
+        String base = SESESP_UTILS.PREFIJO_FOLIO_ENTREGA + "_" + consecutivo + "_" + fecha;
 
         List<EvidenciaSalidaEntity> entidades = new ArrayList<>();
         int numeroProgresivo = 1;
