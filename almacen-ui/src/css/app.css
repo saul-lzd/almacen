@@ -340,71 +340,7 @@
     margin-bottom: 8px;
   }
 
-  .proc-grupos {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  /* Card header */
-  .proc-grupo-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .proc-grupo-header-info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .proc-grupo-titulo {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--oj-core-text-color-primary);
-    margin-bottom: 4px;
-  }
-
-  .proc-grupo-details {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--oj-core-text-color-secondary);
-  }
-
-  .proc-grupo-sep {
-    color: #d1d5db;
-    padding: 0 2px;
-  }
-
-  .proc-grupo-acciones {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-
-  /* Marca + Modelo form */
-  .proc-grupo-form {
-    border-top: 1px solid #f3f4f6;
-  }
-
-  .proc-grupo-form-nota {
-    margin-bottom: 8px;
-  }
-
-  /* Toggle número de serie */
-  .proc-serie-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 14px;
-  }
-
-  /* Lista de números de serie */
+  /* Lista de nombres de componente (wizard Paso 3, bienes "Conjunto") */
   .proc-serie-lista {
     margin-top: 12px;
     padding-top: 12px;
@@ -418,34 +354,150 @@
     font-weight: 600;
   }
 
-  .proc-serie-fila {
+  /* Divisor entre secciones de la Pestaña 2 (Datos generales / Fotos / Sección C) */
+  .proc-seccion-divider {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  /* Paneles de la Pestaña 1 (wizard de configuración) — cada pregunta vive en su propio panel */
+  .proc-config-panel {
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--oj-core-bg-color-secondary, #f5f5f5);
+    transition: opacity 0.15s;
+  }
+
+  .proc-config-panel--disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .proc-config-panel-titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--oj-core-text-color-primary);
+    margin-bottom: 10px;
+  }
+
+  .proc-config-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .proc-config-option {
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    font-size: 13px;
+    color: var(--oj-core-text-color-primary);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+
+  .proc-config-option:hover {
+    border-color: var(--oj-core-brand-color, #0572CE);
+  }
+
+  .proc-config-option--selected {
+    background: #EBF3FC;
+    border-color: var(--oj-core-brand-color, #0572CE);
+    color: var(--oj-core-brand-color, #0572CE);
+    font-weight: 600;
+  }
+
+  /* Sidebar — item de bien (descripción + metadatos + badge de estado apilados) */
+  .proc-sb-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .proc-sb-item-meta {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 4px 0;
+    justify-content: space-between;
+    width: 100%;
   }
 
-  .proc-serie-label {
-    min-width: 72px;
+  /* Tabs de la Pestaña 1 / Pestaña 2 */
+  .proc-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--oj-core-divider-color, #e0e0e0);
+  }
+
+  .proc-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    cursor: pointer;
     font-size: 13px;
+    border-bottom: 2px solid transparent;
     color: var(--oj-core-text-color-secondary);
-    flex-shrink: 0;
+    user-select: none;
   }
 
-  .proc-serie-input {
-    flex: 1;
-    max-width: 320px;
+  .proc-tab--active {
+    border-bottom-color: var(--oj-core-brand-color, #0572CE);
+    color: var(--oj-core-text-color-primary);
+    font-weight: 600;
   }
 
-  .proc-serie-grid3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0 24px;
-    margin-top: 4px;
+  .proc-tab--disabled {
+    color: var(--oj-core-text-color-disabled, #bbb);
+    cursor: not-allowed;
+    pointer-events: none;
   }
 
-  .proc-serie-grid3 .proc-serie-input {
-    max-width: none;
+  /* Footer del área de trabajo (botones Guardar / Finalizar Procesamiento) */
+  .cf-workspace-footer {
+    padding-top: 16px;
+    border-top: 1px solid var(--oj-core-divider-color, #e0e0e0);
+  }
+
+  /* Placeholder de foto ya guardada en una sesión previa (sin endpoint de descarga por URL) */
+  .evidencia-item--placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: var(--oj-core-bg-color-secondary, #f5f5f5);
+    color: var(--oj-core-text-color-secondary);
+    font-size: 10px;
+  }
+
+  /* Tabla de unidades ya capturadas (Simple / Vehículo / Conjunto) */
+  .proc-captura-tabla-wrap {
+    overflow-x: auto;
+  }
+
+  .proc-captura-tabla {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .proc-captura-tabla th,
+  .proc-captura-tabla td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+    white-space: nowrap;
+  }
+
+  .proc-captura-tabla th {
+    color: var(--oj-core-text-color-secondary);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   /* Plantilla de componentes esperados (bienes "Conjunto") */
@@ -490,22 +542,6 @@
     min-width: 120px;
     flex-shrink: 0;
     padding-bottom: 8px;
-  }
-
-  .procesamiento-pill {
-    display: inline-block;
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    color: var(--oj-core-text-color-secondary);
-  }
-
-  .procesamiento-pill--completo {
-    background: #EBF7EE;
-    border-color: #A5D6B3;
-    color: #15803D;
   }
 
   /* ── DASHBOARD (lista / grid) ── */
@@ -886,6 +922,18 @@
   flex-direction: column;
   overflow: hidden;
   min-height: calc(100vh - 450px);
+}
+
+/* Procesamiento — el contenido del área de trabajo es más largo/variable que el
+   formulario de contrato: no recortar (overflow visible) y solo fijar una altura
+   mínima, dejando que crezca según el contenido. */
+.proc-cf-layout {
+  overflow: visible;
+  min-height: 480px;
+}
+.proc-cf-layout .cf-workspace-body {
+  min-height: 480px;
+  height: auto;
 }
 
 .cf-layout-top {
@@ -1398,6 +1446,17 @@
   cursor: pointer;
 }
 .cd-bienes-desc-link:hover {
+  text-decoration: underline;
+}
+
+/* Descripción del bien en el header del área de trabajo de Procesamiento — sin azul, solo hover */
+.proc-ws-desc-link {
+  cursor: pointer;
+  color: var(--oj-core-text-color-primary);
+  transition: color 0.15s;
+}
+.proc-ws-desc-link:hover {
+  color: var(--oj-core-brand-color, #0572CE);
   text-decoration: underline;
 }
 

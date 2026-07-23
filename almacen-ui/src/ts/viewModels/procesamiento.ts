@@ -4,15 +4,14 @@ import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
 import { contratosApi, almacenBienesApi, contratoBienesApi, catalogosApi } from "../utils/api";
 import { CFilePickerElement } from 'oj-c/file-picker';
+import "../jet-composites/quill-editor/quill-editor";
 import "oj-c/dialog";
 
 import "oj-c/form-layout";
 import "oj-c/input-text";
 import "oj-c/button";
 import "oj-c/progress-bar";
-import "oj-c/radioset";
 import "oj-c/file-picker";
-import "ojs/ojswitch";
 
 // crypto.randomUUID solo existe en "contextos seguros" (HTTPS o localhost) —
 // en un deploy por HTTP plano sobre IP (sin dominio/TLS) el navegador no
@@ -46,7 +45,7 @@ type ComponenteGuardado = {
     tieneFoto: boolean;
 };
 
-/** Fila del diálogo de captura de componentes de una unidad "Conjunto". */
+/** Fila del formulario de captura de componentes de una unidad "Conjunto" (Sección C). */
 type ComponenteCapturado = {
     nombreComponente: string;
     frmNumeroSerie: ko.Observable<string>;
@@ -63,23 +62,20 @@ type UnidadProcesamiento = {
     uiComponentesGuardados: ko.Observable<ComponenteGuardado[]>;
 };
 
+type EstadoGrupo = "PENDIENTE" | "CONFIGURADO" | "COMPLETADO";
+
 type GrupoProcesamiento = {
     idContratoBien: number;
     lote: number | null;
     partida: number | null;
     descripcion: string;
+    descripcionCompleta: string;
     unidadMedida: string;
     totalUnidades: number;
     unidades: UnidadProcesamiento[];
     frmMarca: ko.Observable<string>;
     frmModelo: ko.Observable<string>;
-    /** Switch — ¿este bien lleva número de serie/motor? */
-    uiRequiereNumeroSerie: ko.Observable<boolean>;
-    /** SIMPLE | CONJUNTO | null (sin elegir) — solo relevante si uiRequiereNumeroSerie() es true */
-    uiSubTipoCapturaSerie: ko.Observable<string | null>;
-    /** NINGUNO | SIMPLE | CONJUNTO — deriva de los dos anteriores; solo maneja la visibilidad del editor de componentes, sin guardar todavía */
-    calcTipoCapturaEfectivo: ko.PureComputed<string>;
-    /** NINGUNO | SIMPLE | CONJUNTO — la última configuración YA guardada en servidor; controla las secciones por unidad (evita re-renderizar la lista completa en cada click del radio) */
+    /** NINGUNO | SIMPLE | CONJUNTO — la última configuración YA guardada en servidor */
     uiTipoCapturaGuardado: ko.Observable<string>;
     listaComponentesEsperados: ko.ObservableArray<ComponenteEsperadoItem>;
     uiTotalEvidenciasGrupo: ko.Observable<number>;
@@ -89,6 +85,31 @@ type GrupoProcesamiento = {
     calcListoParaFinalizar: ko.PureComputed<boolean>;
     uiGuardandoGrupo: ko.Observable<boolean>;
     uiGuardandoConfig: ko.Observable<boolean>;
+
+    // ── Navegación / estado (sidebar + tabs) ──
+    uiTabActiva: ko.Observable<"CONFIGURACION" | "CAPTURA">;
+    calcEstadoGrupo: ko.PureComputed<EstadoGrupo>;
+
+    // ── Wizard de configuración (estado propio por grupo, ya no un diálogo compartido) ──
+    wizPaso1: ko.Observable<"SI" | "NO" | null>;
+    wizPaso2: ko.Observable<"SIMPLE" | "CONJUNTO" | null>;
+    wizComponentes: ko.ObservableArray<ComponenteEsperadoItem>;
+    calcWizEsConjunto: ko.PureComputed<boolean>;
+    calcWizPuedeConfirmar: ko.PureComputed<boolean>;
+
+    // ── Sección C — entrada secuencial (Simple / Vehículo / Conjunto) ──
+    /** idAlmacenBien en edición vía "Editar" de la tabla; null = la próxima unidad sin llenar */
+    secEditandoUnidadId: ko.Observable<number | null>;
+    secFrmNumero: ko.Observable<string>;
+    secFrmEvidencias: ko.ObservableArray<EvidenciaImagen>;
+    secFrmComponentes: ko.ObservableArray<ComponenteCapturado>;
+    /** Filas ya capturadas para la tabla — filtro puro sobre `unidades`, nunca se muta con push/remove */
+    calcFilasCapturadas: ko.PureComputed<UnidadProcesamiento[]>;
+    uiGuardandoSecFila: ko.Observable<boolean>;
+
+    // ── Sección B — grid de fotos generales del bien (inline, ya no diálogo) ──
+    wizSecBFotos: ko.ObservableArray<EvidenciaImagen>;
+    uiSubiendoFotoGrupo: ko.Observable<boolean>;
 };
 
 type ClavePresupuestal = {
@@ -180,6 +201,33 @@ class ProcesamientoViewModel {
         this.listaGrupos().length > 0 && this.calcTotalPendientes() === 0
     );
 
+    // ── Sidebar — grupo seleccionado ────────────────────────────────
+    public uiGrupoSeleccionadoId = ko.observable<number | null>(null);
+
+    public calcGrupoSeleccionado = ko.pureComputed<GrupoProcesamiento | null>(() =>
+        this.listaGrupos().find(g => g.idContratoBien === this.uiGrupoSeleccionadoId()) || null
+    );
+
+    public cmdSeleccionarGrupo = (grupo: GrupoProcesamiento): void => {
+        this.uiGrupoSeleccionadoId(grupo.idContratoBien);
+    };
+
+    public cmdCambiarTab = (grupo: GrupoProcesamiento, tab: "CONFIGURACION" | "CAPTURA"): void => {
+        if (tab === "CAPTURA" && grupo.calcEstadoGrupo() === "PENDIENTE") return;
+        grupo.uiTabActiva(tab);
+    };
+
+    // ── Diálogo de descripción técnica completa del bien ───────────
+    public uiBienDescripcionDialogOpen   = ko.observable<boolean>(false);
+    public uiDescripcionBienSeleccionada = ko.observable<string>("");
+    public uiTituloBienSeleccionado      = ko.observable<string>("");
+
+    public cmdVerDescripcionCompleta = (grupo: GrupoProcesamiento): void => {
+        this.uiTituloBienSeleccionado(`Lote ${grupo.lote ?? "—"} · Partida ${grupo.partida ?? "—"}`);
+        this.uiDescripcionBienSeleccionada(grupo.descripcionCompleta);
+        this.uiBienDescripcionDialogOpen(true);
+    };
+
     // ================================================================
     // EVIDENCIAS — catálogo de bienes procesados (grupo + unidad + conjunto)
     // ================================================================
@@ -193,38 +241,13 @@ class ProcesamientoViewModel {
         { value: "CONJUNTO", label: "Conjunto de componentes" },
     ];
 
+    public readonly listaPaso1Options = [
+        { value: "SI", label: "Sí, requiere número de serie" },
+        { value: "NO", label: "No requiere número de serie" },
+    ];
+
     public listaCatalogoComponentes = ko.observableArray<string>([]);
     private seqComponenteEsperado = 0;
-
-    // ── Diálogo de evidencias fotográficas (reutilizado para grupo y unidad) ──
-    public uiDialogoEvidencia        = ko.observable<boolean>(false);
-    public uiDialogoEvidenciaTitulo  = ko.observable<string>("");
-    public uiDialogoEvidenciaMin     = ko.observable<number>(5);
-    public uiDialogoEvidenciaPrevias = ko.observable<number>(0);
-    public listaEvidenciasDialogo    = ko.observableArray<EvidenciaImagen>([]);
-    public uiGuardandoEvidencia      = ko.observable<boolean>(false);
-    private evidenciaDialogoTipo: "GRUPO" | "UNIDAD" | null = null;
-    private evidenciaDialogoGrupo: GrupoProcesamiento | null = null;
-    private evidenciaDialogoUnidad: UnidadProcesamiento | null = null;
-
-    public calcTotalEvidenciaDialogo = ko.pureComputed(() =>
-        this.uiDialogoEvidenciaPrevias() + this.listaEvidenciasDialogo().length
-    );
-    public calcFaltanEvidenciaDialogo = ko.pureComputed(() =>
-        this.calcTotalEvidenciaDialogo() < this.uiDialogoEvidenciaMin()
-    );
-
-    // ── Diálogo de componentes (unidad "Conjunto") ──
-    public uiDialogoComponentes       = ko.observable<boolean>(false);
-    public uiDialogoComponentesTitulo = ko.observable<string>("");
-    public listaComponentesDialogo    = ko.observableArray<ComponenteCapturado>([]);
-    public uiGuardandoComponentes     = ko.observable<boolean>(false);
-    private componentesDialogoUnidad: UnidadProcesamiento | null = null;
-
-    public calcPuedeGuardarComponentes = ko.pureComputed(() =>
-        this.listaComponentesDialogo().length > 0 &&
-        this.listaComponentesDialogo().every(c => !!c.frmNumeroSerie().trim() && c.evidencia() !== null)
-    );
 
     constructor(params: any) {
         this.router = params?.router;
@@ -259,8 +282,14 @@ class ProcesamientoViewModel {
     }
 
     disconnected(): void {
-        this.limpiarEvidenciasDialogo();
-        this.limpiarComponentesDialogo();
+        this.listaGrupos().forEach(g => {
+            g.secFrmEvidencias().forEach(e => URL.revokeObjectURL(e.previewUrl));
+            g.secFrmComponentes().forEach(c => {
+                const e = c.evidencia();
+                if (e) URL.revokeObjectURL(e.previewUrl);
+            });
+            g.wizSecBFotos().forEach(e => URL.revokeObjectURL(e.previewUrl));
+        });
     }
     transitionCompleted(): void {}
 
@@ -302,6 +331,10 @@ class ProcesamientoViewModel {
                 (dataContrato.bienes || []).reduce(
                     (sum: number, b: any) => sum + (parseFloat(b.cantidad) || 0), 0
                 )
+            );
+
+            const descripcionCompletaPorBien = new Map<number, string>(
+                (dataContrato.bienes || []).map((b: any) => [b.idContratoBien, b.descripcionTecnica || ""])
             );
 
             if (this.recepcionId && dataRecepciones) {
@@ -359,13 +392,6 @@ class ProcesamientoViewModel {
                 const tipoCapturaSerieInicial: string = g.tipoCapturaSerie || "NINGUNO";
                 const totalEvidenciasGrupoInicial: number = g.totalEvidenciasGrupo || 0;
 
-                const uiRequiereNumeroSerie = ko.observable<boolean>(tipoCapturaSerieInicial !== "NINGUNO");
-                const uiSubTipoCapturaSerie = ko.observable<string | null>(
-                    tipoCapturaSerieInicial === "NINGUNO" ? null : tipoCapturaSerieInicial
-                );
-                const calcTipoCapturaEfectivo = ko.pureComputed(() =>
-                    uiRequiereNumeroSerie() ? (uiSubTipoCapturaSerie() || "NINGUNO") : "NINGUNO"
-                );
                 const uiTipoCapturaGuardado  = ko.observable<string>(tipoCapturaSerieInicial);
                 const uiTotalEvidenciasGrupo = ko.observable<number>(totalEvidenciasGrupoInicial);
 
@@ -386,37 +412,120 @@ class ProcesamientoViewModel {
                     return true;
                 });
 
-                return {
-                    idContratoBien:  g.idContratoBien,
-                    lote:            g.lote,
-                    partida:         g.partida,
-                    descripcion:     g.descripcion,
-                    unidadMedida:    g.unidadMedida,
-                    totalUnidades:   g.totalUnidades,
+                const calcTodosProcesados = ko.pureComputed(() =>
+                    calcProcesados() === unidades.length
+                );
+
+                // Heurística LOCKED: "Pendiente" solo si nunca se tocó nada de este grupo.
+                // No se puede distinguir en servidor "nunca configurado" de "configurado
+                // explícitamente como NINGUNO" (columna NOT NULL, default NINGUNO) — decisión
+                // explícita del usuario de aceptar este límite en vez de tocar el esquema.
+                const calcSinTocar = ko.pureComputed(() =>
+                    !esVehiculo &&
+                    uiTipoCapturaGuardado() === "NINGUNO" &&
+                    frmMarca().trim() === "" && frmModelo().trim() === "" &&
+                    unidades.every(u => u.uiEstatus() === "RECIBIDO" && u.frmNumeroSerie().trim() === "") &&
+                    uiTotalEvidenciasGrupo() === 0
+                );
+
+                const calcEstadoGrupo = ko.pureComputed<EstadoGrupo>(() => {
+                    if (calcTodosProcesados()) return "COMPLETADO";
+                    if (esVehiculo) return "CONFIGURADO";
+                    return calcSinTocar() ? "PENDIENTE" : "CONFIGURADO";
+                });
+
+                const estadoInicial = calcEstadoGrupo();
+
+                const wizPaso1 = ko.observable<"SI" | "NO" | null>(
+                    (esVehiculo || estadoInicial === "PENDIENTE")
+                        ? null
+                        : (tipoCapturaSerieInicial === "NINGUNO" ? "NO" : "SI")
+                );
+                const wizPaso2 = ko.observable<"SIMPLE" | "CONJUNTO" | null>(
+                    (tipoCapturaSerieInicial === "SIMPLE" || tipoCapturaSerieInicial === "CONJUNTO")
+                        ? (tipoCapturaSerieInicial as "SIMPLE" | "CONJUNTO")
+                        : null
+                );
+                const wizComponentes = ko.observableArray<ComponenteEsperadoItem>(
+                    listaComponentesEsperados().map(c => ({ ...c }))
+                );
+                const calcWizEsConjunto = ko.pureComputed(() => wizPaso2() === "CONJUNTO");
+                const calcWizPuedeConfirmar = ko.pureComputed(() => {
+                    if (wizPaso1() === null) return false;
+                    if (wizPaso1() === "NO") return true;
+                    if (wizPaso2() === null) return false;
+                    if (wizPaso2() === "CONJUNTO") {
+                        return wizComponentes().some(c => c.nombre.trim().length > 0);
+                    }
+                    return true;
+                });
+
+                const calcFilasCapturadas = ko.pureComputed(() => {
+                    if (uiTipoCapturaGuardado() === "CONJUNTO") {
+                        return unidades.filter(u => u.uiComponentesGuardados().length > 0);
+                    }
+                    return unidades.filter(u => u.frmNumeroSerie().trim() !== "");
+                });
+
+                const grupo: GrupoProcesamiento = {
+                    idContratoBien:      g.idContratoBien,
+                    lote:                g.lote,
+                    partida:             g.partida,
+                    descripcion:         g.descripcion,
+                    descripcionCompleta: descripcionCompletaPorBien.get(g.idContratoBien) || "",
+                    unidadMedida:        g.unidadMedida,
+                    totalUnidades:       g.totalUnidades,
                     unidades,
                     frmMarca,
                     frmModelo,
-                    uiRequiereNumeroSerie,
-                    uiSubTipoCapturaSerie,
-                    calcTipoCapturaEfectivo,
                     uiTipoCapturaGuardado,
                     listaComponentesEsperados,
                     uiTotalEvidenciasGrupo,
                     calcEsVehiculo: ko.pureComputed(() => esVehiculo),
                     calcProcesados,
-                    uiGuardandoConfig: ko.observable<boolean>(false),
-                    calcTodosProcesados: ko.pureComputed(() =>
-                        calcProcesados() === unidades.length
-                    ),
+                    calcTodosProcesados,
                     calcListoParaFinalizar: ko.pureComputed(() =>
                         unidades.every(u => u.uiEstatus() === "EN_PROCESO" || u.uiEstatus() === "PROCESADO")
                         && calcEvidenciaCompleta()
                     ),
-                    uiGuardandoGrupo: ko.observable<boolean>(false),
+                    uiGuardandoGrupo:  ko.observable<boolean>(false),
+                    uiGuardandoConfig: ko.observable<boolean>(false),
+
+                    uiTabActiva: ko.observable<"CONFIGURACION" | "CAPTURA">(
+                        (esVehiculo || estadoInicial !== "PENDIENTE") ? "CAPTURA" : "CONFIGURACION"
+                    ),
+                    calcEstadoGrupo,
+
+                    wizPaso1,
+                    wizPaso2,
+                    wizComponentes,
+                    calcWizEsConjunto,
+                    calcWizPuedeConfirmar,
+
+                    secEditandoUnidadId: ko.observable<number | null>(null),
+                    secFrmNumero:        ko.observable<string>(""),
+                    secFrmEvidencias:    ko.observableArray<EvidenciaImagen>([]),
+                    secFrmComponentes:   ko.observableArray<ComponenteCapturado>(
+                        tipoCapturaSerieInicial === "CONJUNTO" ? this.filasComponentesVacias(listaComponentesEsperados()) : []
+                    ),
+                    calcFilasCapturadas,
+                    uiGuardandoSecFila: ko.observable<boolean>(false),
+
+                    wizSecBFotos:        ko.observableArray<EvidenciaImagen>([]),
+                    uiSubiendoFotoGrupo: ko.observable<boolean>(false),
                 };
+
+                grupo.wizPaso2.subscribe(tipo => {
+                    if (tipo === "CONJUNTO" && grupo.wizComponentes().length === 0) {
+                        this.cmdAgregarComponenteWizard(grupo);
+                    }
+                });
+
+                return grupo;
             });
 
             this.listaGrupos(grupos);
+            this.uiGrupoSeleccionadoId(grupos.length > 0 ? grupos[0].idContratoBien : null);
         } catch (err: any) {
             console.error("Error al cargar procesamiento:", err);
             this.uiError("No se pudo cargar la información. Intenta de nuevo.");
@@ -436,7 +545,8 @@ class ProcesamientoViewModel {
         if (this.contratoId) void this.loadBienes(this.contratoId);
     };
 
-    // Guarda marca, modelo y números de serie sin marcar como PROCESADO.
+    // Guarda marca y modelo sin marcar como PROCESADO. El número de serie/motor
+    // y los componentes se guardan al vuelo vía cmdSiguienteCaptura (Sección C).
     // RECIBIDO → EN_PROCESO automáticamente en el backend.
     public cmdGuardarGrupo = async (grupo: GrupoProcesamiento): Promise<void> => {
         const pendientes = grupo.unidades.filter(u => u.uiEstatus() !== "PROCESADO");
@@ -453,11 +563,6 @@ class ProcesamientoViewModel {
                 const payload: any = {};
                 if (marca)  payload.marca  = marca;
                 if (modelo) payload.modelo = modelo;
-                if (grupo.calcEsVehiculo() && u.frmNumeroSerie().trim()) {
-                    payload.numeroMotor = u.frmNumeroSerie().trim();
-                } else if (grupo.uiTipoCapturaGuardado() === "SIMPLE" && u.frmNumeroSerie().trim()) {
-                    payload.numeroSerie = u.frmNumeroSerie().trim();
-                }
                 return almacenBienesApi.guardarDatos(u.idAlmacenBien, payload).then(() => {
                     u.uiEstatus("EN_PROCESO");
                 });
@@ -498,47 +603,54 @@ class ProcesamientoViewModel {
     };
 
     // ================================================================
-    // CONFIGURACIÓN DEL GRUPO — tipo de captura de serie + componentes esperados
+    // PESTAÑA 1 — Wizard de configuración de tipo de captura de serie
     // ================================================================
 
-    public cmdAgregarComponenteEsperado = (grupo: GrupoProcesamiento): void => {
-        grupo.listaComponentesEsperados([
-            ...grupo.listaComponentesEsperados(),
+    public cmdSetWizPaso1 = (grupo: GrupoProcesamiento, valor: "SI" | "NO"): void => {
+        grupo.wizPaso1(valor);
+    };
+
+    public cmdSetWizPaso2 = (grupo: GrupoProcesamiento, valor: "SIMPLE" | "CONJUNTO"): void => {
+        if (grupo.wizPaso1() !== "SI") return;
+        grupo.wizPaso2(valor);
+    };
+
+    public cmdAgregarComponenteWizard = (grupo: GrupoProcesamiento): void => {
+        grupo.wizComponentes([
+            ...grupo.wizComponentes(),
             { idLocal: this.seqComponenteEsperado++, nombre: "" },
         ]);
     };
 
-    public cmdEliminarComponenteEsperado = (grupo: GrupoProcesamiento, item: ComponenteEsperadoItem): void => {
-        grupo.listaComponentesEsperados(
-            grupo.listaComponentesEsperados().filter(c => c.idLocal !== item.idLocal)
-        );
+    public cmdEliminarComponenteWizard = (grupo: GrupoProcesamiento, item: ComponenteEsperadoItem): void => {
+        grupo.wizComponentes(grupo.wizComponentes().filter(c => c.idLocal !== item.idLocal));
     };
 
-    public cmdSetNombreComponenteEsperado = (grupo: GrupoProcesamiento, item: ComponenteEsperadoItem, valor: string): void => {
-        const idx = grupo.listaComponentesEsperados().findIndex(c => c.idLocal === item.idLocal);
+    public cmdSetNombreComponenteWizard = (grupo: GrupoProcesamiento, item: ComponenteEsperadoItem, valor: string): void => {
+        const idx = grupo.wizComponentes().findIndex(c => c.idLocal === item.idLocal);
         if (idx === -1) return;
-        grupo.listaComponentesEsperados.splice(idx, 1, { ...item, nombre: valor });
+        grupo.wizComponentes.splice(idx, 1, { ...item, nombre: valor });
     };
 
-    public cmdGuardarCapturaSerie = async (grupo: GrupoProcesamiento): Promise<void> => {
-        if (grupo.uiRequiereNumeroSerie() && !grupo.uiSubTipoCapturaSerie()) {
-            this.uiError("Selecciona si es un número de serie o un conjunto de componentes.");
-            return;
-        }
+    public cmdConfirmarConfigCaptura = async (grupo: GrupoProcesamiento): Promise<void> => {
+        if (!grupo.calcWizPuedeConfirmar()) return;
 
-        grupo.uiGuardandoConfig(true);
-        this.uiError("");
-
-        const tipo = grupo.uiRequiereNumeroSerie() ? grupo.uiSubTipoCapturaSerie()! : "NINGUNO";
-        const nombres = grupo.listaComponentesEsperados()
+        const tipo = grupo.wizPaso1() === "NO" ? "NINGUNO" : grupo.wizPaso2()!;
+        const nombres = grupo.wizComponentes()
             .map(c => c.nombre.trim())
             .filter(n => n.length > 0);
 
         if (tipo === "CONJUNTO" && nombres.length === 0) {
-            this.uiError("Agrega al menos un componente antes de guardar.");
-            grupo.uiGuardandoConfig(false);
+            this.uiError("Agrega al menos un componente antes de confirmar.");
             return;
         }
+
+        await this.guardarCapturaSerie(grupo, tipo, nombres);
+    };
+
+    private async guardarCapturaSerie(grupo: GrupoProcesamiento, tipo: string, nombres: string[]): Promise<void> {
+        grupo.uiGuardandoConfig(true);
+        this.uiError("");
 
         try {
             await contratoBienesApi.definirCapturaSerie(grupo.idContratoBien, {
@@ -546,7 +658,14 @@ class ProcesamientoViewModel {
                 componentes: tipo === "CONJUNTO" ? nombres : [],
             });
             grupo.uiTipoCapturaGuardado(tipo);
+            grupo.listaComponentesEsperados(
+                nombres.map(nombre => ({ idLocal: this.seqComponenteEsperado++, nombre }))
+            );
+            grupo.secFrmComponentes(
+                tipo === "CONJUNTO" ? this.filasComponentesVacias(grupo.listaComponentesEsperados()) : []
+            );
             void this.loadCatalogoComponentes();
+            grupo.uiTabActiva("CAPTURA");
             this.uiExito("Configuración guardada.");
             setTimeout(() => this.uiExito(""), 3000);
         } catch (err: any) {
@@ -555,167 +674,197 @@ class ProcesamientoViewModel {
         } finally {
             grupo.uiGuardandoConfig(false);
         }
-    };
+    }
 
     // ================================================================
-    // DIÁLOGO — Evidencias fotográficas (reutilizado para grupo y unidad)
+    // PESTAÑA 2 — SECCIÓN B — fotos generales del bien (grid inline)
     // ================================================================
 
-    public cmdAbrirEvidenciaGrupo = (grupo: GrupoProcesamiento): void => {
-        this.evidenciaDialogoTipo = "GRUPO";
-        this.evidenciaDialogoGrupo = grupo;
-        this.evidenciaDialogoUnidad = null;
-        this.uiDialogoEvidenciaTitulo(`Evidencias de catálogo — ${grupo.descripcion}`);
-        this.uiDialogoEvidenciaMin(this.minEvidenciasGrupo);
-        this.uiDialogoEvidenciaPrevias(grupo.uiTotalEvidenciasGrupo());
-        this.listaEvidenciasDialogo([]);
-        this.uiDialogoEvidencia(true);
+    public cmdSeleccionarFotoGrupo = (grupo: GrupoProcesamiento, event: CFilePickerElement.ojSelect): void => {
+        const archivos = Array.from(event.detail.files);
+        if (archivos.length === 0) return;
+        void this.subirFotosGrupo(grupo, archivos);
     };
 
-    public cmdAbrirEvidenciaUnidad = (grupo: GrupoProcesamiento, unidad: UnidadProcesamiento): void => {
-        this.evidenciaDialogoTipo = "UNIDAD";
-        this.evidenciaDialogoGrupo = grupo;
-        this.evidenciaDialogoUnidad = unidad;
-        this.uiDialogoEvidenciaTitulo(`Evidencias — ${unidad.displayLabel} (${unidad.codigoInterno})`);
-        this.uiDialogoEvidenciaMin(grupo.calcEsVehiculo() ? this.minEvidenciasVehiculo : this.minEvidenciasSimple);
-        this.uiDialogoEvidenciaPrevias(unidad.uiTotalEvidencias());
-        this.listaEvidenciasDialogo([]);
-        this.uiDialogoEvidencia(true);
+    private async subirFotosGrupo(grupo: GrupoProcesamiento, archivos: File[]): Promise<void> {
+        grupo.uiSubiendoFotoGrupo(true);
+        this.uiError("");
+        try {
+            await contratoBienesApi.subirEvidencia(grupo.idContratoBien, archivos);
+            const nuevas: EvidenciaImagen[] = archivos.map(file => ({
+                id: generarIdCliente(),
+                file,
+                previewUrl: URL.createObjectURL(file),
+            }));
+            grupo.wizSecBFotos([...grupo.wizSecBFotos(), ...nuevas]);
+            grupo.uiTotalEvidenciasGrupo(grupo.uiTotalEvidenciasGrupo() + archivos.length);
+        } catch (err: any) {
+            console.error("Error al subir evidencia de grupo:", err);
+            this.uiError(err.message || "No se pudieron subir las fotos.");
+        } finally {
+            grupo.uiSubiendoFotoGrupo(false);
+        }
+    }
+
+    // ================================================================
+    // PESTAÑA 2 — SECCIÓN C — entrada secuencial (Simple / Vehículo / Conjunto)
+    // ================================================================
+
+    public cmdEditarFilaCaptura = (grupo: GrupoProcesamiento, unidad: UnidadProcesamiento): void => {
+        grupo.secEditandoUnidadId(unidad.idAlmacenBien);
+        grupo.secFrmEvidencias().forEach(e => URL.revokeObjectURL(e.previewUrl));
+        grupo.secFrmEvidencias([]);
+
+        if (grupo.uiTipoCapturaGuardado() === "CONJUNTO") {
+            const guardados = unidad.uiComponentesGuardados();
+            grupo.secFrmComponentes(
+                grupo.listaComponentesEsperados().map(c => {
+                    const previo = guardados.find(g => g.nombreComponente === c.nombre);
+                    return {
+                        nombreComponente: c.nombre,
+                        frmNumeroSerie: ko.observable<string>(previo?.numeroSerie || ""),
+                        evidencia: ko.observable<EvidenciaImagen | null>(null),
+                    };
+                })
+            );
+        } else {
+            grupo.secFrmNumero(unidad.frmNumeroSerie());
+        }
     };
 
-    public onSelectEvidenciaDialogo = (event: CFilePickerElement.ojSelect) => {
+    public cmdSeleccionarFotoSecuencial = (grupo: GrupoProcesamiento, event: CFilePickerElement.ojSelect): void => {
         const archivos = Array.from(event.detail.files);
         const nuevas: EvidenciaImagen[] = archivos.map(file => ({
             id: generarIdCliente(),
             file,
             previewUrl: URL.createObjectURL(file),
         }));
-        this.listaEvidenciasDialogo([...this.listaEvidenciasDialogo(), ...nuevas]);
+        const combinadas = [...grupo.secFrmEvidencias(), ...nuevas];
+        grupo.secFrmEvidencias(grupo.calcEsVehiculo() ? combinadas : combinadas.slice(0, 1));
     };
 
-    public cmdRemoverEvidenciaDialogo = (ev: EvidenciaImagen): void => {
-        URL.revokeObjectURL(ev.previewUrl);
-        this.listaEvidenciasDialogo(this.listaEvidenciasDialogo().filter(e => e.id !== ev.id));
+    public cmdRemoverFotoSecuencial = (grupo: GrupoProcesamiento, foto: EvidenciaImagen): void => {
+        URL.revokeObjectURL(foto.previewUrl);
+        grupo.secFrmEvidencias(grupo.secFrmEvidencias().filter(f => f.id !== foto.id));
     };
 
-    private limpiarEvidenciasDialogo(): void {
-        this.listaEvidenciasDialogo().forEach(e => URL.revokeObjectURL(e.previewUrl));
-        this.listaEvidenciasDialogo([]);
-    }
-
-    public cmdCerrarEvidenciaDialogo = (): void => {
-        if (this.uiGuardandoEvidencia()) return;
-        this.limpiarEvidenciasDialogo();
-        this.uiDialogoEvidencia(false);
+    public cmdSeleccionarFotoComponenteSecuencial = (comp: ComponenteCapturado, event: CFilePickerElement.ojSelect): void => {
+        const archivo = event.detail.files[0];
+        if (!archivo) return;
+        const previa = comp.evidencia();
+        if (previa) URL.revokeObjectURL(previa.previewUrl);
+        comp.evidencia({ id: generarIdCliente(), file: archivo, previewUrl: URL.createObjectURL(archivo) });
     };
 
-    public cmdGuardarEvidenciaDialogo = async (): Promise<void> => {
-        const nuevas = this.listaEvidenciasDialogo();
-        if (nuevas.length === 0) { this.uiDialogoEvidencia(false); return; }
+    public cmdRemoverFotoComponenteSecuencial = (comp: ComponenteCapturado): void => {
+        const previa = comp.evidencia();
+        if (previa) URL.revokeObjectURL(previa.previewUrl);
+        comp.evidencia(null);
+    };
 
-        this.uiGuardandoEvidencia(true);
+    public cmdSiguienteCaptura = async (grupo: GrupoProcesamiento): Promise<void> => {
+        const unidad = this.resolverUnidadObjetivo(grupo);
+        if (!unidad) {
+            this.uiError("Ya se capturaron todas las unidades de este bien.");
+            return;
+        }
+
+        const esVehiculo = grupo.calcEsVehiculo();
+        const esConjunto  = grupo.uiTipoCapturaGuardado() === "CONJUNTO";
+
+        if (esConjunto) {
+            const filas = grupo.secFrmComponentes();
+            const completo = filas.length > 0 && filas.every(c => !!c.frmNumeroSerie().trim() && c.evidencia() !== null);
+            if (!completo) {
+                this.uiError("Completa el número de serie y la foto de cada componente.");
+                return;
+            }
+        } else {
+            const numero = grupo.secFrmNumero().trim();
+            if (!numero) {
+                this.uiError(esVehiculo ? "Captura el número de motor." : "Captura el número de serie.");
+                return;
+            }
+            const minFotos = esVehiculo ? this.minEvidenciasVehiculo : this.minEvidenciasSimple;
+            // Al editar una unidad que ya tenía fotos guardadas, no se exige repetirlas si no se seleccionaron nuevas.
+            if (grupo.secFrmEvidencias().length + unidad.uiTotalEvidencias() < minFotos) {
+                this.uiError(`Se requiere${minFotos > 1 ? "n" : ""} al menos ${minFotos} foto${minFotos > 1 ? "s" : ""}.`);
+                return;
+            }
+        }
+
+        grupo.uiGuardandoSecFila(true);
         this.uiError("");
-        const files = nuevas.map(e => e.file);
 
         try {
-            if (this.evidenciaDialogoTipo === "GRUPO" && this.evidenciaDialogoGrupo) {
-                const grupo = this.evidenciaDialogoGrupo;
-                await contratoBienesApi.subirEvidencia(grupo.idContratoBien, files);
-                grupo.uiTotalEvidenciasGrupo(grupo.uiTotalEvidenciasGrupo() + files.length);
-            } else if (this.evidenciaDialogoTipo === "UNIDAD" && this.evidenciaDialogoUnidad) {
-                const unidad = this.evidenciaDialogoUnidad;
-                await almacenBienesApi.subirEvidencia(unidad.idAlmacenBien, files);
-                unidad.uiTotalEvidencias(unidad.uiTotalEvidencias() + files.length);
+            if (esConjunto) {
+                const filas = grupo.secFrmComponentes();
+                const payload = filas.map(c => ({ nombreComponente: c.nombreComponente, numeroSerie: c.frmNumeroSerie().trim() }));
+                const files = filas.map(c => c.evidencia()!.file);
+                await almacenBienesApi.guardarComponentes(unidad.idAlmacenBien, payload, files);
+                unidad.uiComponentesGuardados(payload.map(p => ({ ...p, tieneFoto: true })));
+            } else {
+                const numero = grupo.secFrmNumero().trim();
+                const payload: any = esVehiculo ? { numeroMotor: numero } : { numeroSerie: numero };
+                const files = grupo.secFrmEvidencias().map(e => e.file);
+                await almacenBienesApi.guardarDatos(unidad.idAlmacenBien, payload);
+                if (files.length > 0) {
+                    await almacenBienesApi.subirEvidencia(unidad.idAlmacenBien, files);
+                    unidad.uiTotalEvidencias(unidad.uiTotalEvidencias() + files.length);
+                }
+                unidad.frmNumeroSerie(numero);
             }
-            this.limpiarEvidenciasDialogo();
-            this.uiDialogoEvidencia(false);
+            if (unidad.uiEstatus() === "RECIBIDO") unidad.uiEstatus("EN_PROCESO");
+            this.limpiarFormularioSeccionC(grupo);
+            this.uiExito("Datos guardados correctamente.");
+            setTimeout(() => this.uiExito(""), 3000);
         } catch (err: any) {
-            console.error("Error al subir evidencias:", err);
-            this.uiError(err.message || "No se pudieron subir las evidencias.");
+            console.error("Error al capturar unidad:", err);
+            this.uiError(err.message || "No se pudo guardar la captura.");
         } finally {
-            this.uiGuardandoEvidencia(false);
+            grupo.uiGuardandoSecFila(false);
         }
     };
 
-    // ================================================================
-    // DIÁLOGO — Componentes de una unidad "Conjunto"
-    // ================================================================
+    private resolverUnidadObjetivo(grupo: GrupoProcesamiento): UnidadProcesamiento | null {
+        if (grupo.secEditandoUnidadId() != null) {
+            return grupo.unidades.find(u => u.idAlmacenBien === grupo.secEditandoUnidadId()) ?? null;
+        }
+        if (grupo.uiTipoCapturaGuardado() === "CONJUNTO") {
+            return grupo.unidades.find(u => u.uiComponentesGuardados().length < grupo.listaComponentesEsperados().length) ?? null;
+        }
+        return grupo.unidades.find(u => u.frmNumeroSerie().trim() === "") ?? null;
+    }
 
-    public cmdAbrirComponentes = (grupo: GrupoProcesamiento, unidad: UnidadProcesamiento): void => {
-        this.componentesDialogoUnidad = unidad;
-        this.uiDialogoComponentesTitulo(`Componentes — ${unidad.displayLabel} (${unidad.codigoInterno})`);
-
-        const guardados = unidad.uiComponentesGuardados();
-        const items: ComponenteCapturado[] = grupo.listaComponentesEsperados().map(c => {
-            const previo = guardados.find(g => g.nombreComponente === c.nombre);
-            return {
-                nombreComponente: c.nombre,
-                frmNumeroSerie: ko.observable<string>(previo?.numeroSerie || ""),
-                evidencia: ko.observable<EvidenciaImagen | null>(null),
-            };
-        });
-        this.listaComponentesDialogo(items);
-        this.uiDialogoComponentes(true);
-    };
-
-    public onSelectComponenteFoto = (item: ComponenteCapturado, event: CFilePickerElement.ojSelect) => {
-        const archivo = event.detail.files[0];
-        if (!archivo) return;
-        const previa = item.evidencia();
-        if (previa) URL.revokeObjectURL(previa.previewUrl);
-        item.evidencia({ id: generarIdCliente(), file: archivo, previewUrl: URL.createObjectURL(archivo) });
-    };
-
-    public cmdRemoverComponenteFoto = (item: ComponenteCapturado): void => {
-        const previa = item.evidencia();
-        if (previa) URL.revokeObjectURL(previa.previewUrl);
-        item.evidencia(null);
-    };
-
-    private limpiarComponentesDialogo(): void {
-        this.listaComponentesDialogo().forEach(c => {
+    private limpiarFormularioSeccionC(grupo: GrupoProcesamiento): void {
+        grupo.secEditandoUnidadId(null);
+        grupo.secFrmNumero("");
+        grupo.secFrmEvidencias().forEach(e => URL.revokeObjectURL(e.previewUrl));
+        grupo.secFrmEvidencias([]);
+        grupo.secFrmComponentes().forEach(c => {
             const e = c.evidencia();
             if (e) URL.revokeObjectURL(e.previewUrl);
         });
-        this.listaComponentesDialogo([]);
+        grupo.secFrmComponentes(
+            grupo.uiTipoCapturaGuardado() === "CONJUNTO" ? this.filasComponentesVacias(grupo.listaComponentesEsperados()) : []
+        );
     }
 
-    public cmdCerrarComponentes = (): void => {
-        if (this.uiGuardandoComponentes()) return;
-        this.limpiarComponentesDialogo();
-        this.uiDialogoComponentes(false);
-    };
-
-    public cmdGuardarComponentes = async (): Promise<void> => {
-        if (!this.calcPuedeGuardarComponentes() || !this.componentesDialogoUnidad) return;
-
-        this.uiGuardandoComponentes(true);
-        this.uiError("");
-
-        const unidad = this.componentesDialogoUnidad;
-        const items = this.listaComponentesDialogo();
-        const payload = items.map(c => ({
-            nombreComponente: c.nombreComponente,
-            numeroSerie: c.frmNumeroSerie().trim(),
+    private filasComponentesVacias(esperados: ComponenteEsperadoItem[]): ComponenteCapturado[] {
+        return esperados.map(c => ({
+            nombreComponente: c.nombre,
+            frmNumeroSerie: ko.observable<string>(""),
+            evidencia: ko.observable<EvidenciaImagen | null>(null),
         }));
-        const files = items.map(c => c.evidencia()!.file);
-
-        try {
-            await almacenBienesApi.guardarComponentes(unidad.idAlmacenBien, payload, files);
-            unidad.uiComponentesGuardados(payload.map(p => ({ ...p, tieneFoto: true })));
-            this.limpiarComponentesDialogo();
-            this.uiDialogoComponentes(false);
-        } catch (err: any) {
-            console.error("Error al guardar componentes:", err);
-            this.uiError(err.message || "No se pudieron guardar los componentes.");
-        } finally {
-            this.uiGuardandoComponentes(false);
-        }
-    };
+    }
 
     // ================================================================
     // HELPERS
     // ================================================================
+
+    /** Genera un arreglo [0..n) para renderizar N placeholders con oj-bind-for-each. */
+    public rangoArray = (n: number): number[] => Array.from({ length: Math.max(0, n) }, (_, i) => i);
+
     private formatMonto(val: any): string {
         const n = parseFloat(val);
         if (isNaN(n)) return "—";
