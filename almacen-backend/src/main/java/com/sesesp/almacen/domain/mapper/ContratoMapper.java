@@ -10,7 +10,6 @@ import com.sesesp.almacen.domain.entity.ContratoBienEntity;
 import com.sesesp.almacen.domain.entity.ContratoClavePresupuestalEntity;
 import com.sesesp.almacen.domain.entity.ContratoEntity;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -106,7 +105,7 @@ public class ContratoMapper {
                 .lote(entity.getLote())
                 .partida(entity.getPartida())
                 .descripcionTecnica(entity.getDescripcionTecnica())
-                .descripcionCorta(stripHtml(entity.getDescripcionTecnica(), SESESP_UTILS.DESCRIPCION_CORTA_BIEN_MAX_LENGTH))
+                .descripcionCorta(SESESP_UTILS.stripHtml(entity.getDescripcionTecnica(), SESESP_UTILS.DESCRIPCION_CORTA_BIEN_MAX_LENGTH))
                 .idUnidadMedida(entity.getUnidadMedida().getIdUnidadMedida())
                 .unidadMedida(entity.getUnidadMedida().getNombre())
                 .cantidad(entity.getCantidad())
@@ -116,13 +115,6 @@ public class ContratoMapper {
                 .cantidadProcesadaTotal(entity.getCantidadProcesadaTotal() != null ? entity.getCantidadProcesadaTotal() : 0L)
                 .cantidadEntregadaTotal(entity.getCantidadEntregadaTotal() != null ? entity.getCantidadEntregadaTotal() : 0L)
                 .build();
-    }
-
-    // Parse <html> string to "plain" text
-    private String stripHtml(String html, int maxLen) {
-        if (html == null || html.isBlank()) return "";
-        String text = Jsoup.parse(html).text().trim();
-        return text.length() > maxLen ? text.substring(0, maxLen) + "…" : text;
     }
 
 }

@@ -33,7 +33,6 @@ import com.sesesp.almacen.domain.repository.EvidenciaContratoBienRepository;
 import com.sesesp.almacen.domain.repository.RecepcionAlmacenRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -65,11 +64,6 @@ public class AlmacenBienService {
     private final EvidenciaContratoBienRepository evidenciaContratoBienRepository;
     private final CatalogoComponenteRepository catalogoComponenteRepository;
     private final S3StorageService s3StorageService;
-
-    private static final int MIN_EVIDENCIAS_GRUPO = 5;
-    private static final int MAX_EVIDENCIAS_GRUPO = 10;
-    private static final int MIN_EVIDENCIAS_UNIDAD = 5;
-    private static final int MAX_EVIDENCIAS_UNIDAD = 10;
 
     @Transactional(readOnly = true)
     public List<AlmacenBienGrupoDto> getBienesAgrupados(Integer idContrato) {
@@ -122,7 +116,7 @@ public class AlmacenBienService {
                             .idContratoBien(cb.getIdContratoBien())
                             .lote(cb.getLote())
                             .partida(cb.getPartida())
-                            .descripcion(stripHtml(cb.getDescripcionTecnica(), SESESP_UTILS.DESCRIPCION_CORTA_BIEN_MAX_LENGTH))
+                            .descripcion(SESESP_UTILS.stripHtml(cb.getDescripcionTecnica(), SESESP_UTILS.DESCRIPCION_CORTA_BIEN_MAX_LENGTH))
                             .unidadMedida(cb.getUnidadMedida().getNombre())
                             .totalUnidades(unidades.size())
                             .unidades(unidades)
@@ -362,14 +356,15 @@ public class AlmacenBienService {
             throw new ContratoValidacionException(List.of("Debes adjuntar al menos una foto."));
         }
         int totalPrevio = cb.getEvidencias().size();
-        if (totalPrevio + evidencias.size() > MAX_EVIDENCIAS_GRUPO) {
+        if (totalPrevio + evidencias.size() > SESESP_UTILS.MAX_EVIDENCIAS_BIEN_GRUPO) {
             throw new ContratoValidacionException(List.of(
-                    "No puedes superar " + MAX_EVIDENCIAS_GRUPO + " evidencias por bien (ya hay " + totalPrevio + ")."));
+                    "No puedes superar " + SESESP_UTILS.MAX_EVIDENCIAS_BIEN_GRUPO + " evidencias por bien (ya hay " + totalPrevio + ")."));
         }
 
         String folderContrato = cb.getContrato().getNumeroContrato().replaceAll("/", "_");
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd"));
-        String base = String.format("BP_%05d_%s", idContratoBien, fecha);
+        String base = String.format("%s_%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_BIEN + "d_%s",
+                SESESP_UTILS.PREFIJO_EVIDENCIA_BIEN_PROCESADO, idContratoBien, fecha);
 
         List<EvidenciaContratoBienEntity> nuevas = new ArrayList<>();
         int numeroProgresivo = totalPrevio + 1;
@@ -402,14 +397,15 @@ public class AlmacenBienService {
             throw new ContratoValidacionException(List.of("Debes adjuntar al menos una foto."));
         }
         int totalPrevio = bien.getEvidencias().size();
-        if (totalPrevio + evidencias.size() > MAX_EVIDENCIAS_UNIDAD) {
+        if (totalPrevio + evidencias.size() > SESESP_UTILS.MAX_EVIDENCIAS_BIEN_UNIDAD) {
             throw new ContratoValidacionException(List.of(
-                    "No puedes superar " + MAX_EVIDENCIAS_UNIDAD + " evidencias por unidad (ya hay " + totalPrevio + ")."));
+                    "No puedes superar " + SESESP_UTILS.MAX_EVIDENCIAS_BIEN_UNIDAD + " evidencias por unidad (ya hay " + totalPrevio + ")."));
         }
 
         String folderContrato = bien.getContrato().getNumeroContrato().replaceAll("/", "_");
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy_MM_dd"));
-        String base = String.format("BP_%05d_%s", idAlmacenBien, fecha);
+        String base = String.format("%s_%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_BIEN + "d_%s",
+                SESESP_UTILS.PREFIJO_EVIDENCIA_BIEN_PROCESADO, idAlmacenBien, fecha);
 
         List<EvidenciaBienEntity> nuevas = new ArrayList<>();
         int numeroProgresivo = totalPrevio + 1;
@@ -482,7 +478,8 @@ public class AlmacenBienService {
             MultipartFile file = evidencias.get(i);
             String nombreComponenteLimpio = c.getNombreComponente().trim();
             String nombreArchivoBase = nombreComponenteLimpio.replaceAll("[^a-zA-Z0-9]+", "_");
-            String nombreEnS3 = String.format("BP_%05d_%s_%s%s", idAlmacenBien, nombreArchivoBase, fecha,
+            String nombreEnS3 = String.format("%s_%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_BIEN + "d_%s_%s%s",
+                    SESESP_UTILS.PREFIJO_EVIDENCIA_BIEN_PROCESADO, idAlmacenBien, nombreArchivoBase, fecha,
                     extraerExtension(file.getOriginalFilename()));
             String key = s3StorageService.getPrefixEvidencias() + "/" + folderContrato + "/evidencia/bienes/" + nombreEnS3;
             String url = s3StorageService.uploadEvidencia(file, key);
@@ -589,14 +586,4 @@ public class AlmacenBienService {
         return bien.getRecepcionAlmacenBien().getRecepcionAlmacen();
     }
 
-    private String stripHtml(String html, int maxLen) {
-        if (html == null) return "";
-
-        // Jsoup parsea el HTML y .text() extrae el texto plano eliminando etiquetas
-        // y convirtiendo entidades como &nbsp; o &amp; en caracteres normales
-        String text = Jsoup.parse(html).text().trim();
-
-        // Validamos el recorte de longitud
-        return text.length() > maxLen ? text.substring(0, maxLen) + "…" : text;
-    }
 }

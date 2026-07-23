@@ -1,5 +1,6 @@
 package com.sesesp.almacen.domain.service;
 
+import com.sesesp.almacen.common.SESESP_UTILS;
 import com.sesesp.almacen.common.exception.ContratoValidacionException;
 import com.sesesp.almacen.common.util.SecurityUtils;
 import com.sesesp.almacen.domain.dto.RecepcionAlmacenRequestDto;
@@ -51,9 +52,6 @@ public class RecepcionAlmacenService {
     private final AlmacenBienRepository almacenBienRepository;
     private final EvidenciaEntradaRepository evidenciaEntradaRepository;
     private final S3StorageService s3StorageService;
-
-    private static final int MIN_EVIDENCIAS = 5;
-    private static final int MAX_EVIDENCIAS = 10;
 
     /**
      * Registra la recepción de bienes cuando llega el proveedor.
@@ -224,7 +222,7 @@ public class RecepcionAlmacenService {
                             cb.getIdContratoBien(),
                             cb.getLote(),
                             cb.getPartida(),
-                            descripcionCorta(cb.getDescripcionTecnica()),
+                            SESESP_UTILS.stripHtml(cb.getDescripcionTecnica(), SESESP_UTILS.DESCRIPCION_CORTA_BIEN_MAX_LENGTH),
                             cb.getUnidadMedida().getNombre(),
                             cb.getCantidad(),
                             b.getCantidadRecibida(),
@@ -270,12 +268,6 @@ public class RecepcionAlmacenService {
         );
     }
 
-    private static String descripcionCorta(String html) {
-        if (html == null || html.isBlank()) return "";
-        String stripped = html.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").strip();
-        return stripped.length() > 100 ? stripped.substring(0, 97) + "..." : stripped;
-    }
-
     // ─────────────────────────────────────────────────────────────
     // GET — recepción de un contrato (legado — devuelve la más reciente)
     // ─────────────────────────────────────────────────────────────
@@ -308,9 +300,9 @@ public class RecepcionAlmacenService {
 
     private void validarEvidencias(List<MultipartFile> evidencias) {
         int total = evidencias == null ? 0 : evidencias.size();
-        if (total < MIN_EVIDENCIAS || total > MAX_EVIDENCIAS) {
+        if (total < SESESP_UTILS.MIN_EVIDENCIAS_RECEPCION || total > SESESP_UTILS.MAX_EVIDENCIAS_RECEPCION) {
             throw new ContratoValidacionException(List.of(
-                    "Debes adjuntar entre " + MIN_EVIDENCIAS + " y " + MAX_EVIDENCIAS
+                    "Debes adjuntar entre " + SESESP_UTILS.MIN_EVIDENCIAS_RECEPCION + " y " + SESESP_UTILS.MAX_EVIDENCIAS_RECEPCION
                             + " fotos de evidencia (se recibieron " + total + ")."));
         }
     }
@@ -404,7 +396,8 @@ public class RecepcionAlmacenService {
         for (RecepcionAlmacenBienEntity recepcionBien : recepcion.getBienes()) {
             int cantidad = recepcionBien.getCantidadRecibida().intValue();
             for (int i = 1; i <= cantidad; i++) {
-                String codigoInterno = String.format("AB-%s-%05d", anio, baseSecuencial + (++indiceGlobal));
+                String codigoInterno = String.format("%s-%s-%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_BIEN + "d",
+                        SESESP_UTILS.PREFIJO_CODIGO_INTERNO_BIEN, anio, baseSecuencial + (++indiceGlobal));
                 unidades.add(AlmacenBienEntity.builder()
                         .contrato(contrato)
                         .contratoBien(recepcionBien.getContratoBien())
@@ -437,6 +430,7 @@ public class RecepcionAlmacenService {
     private String generarFolio() {
         String fecha = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         long secuencial = recepcionAlmacenRepository.count() + 1;
-        return String.format("EA-%04d-%s", secuencial, fecha);
+        return String.format("%s-%0" + SESESP_UTILS.DIGITOS_CONSECUTIVO_FOLIO + "d-%s",
+                SESESP_UTILS.PREFIJO_FOLIO_RECEPCION, secuencial, fecha);
     }
 }
