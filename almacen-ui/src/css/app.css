@@ -571,7 +571,7 @@
   .dash-lista-header,
   .dash-lista-fila {
     display: grid;
-    grid-template-columns: 2fr 110px 55px 150px 240px;
+    grid-template-columns: 2fr 110px 55px 100px 150px 240px;
     gap: 0 10px;
     padding: 10px 20px;
     align-items: center;
@@ -1387,7 +1387,7 @@
    el resto (borde, padding, tipografía, hover) se hereda. */
 
 .cd-bienes-row--lectura-bien-desc {
-  grid-template-columns: 90px 1fr 70px 100px 100px 100px;
+  grid-template-columns: 110px 1fr 70px 90px 100px 100px;
 }
 .cd-bienes-row--lectura-clave {
   grid-template-columns: 1fr 1fr 160px;

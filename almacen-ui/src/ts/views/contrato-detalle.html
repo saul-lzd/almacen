@@ -158,7 +158,14 @@
       <div class="proc-kpis oj-sm-margin-6x-bottom">
 
         <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
-          <div class="cd-kpi-label">Total de Bienes</div>
+          <div class="cd-kpi-label">Total de Partidas</div>
+          <div class="cd-kpi-num">
+            <oj-bind-text value="[[contrato().bienes.length]]"></oj-bind-text>
+          </div>
+        </div>
+
+        <div class="cd-kpi-card oj-panel oj-sm-padding-6x oj-bg-neutral-30">
+          <div class="cd-kpi-label">Sum. Cantidades</div>
           <div class="cd-kpi-num">
             <oj-bind-text value="[[contrato().resumenBienes.totalContratados]]"></oj-bind-text>
           </div>
@@ -347,7 +354,7 @@
       <!-- Header del panel -->
       <div class="cd-rec-header oj-sm-margin-4x-bottom">
         <div class="cd-rec-header-left">
-          <span class="cd-rec-titulo">Bienes en almacén</span>
+          <span class="cd-rec-titulo">Anexo de Especificaciones</span>
           <span class="cd-rec-count-badge">
             <oj-bind-text value="[[contrato().resumenBienes.totalRecibidos + ' recibidos de ' + contrato().resumenBienes.totalContratados + ' adquiridos']]"></oj-bind-text>
           </span>
@@ -362,7 +369,7 @@
           <div class="cd-bienes-col-partida">Lote / Partida</div>
           <div class="cd-bienes-col-desc">Descripción</div>
           <div class="cd-bienes-col-um">U. Medida</div>
-          <div class="cd-bienes-col-num">Contratados</div>
+          <div class="cd-bienes-col-num">Cant.</div>
           <oj-bind-if test="[[calcEsAdmin()]]">
             <div class="cd-bienes-col-monto">P. Unitario</div>
             <div class="cd-bienes-col-monto">Subtotal</div>

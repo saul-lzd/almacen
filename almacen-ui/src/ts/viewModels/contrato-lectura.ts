@@ -35,8 +35,8 @@ type ClaveItem = {
 
 type BienItem = {
     idContratoBien: number;
-    lote: number;
-    partida: number;
+    lote: number | null;
+    partida: number | null;
     descripcionCorta: string;
     descripcionTecnica: string; // HTML de Quill, completo
     unidadMedida: string;
@@ -223,7 +223,7 @@ class ContratoLecturaViewModel {
     };
 
     public cmdVerDescripcionBien = (bien: BienItem): void => {
-        this.uiTituloBienSeleccionado(`Lote ${bien.lote} · Partida ${bien.partida}`);
+        this.uiTituloBienSeleccionado(`Lote ${bien.lote ?? "—"} · Partida ${bien.partida ?? "—"}`);
         this.uiDescripcionBienSeleccionada(bien.descripcionTecnica);
         this.uiBienDescripcionDialogOpen(true);
     };

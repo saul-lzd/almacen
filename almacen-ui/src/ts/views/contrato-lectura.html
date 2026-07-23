@@ -232,7 +232,7 @@
     <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
       <div class="cd-rec-header oj-sm-margin-4x-bottom">
         <div class="cd-rec-header-left">
-          <span class="cd-rec-titulo">Adquisición</span>
+          <span class="cd-rec-titulo">Anexo de Especificaciones</span>
           <span class="cd-rec-count-badge">
             <oj-bind-text value="[[calcTotalBienes() + ' bienes']]"></oj-bind-text>
           </span>
@@ -243,23 +243,30 @@
         <div class="cd-bienes-row cd-bienes-row--header cd-bienes-row--lectura-bien-desc">
           <div>Lote/Partida</div>
           <div>Descripción</div>
-          <div class="cd-bienes-col-num">Cant.</div>
           <div>U. Medida</div>
+          <div class="cd-bienes-col-num">Cant.</div>
           <div class="cd-bienes-col-monto">P. Unitario</div>
           <div class="cd-bienes-col-monto">Subtotal</div>
         </div>
         <oj-bind-for-each data="[[listBienes]]">
           <template data-oj-as="item">
             <div class="cd-bienes-row cd-bienes-row--lectura-bien-desc">
-              <div class="cd-bienes-col-num font-mono">
-                <oj-bind-text value="[[item.data.lote + ' / ' + item.data.partida]]"></oj-bind-text>
+              <div class="cd-bienes-col-partida">
+                <oj-bind-if test="[[item.data.lote !== null || item.data.partida !== null]]">
+                  <span class="recepcion-partida-tag">
+                    <oj-bind-text value="[['L' + (item.data.lote ?? '?') + ' · P' + (item.data.partida ?? '?')]]"></oj-bind-text>
+                  </span>
+                </oj-bind-if>
+                <oj-bind-if test="[[item.data.lote === null && item.data.partida === null]]">
+                  <span class="oj-text-color-secondary">—</span>
+                </oj-bind-if>
               </div>
               <div class="cd-bienes-desc-link oj-line-clamp-2"
                 on-click="[[() => cmdVerDescripcionBien(item.data)]]">
                 <oj-bind-text value="[[item.data.descripcionCorta]]"></oj-bind-text>
               </div>
-              <div class="cd-bienes-col-num"><oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text></div>
               <div class="cd-bienes-col-um"><oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text></div>
+              <div class="cd-bienes-col-num"><oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text></div>
               <div class="cd-bienes-col-monto"><oj-bind-text value="[[item.data.precioUnitarioStr]]"></oj-bind-text></div>
               <div class="cd-bienes-col-monto"><oj-bind-text value="[[item.data.subtotalStr]]"></oj-bind-text></div>
             </div>
