@@ -1,0 +1,289 @@
+<!-- View: Ver Contrato (solo lectura) -->
+
+<div class="oj-hybrid-padding contrato-editor-page">
+
+  <!-- NAVEGACIÓN -->
+  <div class="vista-nav">
+    <oj-c-button
+      chroming="borderless"
+      label="Panel de Inicio"
+      size="sm"
+      on-oj-action="[[cmdGoBack]]">
+      <span slot="startIcon" class="oj-ux-ico-arrow-left"></span>
+    </oj-c-button>
+    <div class="vista-nav-sep"></div>
+    <div class="vista-breadcrumb">
+      <span class="vista-breadcrumb-seg">Contratos</span>
+      <span class="vista-breadcrumb-gt">›</span>
+      <span class="vista-breadcrumb-seg--active">Ver contrato</span>
+    </div>
+  </div>
+
+  <!-- MENSAJE DE ERROR -->
+  <oj-bind-if test="[[uiError()]]">
+    <div class="recepcion-banner recepcion-banner--error oj-sm-margin-4x-bottom">
+      <span class="oj-ux-ico-warning-s"></span>
+      <oj-bind-text value="[[uiError]]"></oj-bind-text>
+    </div>
+  </oj-bind-if>
+
+  <oj-bind-if test="[[uiCargando()]]">
+    <div class="recepcion-cargando">Cargando contrato...</div>
+  </oj-bind-if>
+
+  <oj-bind-if test="[[!uiCargando() && !uiError()]]">
+
+    <!-- ═══ HEADER — contexto del contrato ═══ -->
+    <div class="cf-ctx-bar oj-panel oj-panel-shadow-sm oj-sm-padding-0 oj-sm-margin-6x-bottom">
+      <div class="cf-ctx-bar-row1">
+        <div class="cf-ctx-bar-items">
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Contrato</div>
+            <div class="ctx-val mono">
+              <oj-bind-text value="[[uiNumeroContrato]]"></oj-bind-text>
+            </div>
+          </div>
+
+          <div class="ctx-item grow">
+            <div class="ctx-label">Adquisición</div>
+            <div class="ctx-val" :title="[[uiAdquisicion()]]">
+              <oj-bind-text value="[[uiAdquisicion]]"></oj-bind-text>
+            </div>
+          </div>
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Proveedor</div>
+            <div class="ctx-val" :title="[[uiProveedorNombre()]]">
+              <oj-bind-text value="[[uiProveedorNombre]]"></oj-bind-text>
+            </div>
+          </div>
+
+          <div class="ctx-item fixed">
+            <div class="ctx-label">Estatus</div>
+            <div class="ctx-val">
+              <span :class="[['oj-badge oj-badge-subtle ' + uiEstatusBadge()]]">
+                <oj-bind-text value="[[uiEstatusLabel]]"></oj-bind-text>
+              </span>
+            </div>
+          </div>
+
+        </div>
+        <div class="cf-ctx-bar-actions">
+          <oj-bind-if test="[[calcEsAdmin()]]">
+            <oj-c-button
+              chroming="callToAction"
+              label="Editar contrato"
+              size="sm"
+              on-oj-action="[[cmdEditarContrato]]">
+              <span slot="startIcon" class="oj-ux-ico-edit"></span>
+            </oj-c-button>
+          </oj-bind-if>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Datos generales ═══ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Datos generales</span>
+        </div>
+      </div>
+      <div class="oj-flex oj-flex-items-pad">
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Número de contrato</div>
+          <div class="funcionario-info-value font-mono"><oj-bind-text value="[[uiNumeroContrato]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Adquisición</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiAdquisicion]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Fecha de llegada (aprox)</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiFechaTentativaLlegada]]"></oj-bind-text></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Partes ═══ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Partes</span>
+        </div>
+      </div>
+
+      <div class="oj-typography-subheading-xs oj-text-color-secondary">Proveedor</div>
+      <div class="oj-flex oj-flex-items-pad oj-sm-margin-2x-top">
+        <div class="oj-flex-item oj-sm-12 oj-md-6 funcionario-info-block">
+          <div class="funcionario-info-label">Razón social</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiProveedorRazonSocial]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-6 funcionario-info-block">
+          <div class="funcionario-info-label">Representante</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiProveedorRepresentante]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-6 funcionario-info-block">
+          <div class="funcionario-info-label">Domicilio fiscal</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiProveedorDomicilioFiscal]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-6 funcionario-info-block">
+          <div class="funcionario-info-label">Carácter del representante</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiProveedorCaracter]]"></oj-bind-text></div>
+        </div>
+      </div>
+
+      <div class="cf-subseccion-divider"></div>
+      <div class="oj-typography-subheading-xs oj-text-color-secondary oj-sm-margin-4x-top">Comprador</div>
+      <div class="oj-flex oj-flex-items-pad oj-sm-margin-2x-top">
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Nombre</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiCompradorNombre]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Dependencia</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiCompradorDependencia]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Carácter</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiCompradorCaracter]]"></oj-bind-text></div>
+        </div>
+      </div>
+
+      <div class="cf-subseccion-divider"></div>
+      <div class="oj-typography-subheading-xs oj-text-color-secondary oj-sm-margin-4x-top">Administrador del contrato</div>
+      <div class="oj-flex oj-flex-items-pad oj-sm-margin-2x-top">
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Nombre</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiAdministradorNombre]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Dependencia</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiAdministradorDependencia]]"></oj-bind-text></div>
+        </div>
+        <div class="oj-flex-item oj-sm-12 oj-md-4 funcionario-info-block">
+          <div class="funcionario-info-label">Carácter</div>
+          <div class="funcionario-info-value"><oj-bind-text value="[[uiAdministradorCaracter]]"></oj-bind-text></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Información financiera ═══ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Información financiera</span>
+        </div>
+      </div>
+
+      <div class="oj-typography-subheading-xs oj-text-color-secondary oj-sm-margin-2x-bottom">Claves presupuestales</div>
+      <div class="cd-bienes-tabla">
+        <div class="cd-bienes-row cd-bienes-row--header cd-bienes-row--lectura-clave">
+          <div>Clave</div>
+          <div>Partida específica</div>
+          <div class="cd-bienes-col-monto">Monto asignado</div>
+        </div>
+        <oj-bind-for-each data="[[listClaves]]">
+          <template data-oj-as="item">
+            <div class="cd-bienes-row cd-bienes-row--lectura-clave">
+              <div class="cd-bienes-desc-text font-mono"><oj-bind-text value="[[item.data.clave]]"></oj-bind-text></div>
+              <div class="cd-bienes-desc-text"><oj-bind-text value="[[item.data.partidaEspecifica]]"></oj-bind-text></div>
+              <div class="cd-bienes-col-monto"><oj-bind-text value="[[item.data.montoAsignado]]"></oj-bind-text></div>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+
+      <div class="cf-info-financial-rows-lectura oj-sm-margin-4x-top">
+        <span class="cf-info-financial-label">Monto sin impuestos</span>
+        <span class="cf-info-financial-val"><oj-bind-text value="[[uiMontoSinImpuestos]]"></oj-bind-text></span>
+        <span class="cf-info-financial-label">Impuestos</span>
+        <span class="cf-info-financial-val"><oj-bind-text value="[[uiImpuestos]]"></oj-bind-text></span>
+        <div class="cf-info-financial-rows-lectura-divider"></div>
+        <span class="cf-info-financial-label cf-info-financial-label--total">Monto total</span>
+        <span class="cf-info-financial-val cf-info-financial-val--total"><oj-bind-text value="[[uiMontoTotal]]"></oj-bind-text></span>
+      </div>
+    </div>
+
+    <!-- ═══ Beneficiarios ═══ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Beneficiarios</span>
+          <span class="cd-rec-count-badge">
+            <oj-bind-text value="[[calcTotalBeneficiarios]]"></oj-bind-text>
+          </span>
+        </div>
+      </div>
+      <div class="cf-beneficiarios-lista">
+        <oj-bind-for-each data="[[listBeneficiarios]]">
+          <template data-oj-as="item">
+            <div class="cf-beneficiario-item">
+              <span class="cf-beneficiario-idx"><oj-bind-text value="[[(item.index + 1) + '.']]"></oj-bind-text></span>
+              <span><oj-bind-text value="[[item.data]]"></oj-bind-text></span>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+
+    <!-- ═══ Adquisición (bienes) ═══ -->
+    <div class="oj-panel oj-panel-shadow-sm oj-sm-padding-6x oj-sm-margin-6x-bottom">
+      <div class="cd-rec-header oj-sm-margin-4x-bottom">
+        <div class="cd-rec-header-left">
+          <span class="cd-rec-titulo">Adquisición</span>
+          <span class="cd-rec-count-badge">
+            <oj-bind-text value="[[calcTotalBienes() + ' bienes']]"></oj-bind-text>
+          </span>
+        </div>
+      </div>
+
+      <div class="cd-bienes-tabla">
+        <div class="cd-bienes-row cd-bienes-row--header cd-bienes-row--lectura-bien-desc">
+          <div>Lote/Partida</div>
+          <div>Descripción</div>
+          <div class="cd-bienes-col-num">Cant.</div>
+          <div>U. Medida</div>
+          <div class="cd-bienes-col-monto">P. Unitario</div>
+          <div class="cd-bienes-col-monto">Subtotal</div>
+        </div>
+        <oj-bind-for-each data="[[listBienes]]">
+          <template data-oj-as="item">
+            <div class="cd-bienes-row cd-bienes-row--lectura-bien-desc">
+              <div class="cd-bienes-col-num font-mono">
+                <oj-bind-text value="[[item.data.lote + ' / ' + item.data.partida]]"></oj-bind-text>
+              </div>
+              <div class="cd-bienes-desc-link oj-line-clamp-2"
+                on-click="[[() => cmdVerDescripcionBien(item.data)]]">
+                <oj-bind-text value="[[item.data.descripcionCorta]]"></oj-bind-text>
+              </div>
+              <div class="cd-bienes-col-num"><oj-bind-text value="[[item.data.cantidad]]"></oj-bind-text></div>
+              <div class="cd-bienes-col-um"><oj-bind-text value="[[item.data.unidadMedida]]"></oj-bind-text></div>
+              <div class="cd-bienes-col-monto"><oj-bind-text value="[[item.data.precioUnitarioStr]]"></oj-bind-text></div>
+              <div class="cd-bienes-col-monto"><oj-bind-text value="[[item.data.subtotalStr]]"></oj-bind-text></div>
+            </div>
+          </template>
+        </oj-bind-for-each>
+      </div>
+    </div>
+
+  </oj-bind-if>
+
+  <!-- ═══ DIALOG — Descripción completa del bien ═══ -->
+  <oj-c-dialog
+    opened="{{uiBienDescripcionDialogOpen}}"
+    id="lectura-descripcion-bien-dialog"
+    :dialog-title="[[uiTituloBienSeleccionado()]]"
+    min-width="60vw"
+    cancel-behavior="icon">
+    <div slot="body">
+      <quill-editor
+        readonly="true"
+        placeholder="Este bien no tiene descripción técnica."
+        value="[[uiDescripcionBienSeleccionada]]">
+      </quill-editor>
+    </div>
+  </oj-c-dialog>
+
+</div>

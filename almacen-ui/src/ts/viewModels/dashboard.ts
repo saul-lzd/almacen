@@ -41,12 +41,12 @@ type ContratoItem = {
     todosLosBienesRecibidos:    boolean;
     contratoCerrado:            boolean;
     beneficiarios: string;
-    numeroBeneficiarios: number;
     proveedor: string;
     fechaTentativaLlegada: string | null;
     fechaTentativaLlegadaFormateada: string;
     montoSinImpuestos: string;
     montoTotal: string;
+    totalPartidas: number;
     resumenBienes: ResumenBienes;
     pctRecibido: number;
     pctEntregado: number;
@@ -187,14 +187,12 @@ class DashboardViewModel {
                     todosLosBienesRecibidos:    c.todosLosBienesRecibidos    ?? false,
                     contratoCerrado:            c.contratoCerrado            ?? false,
                     beneficiarios:  c.beneficiarios || "—",
-                    numeroBeneficiarios: c.beneficiarios
-                        ? c.beneficiarios.split(",").map((b: string) => b.trim()).filter(Boolean).length
-                        : 0,
                     proveedor:      c.proveedor?.razonSocial || "Sin proveedor asignado",
                     fechaTentativaLlegada:          fechaRaw,
                     fechaTentativaLlegadaFormateada: this.formatFecha(fechaRaw),
                     montoSinImpuestos: this.formatMonto(c.montoSinImpuestos),
                     montoTotal:     this.formatMonto(c.montoTotal),
+                    totalPartidas:  (c.bienes ?? []).length,
                     resumenBienes:  c.resumenBienes ?? {
                         totalContratados: 0, totalRecibidos: 0,
                         enProceso: 0, procesados: 0, listos: 0, entregados: 0,
@@ -227,6 +225,18 @@ class DashboardViewModel {
 
     public cmdEditarContrato = (contrato: ContratoItem): void => {
         this.router?.go({ path: "contrato", params: { id: contrato.idContrato } });
+    };
+
+    // "Ver contrato": mientras está en captura manda directo al formulario
+    // (es el flujo normal de captura); una vez enviado a almacén, primero
+    // muestra la vista de solo lectura (con la descripción técnica completa)
+    // — desde ahí "Editar contrato" abre el formulario real si hace falta.
+    public cmdVerContrato = (contrato: ContratoItem): void => {
+        if (contrato.estatusEfectivo === "CAPTURA") {
+            this.cmdEditarContrato(contrato);
+        } else {
+            this.router?.go({ path: "contrato-lectura", params: { id: contrato.idContrato } });
+        }
     };
 
     public cmdNuevoContrato = (): void => {

@@ -60,6 +60,7 @@ class RootViewModel {
       { path: "almacen",            detail: { label: "Almacén",    iconClass: "oj-ux-ico-warehouse" } },
       // Sub-rutas: registradas en el router pero no aparecen en el nav
       { path: "contrato-detalle",   detail: { label: "Detalle",       iconClass: "oj-ux-ico-data-document" } },
+      { path: "contrato-lectura",   detail: { label: "Ver contrato",  iconClass: "oj-ux-ico-data-document" } },
       { path: "procesamiento",      detail: { label: "Procesamiento", iconClass: "oj-ux-ico-process" } },
       { path: "recepcion",          detail: { label: "Recepción",     iconClass: "oj-ux-ico-package" } },
       { path: "entrega",            detail: { label: "Entrega",       iconClass: "oj-ux-ico-export" } },
@@ -69,7 +70,7 @@ class RootViewModel {
     const navItems = allRoutes.filter(r =>
       r.path !== "" &&
       r.path !== "almacen" &&
-      r.path !== "contrato-detalle" && r.path !== "procesamiento" &&
+      r.path !== "contrato-detalle" && r.path !== "contrato-lectura" && r.path !== "procesamiento" &&
       r.path !== "recepcion" && r.path !== "entrega"
     );
 

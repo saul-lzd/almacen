@@ -94,10 +94,8 @@
         <div class="dash-lista-header">
           <div>Contrato</div>
           <div>Estatus</div>
-          <div class="dash-lista-col-center">Beneficiarios</div>
-          <div class="dash-lista-col-center">Recibidos</div>
-          <div class="dash-lista-col-center">Procesados</div>
-          <div class="dash-lista-col-center">Entregados</div>
+          <div class="dash-lista-col-center">Bienes</div>
+          <div class="dash-lista-col-right">Monto sin impuestos</div>
           <div></div>
         </div>
 
@@ -122,28 +120,23 @@
               </div>
 
               <div class="dash-lista-num">
-                <oj-bind-text value="[[item.data.numeroBeneficiarios]]"></oj-bind-text>
+                <oj-bind-text value="[[item.data.totalPartidas]]"></oj-bind-text>
               </div>
 
-              <div class="dash-lista-num dash-lista-num--blue">
-                <oj-bind-text value="[[item.data.resumenBienes.totalRecibidos]]"></oj-bind-text>
-              </div>
-
-              <div class="dash-lista-num dash-lista-num--green">
-                <oj-bind-text value="[[item.data.totalProcesadosAcum]]"></oj-bind-text>
-              </div>
-
-              <div class="dash-lista-num dash-lista-num--amber">
-                <oj-bind-text value="[[item.data.resumenBienes.entregados]]"></oj-bind-text>
+              <div class="dash-lista-monto">
+                <oj-bind-text value="[[item.data.montoSinImpuestos]]"></oj-bind-text>
               </div>
 
               <div class="dash-lista-accion">
-                <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
-                  <oj-c-button label="Editar" chroming="ghost" size="sm"
-                    on-oj-action="[[() => cmdEditarContrato(item.data)]]">
+                <oj-bind-if test="[[calcEsAdmin()]]">
+                  <oj-c-button label="Ver contrato" chroming="ghost" size="sm"
+                    on-oj-action="[[() => cmdVerContrato(item.data)]]">
+                  </oj-c-button>
+                  <oj-c-button label="Ver en almacén" chroming="ghost" size="sm"
+                    on-oj-action="[[() => cmdVerDetalle(item.data)]]">
                   </oj-c-button>
                 </oj-bind-if>
-                <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
+                <oj-bind-if test="[[calcEsAlmacenista()]]">
                   <oj-c-button label="Ver detalles" chroming="ghost" size="sm"
                     on-oj-action="[[() => cmdVerDetalle(item.data)]]">
                   </oj-c-button>
@@ -240,12 +233,17 @@
                     <span class="dash-card-fecha-label dash-card-fecha-label--muted">Sin fecha asignada</span>
                   </oj-bind-if>
                 </div>
-                <oj-bind-if test="[[item.data.estatusEfectivo === 'CAPTURA']]">
-                  <oj-c-button label="Editar" chroming="ghost" size="sm"
-                    on-oj-action="[[() => cmdEditarContrato(item.data)]]">
-                  </oj-c-button>
+                <oj-bind-if test="[[calcEsAdmin()]]">
+                  <div class="dash-card-footer-acciones">
+                    <oj-c-button label="Ver contrato" chroming="ghost" size="sm"
+                      on-oj-action="[[() => cmdVerContrato(item.data)]]">
+                    </oj-c-button>
+                    <oj-c-button label="Ver en almacén" chroming="ghost" size="sm"
+                      on-oj-action="[[() => cmdVerDetalle(item.data)]]">
+                    </oj-c-button>
+                  </div>
                 </oj-bind-if>
-                <oj-bind-if test="[[item.data.estatusEfectivo !== 'CAPTURA']]">
+                <oj-bind-if test="[[calcEsAlmacenista()]]">
                   <oj-c-button label="Ver detalles" chroming="ghost" size="sm"
                     on-oj-action="[[() => cmdVerDetalle(item.data)]]">
                   </oj-c-button>

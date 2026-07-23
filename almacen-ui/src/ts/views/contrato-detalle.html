@@ -398,7 +398,8 @@
               </div>
 
               <div class="cd-bienes-col-desc">
-                <span class="cd-bienes-desc-text oj-line-clamp-2">
+                <span class="cd-bienes-desc-link oj-line-clamp-2"
+                  on-click="[[() => cmdVerDescripcionBien(bien.data)]]">
                   <oj-bind-text value="[[bien.data.descripcionCorta]]"></oj-bind-text>
                 </span>
               </div>
@@ -810,6 +811,22 @@
     </div>
     <div slot="footer">
       <oj-c-button label="Cerrar" chroming="outlined" on-oj-action="[[() => uiDialogoBeneficiarios(false)]]"></oj-c-button>
+    </div>
+  </oj-c-dialog>
+
+  <!-- ═══ DIÁLOGO: Descripción completa del bien ═══════════════ -->
+  <oj-c-dialog
+    opened="{{uiBienDescripcionDialogOpen}}"
+    id="detalle-descripcion-bien-dialog"
+    :dialog-title="[[uiTituloBienSeleccionado()]]"
+    min-width="60vw"
+    cancel-behavior="icon">
+    <div slot="body">
+      <quill-editor
+        readonly="true"
+        placeholder="Este bien no tiene descripción técnica."
+        value="[[uiDescripcionBienSeleccionada]]">
+      </quill-editor>
     </div>
   </oj-c-dialog>
 

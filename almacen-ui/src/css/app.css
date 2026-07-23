@@ -571,13 +571,21 @@
   .dash-lista-header,
   .dash-lista-fila {
     display: grid;
-    grid-template-columns: 2fr 150px 100px 90px 90px 90px 130px;
-    gap: 0 12px;
+    grid-template-columns: 2fr 110px 55px 150px 240px;
+    gap: 0 10px;
     padding: 10px 20px;
     align-items: center;
   }
 
   .dash-lista-col-center { text-align: center; }
+  .dash-lista-col-right  { text-align: right; }
+
+  .dash-lista-monto {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+    margin-right: 28px;
+  }
 
   .dash-lista-fila { padding: 12px 20px; }
 
@@ -607,13 +615,10 @@
     text-align: center;
   }
 
-  .dash-lista-num--blue  { color: #1d4ed8; }
-  .dash-lista-num--green { color: #16a34a; }
-  .dash-lista-num--amber { color: #d97706; }
-
   .dash-lista-accion {
     display: flex;
     justify-content: flex-end;
+    gap: 6px;
   }
 
   /* ─ Vista grid ─ */
@@ -709,6 +714,11 @@
     padding: 10px 16px;
     border-top: 1px solid #e5e7eb;
     background: #f9fafb;
+  }
+
+  .dash-card-footer-acciones {
+    display: flex;
+    gap: 6px;
   }
 
   .dash-card-fecha {
@@ -1368,4 +1378,74 @@
   font-weight: 600;
   color: var(--oj-core-text-color-secondary);
   min-width: 20px;
+}
+
+/* ═══ Vista: contrato-lectura (Ver contrato, solo lectura) ═══ */
+/* Reutiliza .funcionario-info-* (definido más abajo, compartido con
+   contrato.html) y .cd-bienes-* (Panel 3 de contrato-detalle.html) —
+   solo se agregan los grid-template-columns propios de estas 2 tablas,
+   el resto (borde, padding, tipografía, hover) se hereda. */
+
+.cd-bienes-row--lectura-bien-desc {
+  grid-template-columns: 90px 1fr 70px 100px 100px 100px;
+}
+.cd-bienes-row--lectura-clave {
+  grid-template-columns: 1fr 1fr 160px;
+}
+.cd-bienes-desc-link {
+  font-size: 13px;
+  color: #1d4ed8;
+  cursor: pointer;
+}
+.cd-bienes-desc-link:hover {
+  text-decoration: underline;
+}
+
+/* Resumen Monto sin impuestos/Impuestos/Total debajo de la tabla de claves —
+   2 columnas (label, valor), ambas alineadas a la derecha, todo el bloque
+   pegado al borde derecho del panel (no space-between de ancho completo
+   como .cf-info-financial-row en el diálogo de contrato.html). */
+.cf-info-financial-rows-lectura {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  column-gap: 16px;
+  row-gap: 6px;
+  font-size: 13px;
+}
+.cf-info-financial-rows-lectura .cf-info-financial-label,
+.cf-info-financial-rows-lectura .cf-info-financial-val {
+  text-align: right;
+}
+.cf-info-financial-rows-lectura-divider {
+  grid-column: 1 / -1;
+  border-top: 1px solid #e5e7eb;
+  margin: 2px 0;
+}
+.cf-info-financial-label--total,
+.cf-info-financial-val--total {
+  font-weight: 600;
+  color: var(--oj-core-text-color-primary);
+}
+.cf-info-financial-val--total { font-size: 15px; }
+
+.cf-subseccion-divider {
+  border-top: 1px solid #e5e7eb;
+  margin: 16px 0 4px;
+}
+
+/* Compartido con contrato.html (bloque informativo de solo lectura) */
+.funcionario-info-block {
+  padding: 12px 0;
+  margin-top: 8px;
+}
+.funcionario-info-label {
+  font-size: 11px;
+  color: var(--oj-core-text-color-secondary, #767676);
+  margin-bottom: 2px;
+}
+.funcionario-info-value {
+  font-size: 13px;
+  color: var(--oj-core-text-color-primary, #161513);
+  font-weight: 500;
 }

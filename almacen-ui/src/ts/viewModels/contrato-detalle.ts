@@ -4,6 +4,7 @@ import { mapEstatusToLabel, mapEstatusToBadge } from "../utils/contratoUtils";
 import { getRole } from "../utils/auth";
 import { contratosApi } from "../utils/api";
 import { CFilePickerElement } from 'oj-c/file-picker';
+import "../jet-composites/quill-editor/quill-editor";
 import "oj-c/button";
 import "oj-c/dialog";
 import "oj-c/input-text";
@@ -42,6 +43,7 @@ type BienContrato = {
     lote: number | null;
     partida: number | null;
     descripcionCorta: string;
+    descripcionTecnica: string;
     unidadMedida: string;
     cantidad: number;
     precioUnitario: string;
@@ -184,6 +186,17 @@ class ContratoDetalleViewModel {
 
     public cmdVerFinanciero    = (): void => { this.uiDialogoFinanciero(true); };
     public cmdVerBeneficiarios = (): void => { this.uiDialogoBeneficiarios(true); };
+
+    // ── Diálogo de descripción técnica de un bien ──────────────
+    public uiBienDescripcionDialogOpen   = ko.observable<boolean>(false);
+    public uiDescripcionBienSeleccionada = ko.observable<string>("");
+    public uiTituloBienSeleccionado      = ko.observable<string>("");
+
+    public cmdVerDescripcionBien = (bien: { lote: number | null; partida: number | null; descripcionTecnica: string }): void => {
+        this.uiTituloBienSeleccionado(`Lote ${bien.lote ?? "—"} · Partida ${bien.partida ?? "—"}`);
+        this.uiDescripcionBienSeleccionada(bien.descripcionTecnica);
+        this.uiBienDescripcionDialogOpen(true);
+    };
 
     // ── Diálogo de detalle de recepción ────────────────────────
     public uiDialogoDetalle     = ko.observable<boolean>(false);
@@ -370,6 +383,7 @@ class ContratoDetalleViewModel {
                     lote:                 b.lote,
                     partida:              b.partida,
                     descripcionCorta:     b.descripcionCorta || "—",
+                    descripcionTecnica:   b.descripcionTecnica || "",
                     unidadMedida:         b.unidadMedida || "—",
                     cantidad:             b.cantidad ?? 0,
                     precioUnitario:       this.formatMonto(b.precioUnitario),
