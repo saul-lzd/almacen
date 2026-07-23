@@ -176,15 +176,15 @@ public class ContratoService {
         // 1. Buscar el contrato existente y forzar carga de relaciones
         ContratoEntity contrato = findContratoOrThrow(idContrato);
 
-        // Bloquear edición si el contrato ya fue enviado al almacén
-        if (contrato.getEstatus() != ContratoEntity.EstatusContrato.CAPTURA) {
-            throw new ContratoValidacionException(List.of(
-                    "El contrato no puede editarse porque su estatus es: "
-                            + contrato.getEstatus().name()
-            ));
-        }
+        // Una vez enviado al almacén (POR_RECIBIR) solo la sección de bienes es editable —
+        // el resto del payload (datos generales, proveedor, funcionarios, beneficiarios,
+        // claves presupuestales) se ignora. contratoBienService.sincronizar() nunca borra
+        // físicamente un ContratoBienEntity (solo desactiva), así que no hay riesgo de romper
+        // la integridad referencial con AlmacenBienEntity ya recibidos/procesados/entregados
+        // de partidas que ya no vengan en el request. Decisión de negocio 2026-07-23.
+        boolean soloBienesEditable = contrato.getEstatus() == ContratoEntity.EstatusContrato.POR_RECIBIR;
 
-        if (contratoRepository.existsByNumeroContratoAndActivoTrueAndIdContratoNot(
+        if (!soloBienesEditable && contratoRepository.existsByNumeroContratoAndActivoTrueAndIdContratoNot(
                 request.getNumeroContrato(), idContrato)) {
             throw new ContratoValidacionException(List.of(
                     "El número de contrato '" + request.getNumeroContrato() + "' ya existe."
@@ -195,31 +195,34 @@ public class ContratoService {
         Hibernate.initialize(contrato.getBeneficiarios());
         Hibernate.initialize(contrato.getClavesPresupuestales());
 
-        // 2. Actualizar campos básicos directamente sobre el contrato encontrado
-        contrato.setNumeroContrato(request.getNumeroContrato());
-        contrato.setAdquisicion(request.getAdquisicion());
-        contrato.setFechaTentativaLlegada(request.getFechaTentativaLlegada());
-        contrato.setMontoSinImpuestos(request.getMontoSinImpuestos());
-        contrato.setImpuestos(request.getImpuestos());
-        contrato.setMontoTotal(request.getMontoTotal());
+        if (!soloBienesEditable) {
+            // 2. Actualizar campos básicos directamente sobre el contrato encontrado
+            contrato.setNumeroContrato(request.getNumeroContrato());
+            contrato.setAdquisicion(request.getAdquisicion());
+            contrato.setFechaTentativaLlegada(request.getFechaTentativaLlegada());
+            contrato.setMontoSinImpuestos(request.getMontoSinImpuestos());
+            contrato.setImpuestos(request.getImpuestos());
+            contrato.setMontoTotal(request.getMontoTotal());
 
-        // 3. Actualizar proveedor — mutamos el existente, no creamos uno nuevo
-        contrato.setProveedor(
-                proveedorService.actualizar(contrato.getProveedor(), request.getProveedor()));
+            // 3. Actualizar proveedor — mutamos el existente, no creamos uno nuevo
+            contrato.setProveedor(
+                    proveedorService.actualizar(contrato.getProveedor(), request.getProveedor()));
 
-        // 4. Actualizar comprador
-        contrato.setComprador(funcionarioService.buscarPorId(
-                request.getComprador() != null ? request.getComprador().getId() : null,
-                "Comprador"));
+            // 4. Actualizar comprador
+            contrato.setComprador(funcionarioService.buscarPorId(
+                    request.getComprador() != null ? request.getComprador().getId() : null,
+                    "Comprador"));
 
-        // 5. Actualizar administrador
-        contrato.setAdministradorContrato(funcionarioService.buscarPorId(
-                request.getAdministradorContrato() != null ? request.getAdministradorContrato().getId() : null,
-                "Administrador del contrato"));
+            // 5. Actualizar administrador
+            contrato.setAdministradorContrato(funcionarioService.buscarPorId(
+                    request.getAdministradorContrato() != null ? request.getAdministradorContrato().getId() : null,
+                    "Administrador del contrato"));
 
-        // 6. Actualizar relaciones hijas (beneficiarios, claves presupuestales y bienes)
-        beneficiarioService.sincronizar(contrato, request.getBeneficiarios());
-        clavePresupuestalService.sincronizar(contrato, request.getClavesPresupuestales());
+            // 6. Actualizar relaciones hijas (beneficiarios y claves presupuestales)
+            beneficiarioService.sincronizar(contrato, request.getBeneficiarios());
+            clavePresupuestalService.sincronizar(contrato, request.getClavesPresupuestales());
+        }
+
         contratoBienService.sincronizar(contrato, request.getBienes());
 
         // 7. Persistir todos los cambios
